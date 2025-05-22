@@ -14,8 +14,13 @@
             <button id="start-button" class="btn btn-primary">Start</button>
         </section>
 
-        <!-- Game Screen (Initially Hidden) -->
+        <!-- Game Screen -->
         <section id="game-screen" class="screen">
+            <!-- History Display -->
+            <div class="history-container">
+                <!-- History items will be added here dynamically -->
+            </div>
+            
             <div class="game-controls">
                 <button id="play-pause-button" class="btn">Play Snippet</button>
                 <input type="text" id="guess-input" placeholder="Enter song title...">
@@ -32,23 +37,23 @@
             </div>
         </section>
 
-        <!-- Success Screen (Initially Hidden) -->
-        <section id="success-screen" class="screen overlay overlay-success">
-            <div class="overlay-content">
+        <!-- Success Modal (Hidden by default) -->
+        <div id="success-modal" class="modal" style="display: none;">
+            <div class="modal-content success">
                 <h2 id="success-message">Congratulations!</h2>
                 <p id="success-song-info">Song Title - Artist</p>
                 <button id="play-next-button" class="btn btn-primary">Play Next</button>
             </div>
-        </section>
+        </div>
 
-        <!-- Failure Screen (Initially Hidden) -->
-        <section id="failure-screen" class="screen overlay overlay-failure">
-            <div class="overlay-content">
+        <!-- Failure Modal (Hidden by default) -->
+        <div id="failure-modal" class="modal" style="display: none;">
+            <div class="modal-content failure">
                 <h2 id="failure-message">You failed!</h2>
                 <p id="failure-song-info">The song was: Song Title - Artist</p>
                 <button id="try-again-button" class="btn btn-primary">Try Again</button>
             </div>
-        </section>
+        </div>
     </div>
 
     <script type="module" src="js/main.js"></script>

@@ -1,7 +1,8 @@
 require('dotenv').config(); // For loading environment variables (Spotify keys)
 const express = require('express');
 const cors = require('cors');
-// const Spotify = require('node-spotify-api'); // We'll integrate this later
+const path = require('path'); // Added for serving static files
+const spotifyService = require('./spotifyService'); // Import the new Spotify service
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,9 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // To parse JSON bodies
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Mock Data (will be replaced by Spotify API calls) ---
 const mockSongsList = [
@@ -24,72 +28,40 @@ const mockSongsList = [
 
 // GET /api/song/random - Fetches a random rap/hip-hop track
 app.get('/api/song/random', async (req, res) => {
-    // TODO: Implement actual Spotify API call to get a random popular rap/hip-hop song
-    // For now, return a random song from the mock list
     try {
-        const randomSong = mockSongsList[Math.floor(Math.random() * mockSongsList.length)];
-        if (!randomSong.previewUrl) {
-            // Basic fallback if a mock song accidentally misses a URL
-            randomSong.previewUrl = "https://p.scdn.co/mp3-preview/297fd17631339939714219609336d5885ae892f0";
+        const song = await spotifyService.getRandomSong();
+        if (song) {
+            res.json(song);
+        } else {
+            res.status(404).json({ message: "Could not fetch a random playable song." });
         }
-        res.json(randomSong);
     } catch (error) {
-        console.error("Error fetching random song:", error);
-        res.status(500).json({ error: "Failed to fetch random song" });
+        console.error("Server error fetching random song:", error);
+        res.status(500).json({ message: "Error fetching random song from Spotify", error: error.message });
     }
 });
 
 // GET /api/songs - Fetches the full list of candidate tracks for autocomplete
 app.get('/api/songs', async (req, res) => {
-    // TODO: Implement actual Spotify API call or use a more extensive curated list
-    // For now, return a simplified list for autocomplete (title and artist)
     try {
-        const autocompleteList = mockSongsList.map(song => ({ title: song.title, artist: song.artist }));
-        res.json(autocompleteList);
-    } catch (error) {
-        console.error("Error fetching songs list:", error);
-        res.status(500).json({ error: "Failed to fetch songs list" });
-    }
-});
-
-// --- Spotify API Integration (Placeholder for now) ---
-/*
-const spotify = new Spotify({
-  id: process.env.SPOTIFY_CLIENT_ID,
-  secret: process.env.SPOTIFY_CLIENT_SECRET
-});
-
-async function getSpotifyRapSongs() {
-    try {
-        // Example: Search for playlists with "Rap Caviar", "Most Necessary" etc.
-        // Or search for tracks with genre:hip-hop and sort by popularity
-        const data = await spotify.search({ type: 'track', query: 'genre:"hip hop"', limit: 50 });
-        let tracks = data.tracks.items;
-        
-        // Filter for tracks with preview_url and high popularity (Spotify's popularity is 0-100)
-        tracks = tracks.filter(track => track.preview_url && track.popularity > 75); // Adjust popularity threshold
-
-        if (tracks.length === 0) {
-            // Fallback or broaden search if no tracks meet criteria
-            return mockSongsList; // For now
+        const songs = await spotifyService.getAllSongsForAutocomplete();
+        if (songs && songs.length > 0) {
+            res.json(songs);
+        } else {
+            res.status(404).json({ message: "No songs found or error fetching songs." });
         }
-
-        return tracks.map(track => ({
-            id: track.id,
-            title: track.name,
-            artist: track.artists.map(a => a.name).join(', '),
-            previewUrl: track.preview_url,
-            spotifyPopularity: track.popularity // Using popularity as a proxy for streams
-        }));
-    } catch (err) {
-        console.error('Error fetching from Spotify:', err);
-        return mockSongsList; // Fallback to mocks
+    } catch (error) {
+        console.error("Server error fetching all songs:", error);
+        res.status(500).json({ message: "Error fetching songs from Spotify", error: error.message });
     }
-}
-// We will call getSpotifyRapSongs() to populate our lists once ready.
-*/
+});
+
+// Catch-all route to serve index.html for any other GET request (for client-side routing)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 }); 

@@ -1,4 +1,4 @@
-import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText } from './ui.js';
+import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory } from './ui.js';
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, toggleMute, getMuteState } from './audio.js';
 import { initializeSearchIndex, getAutocompleteSuggestions, checkGuess } from './search.js';
@@ -41,7 +41,12 @@ function setupEventListeners() {
     if (startButton) startButton.addEventListener('click', startGame);
     if (playPauseButton) playPauseButton.addEventListener('click', playCurrentSnippet);
     if (submitButton) submitButton.addEventListener('click', handleGuess);
-    if (skipButton) skipButton.addEventListener('click', handleSkip);
+    if (skipButton) {
+        skipButton.addEventListener('click', () => {
+            console.log("Skip button clicked"); // Debug log
+            handleSkip();
+        });
+    }
     if (muteToggleButton) muteToggleButton.addEventListener('click', handleMuteToggle);
 
     if (guessInput) {
@@ -91,6 +96,7 @@ async function startGame() {
 }
 
 function resetGameState() {
+    currentSong = null;
     currentStage = 0;
     elapsedTime = 0;
     if (timerInterval) clearInterval(timerInterval);
@@ -101,17 +107,18 @@ function resetGameState() {
     updateProgressBar(0);
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
+    clearHistory(); // Clear history when resetting game
 }
 
 function startStage() {
+    console.log(`Starting stage ${currentStage + 1}`);
     if (!currentSong || currentStage >= MAX_STAGES) {
         handleFailure("Max stages reached or no song.");
         return;
     }
     updateStageCounter(currentStage + 1, MAX_STAGES);
     updateProgressBar(((currentStage + 1) / MAX_STAGES) * 100);
-    // Don't auto-play, wait for user to click "Play Snippet"
-    // playCurrentSnippet(); 
+    updatePlayButton(true); // Reset play button state
     startTimer();
 }
 
@@ -143,7 +150,7 @@ function stopTimer() {
 function handleGuess() {
     if (!currentSong) return;
     const userGuess = guessInput.value.trim();
-    if (!userGuess) return; //
+    if (!userGuess) return;
     
     console.log(`Guess: ${userGuess}, Stage: ${currentStage + 1}, Track: ${currentSong.id}`);
 
@@ -152,6 +159,8 @@ function handleGuess() {
     if (isCorrect) {
         handleSuccess();
     } else {
+        // Add wrong guess to history
+        addHistoryItem('wrong', userGuess);
         advanceStageOrEndGame("Wrong guess");
     }
     guessInput.value = ''; // Clear input after guess
@@ -159,16 +168,27 @@ function handleGuess() {
 }
 
 function handleSkip() {
-    if (!currentSong) return;
+    if (!currentSong) {
+        console.log("No current song to skip");
+        return;
+    }
     console.log(`Skip: Stage: ${currentStage + 1}, Track: ${currentSong.id}`);
+    
+    // Add skip to history
+    addHistoryItem('skipped');
+    stopAudio(); // Stop current audio if playing
     advanceStageOrEndGame("Skipped");
 }
 
 function advanceStageOrEndGame(outcome) {
+    console.log(`Advancing stage. Current stage: ${currentStage}, Outcome: ${outcome}`);
     currentStage++;
+    
     if (currentStage < MAX_STAGES) {
+        console.log(`Moving to stage ${currentStage + 1}`);
         startStage();
     } else {
+        console.log("No more stages, ending game");
         handleFailure(outcome + " - All stages used.");
     }
 }
@@ -183,11 +203,14 @@ function handleSuccess() {
 }
 
 function handleFailure(reason = "No more attempts") {
+    debugger;
     stopTimer();
     stopAudio(); // Stop snippet if playing
-    console.log(`Failed: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
+    console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" }); // DEBUG
     if(currentSong && currentSong.previewUrl) playFullPreview(currentSong.previewUrl);
-    showFailureScreen(currentSong ? currentSong.title : "Unknown Title", currentSong ? currentSong.artist : "Unknown Artist", startGame); // Pass startGame for "Try Again"
+    const songTitle = currentSong ? currentSong.title : "Unknown Title";
+    const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
+    showFailureScreen(songTitle, songArtist, startGame); // Pass startGame for "Try Again"
 }
 
 function handleMuteToggle() {

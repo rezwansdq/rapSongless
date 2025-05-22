@@ -156,53 +156,96 @@ body {
     }
 }
 
-/* Overlay Screens (Success/Failure) */
-.overlay {
-    position: fixed; /* Cover the whole screen */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex; /* Used by .active to show */
-    justify-content: center;
-    align-items: center;
-    z-index: 1000; /* Make sure it's on top */
-    /* display: none; is handled by .screen class, .active shows it */
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    display: none; /* Hidden by default */
 }
 
-.overlay-content {
-    background-color: rgba(18, 18, 18, 0.95); /* Darker, slightly transparent background for the content box */
+.modal-content {
+    background-color: rgba(18, 18, 18, 0.95);
     padding: 30px;
     border-radius: 10px;
     text-align: center;
+    min-width: 300px;
     max-width: 90%;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.overlay-content h2 {
+.modal-content h2 {
     font-size: 2rem;
     font-weight: 700;
-    margin-top: 0;
-    margin-bottom: 15px;
+    margin: 0 0 15px 0;
 }
 
-.overlay-content p {
+.modal-content p {
     font-size: 1.1rem;
     font-weight: 500;
-    margin-bottom: 25px;
+    margin: 0 0 25px 0;
+    color: #ffffff;
 }
 
-.overlay-success {
-    background-color: rgba(46, 204, 113, 0.8); /* Green overlay */
+.modal-content.success {
+    border: 2px solid #2ecc71;
 }
 
-.overlay-failure {
-    background-color: rgba(231, 76, 60, 0.8); /* Red overlay */
+.modal-content.failure {
+    border: 2px solid #e74c3c;
 }
 
-/* Ensure buttons within overlays also have distinct styling if needed, */
-/* but they will inherit .btn and .btn-primary for now */
-.overlay-content .btn-primary {
+.modal-content .btn-primary {
     padding: 12px 25px;
     font-size: 1.1rem;
+    min-width: 120px;
+}
+
+/* History Display */
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    background-color: #2a2a2a;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.history-item .arrow {
+    margin-right: 10px;
+    color: #666;
+}
+
+.history-item .status {
+    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+    color: #888;
+}
+
+.history-item.skipped {
+    background-color: #2a2a2a;
+}
+
+.history-item.wrong {
+    background-color: #3a2a2a;
+    color: #e74c3c;
+}
+
+.history-item.correct {
+    background-color: #2a3a2a;
+    color: #2ecc71;
 } 

@@ -1,13 +1,17 @@
 const screens = document.querySelectorAll('.screen');
 
 export function showScreen(screenId) {
+    console.log(`UI: Attempting to show screen: ${screenId}`); // DEBUG
+    const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {
+        screen.classList.remove('active');
         if (screen.id === screenId) {
             screen.classList.add('active');
-        } else {
-            screen.classList.remove('active');
         }
     });
+    if (!screens.some(screen => screen.id === screenId)) {
+        console.error(`UI: Screen with ID '${screenId}' not found.`); // DEBUG
+    }
 }
 
 export function updateStageCounter(currentStage, totalStages) {
@@ -80,43 +84,77 @@ export function updatePlayButton(isReadyToPlay) {
     }
 }
 
-export function showSuccessScreen(title, artist, onPlayNextCallback) {
-    showScreen('success-screen');
-    const successMessage = document.getElementById('success-message');
-    const playNextButton = document.getElementById('play-next-button');
-    const songInfo = document.getElementById('success-song-info');
+export function addHistoryItem(type, guess = '') {
+    const historyContainer = document.querySelector('.history-container');
+    if (!historyContainer) return;
 
-    if (successMessage) successMessage.textContent = "Congratulations!";
-    if (songInfo) songInfo.textContent = `You guessed: ${title} by ${artist}`;
+    const historyItem = document.createElement('div');
+    historyItem.className = `history-item ${type}`;
 
-    if (playNextButton) {
-        // Clone and replace to remove old listeners
-        const newPlayNextButton = playNextButton.cloneNode(true);
-        playNextButton.parentNode.replaceChild(newPlayNextButton, playNextButton);
-        newPlayNextButton.addEventListener('click', () => {
-            showScreen('landing-screen'); // Or directly call onPlayNextCallback if it handles screen transitions
-            onPlayNextCallback();
-        });
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.textContent = '→';
+    historyItem.appendChild(arrow);
+
+    if (guess) {
+        const guessText = document.createElement('span');
+        guessText.className = 'guess';
+        guessText.textContent = guess;
+        historyItem.appendChild(guessText);
+    }
+
+    const status = document.createElement('span');
+    status.className = 'status';
+    status.textContent = type.toUpperCase();
+    historyItem.appendChild(status);
+
+    // Add with fade-in animation
+    historyItem.style.opacity = '0';
+    historyContainer.appendChild(historyItem);
+    setTimeout(() => {
+        historyItem.style.opacity = '1';
+    }, 10);
+}
+
+export function clearHistory() {
+    const historyContainer = document.querySelector('.history-container');
+    if (historyContainer) {
+        historyContainer.innerHTML = '';
     }
 }
 
-export function showFailureScreen(title, artist, onTryAgainCallback) {
-    showScreen('failure-screen');
-    const failureMessage = document.getElementById('failure-message');
-    const tryAgainButton = document.getElementById('try-again-button');
+export function showSuccessScreen(songTitle, artist, onPlayNext) {
+    const modal = document.getElementById('success-modal');
+    const songInfo = document.getElementById('success-song-info');
+    const playNextButton = document.getElementById('play-next-button');
+
+    addHistoryItem('correct', songTitle);
+    songInfo.textContent = `${songTitle} - ${artist}`;
+    modal.style.display = 'block';
+
+    playNextButton.replaceWith(playNextButton.cloneNode(true));
+    document.getElementById('play-next-button').addEventListener('click', () => {
+        modal.style.display = 'none';
+        clearHistory(); // Clear history when starting new song
+        if (onPlayNext) onPlayNext();
+    });
+}
+
+export function showFailureScreen(songTitle, artist, onTryAgain) {
+    const modal = document.getElementById('failure-modal');
     const songInfo = document.getElementById('failure-song-info');
+    const tryAgainButton = document.getElementById('try-again-button');
 
-    if (failureMessage) failureMessage.textContent = "You failed!";
-    if (songInfo) songInfo.textContent = `The song was: ${title} by ${artist}`;
+    addHistoryItem('wrong', songTitle);
+    songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
+    modal.style.display = 'block';
 
-    if (tryAgainButton) {
-        const newTryAgainButton = tryAgainButton.cloneNode(true);
-        tryAgainButton.parentNode.replaceChild(newTryAgainButton, tryAgainButton);
-        newTryAgainButton.addEventListener('click', () => {
-            showScreen('landing-screen');
-            onTryAgainCallback();
-        });
-    }
+    tryAgainButton.replaceWith(tryAgainButton.cloneNode(true));
+    document.getElementById('try-again-button').addEventListener('click', () => {
+        modal.style.display = 'none';
+        clearHistory(); // Clear history when trying again
+        if (onTryAgain) onTryAgain();
+    });
 }
 
 export function updateMuteButtonText(isMuted) {
