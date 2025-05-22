@@ -76,11 +76,30 @@ export function clearAutocompleteSuggestions() {
     }
 }
 
-export function updatePlayButton(isReadyToPlay) {
+export function displayAlbumArt(imageUrl) {
+    const imgElement = document.getElementById('album-art-img');
+    if (imgElement) {
+        if (imageUrl) {
+            imgElement.src = imageUrl;
+            imgElement.style.display = 'block';
+        } else {
+            imgElement.src = '';
+            imgElement.style.display = 'none';
+        }
+    }
+}
+
+export function updatePlayButton(isEnabled, hasPreview) {
     const playButton = document.getElementById('play-pause-button');
     if (playButton) {
-        playButton.textContent = isReadyToPlay ? "Play Snippet" : "Playing...";
-        // playButton.disabled = !isReadyToPlay; // Or some other indicator
+        playButton.disabled = !isEnabled;
+        if (!isEnabled && hasPreview) { // Playing audio
+            playButton.textContent = "Playing...";
+        } else if (hasPreview) {
+            playButton.textContent = "Play Snippet";
+        } else {
+            playButton.textContent = "Get Hint (No Audio)"; // Or just "Get Hint"
+        }
     }
 }
 
@@ -123,10 +142,13 @@ export function clearHistory() {
     }
 }
 
-export function showSuccessScreen(songTitle, artist, onPlayNext) {
+export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext) {
     const modal = document.getElementById('success-modal');
     const songInfo = document.getElementById('success-song-info');
     const playNextButton = document.getElementById('play-next-button');
+    // Optional: Display album art in modal too
+    // const modalAlbumArt = modal.querySelector('.album-art-modal-img'); 
+    // if (modalAlbumArt && albumArtUrl) modalAlbumArt.src = albumArtUrl;
 
     addHistoryItem('correct', songTitle);
     songInfo.textContent = `${songTitle} - ${artist}`;
@@ -135,24 +157,27 @@ export function showSuccessScreen(songTitle, artist, onPlayNext) {
     playNextButton.replaceWith(playNextButton.cloneNode(true));
     document.getElementById('play-next-button').addEventListener('click', () => {
         modal.style.display = 'none';
-        clearHistory(); // Clear history when starting new song
+        clearHistory(); 
         if (onPlayNext) onPlayNext();
     });
 }
 
-export function showFailureScreen(songTitle, artist, onTryAgain) {
+export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
     const modal = document.getElementById('failure-modal');
     const songInfo = document.getElementById('failure-song-info');
     const tryAgainButton = document.getElementById('try-again-button');
+    // Optional: Display album art in modal too
+    // const modalAlbumArt = modal.querySelector('.album-art-modal-img');
+    // if (modalAlbumArt && albumArtUrl) modalAlbumArt.src = albumArtUrl;
 
-    addHistoryItem('wrong', songTitle);
+    addHistoryItem('wrong', `Failed. Song was: ${songTitle}`); // More informative history for failure
     songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
     modal.style.display = 'block';
 
     tryAgainButton.replaceWith(tryAgainButton.cloneNode(true));
     document.getElementById('try-again-button').addEventListener('click', () => {
         modal.style.display = 'none';
-        clearHistory(); // Clear history when trying again
+        clearHistory(); 
         if (onTryAgain) onTryAgain();
     });
 }

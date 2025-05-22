@@ -138,6 +138,19 @@ body {
     transition: width 0.3s ease;
 }
 
+.album-art-container {
+    width: 100%;
+    max-width: 200px; /* Or your desired max size */
+    margin: 0 auto 15px auto; /* Center it and add margin below */
+}
+
+#album-art-img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
 /* Responsive Design: Breakpoint at 600px */
 @media (max-width: 600px) {
     .game-controls {

@@ -276,20 +276,42 @@ async function getRandomSong() {
         return null;
     }
     
-    console.log(`Found ${tracks.length} total tracks to choose from.`);
+    console.log(`Found ${tracks.length} total tracks to choose from (some may lack preview URLs due to BYPASS_PREVIEW_CHECK=${BYPASS_PREVIEW_CHECK}).`);
     
-    // Get tracks with preview URLs if we want to play snippets
+    // Prioritize tracks with preview URLs if BYPASS_PREVIEW_CHECK is false, 
+    // or if true, use any track but still note which have previews.
     const tracksWithPreviews = tracks.filter(track => track.previewUrl);
+    const tracksWithoutPreviews = tracks.filter(track => !track.previewUrl);
+
     console.log(`Of these, ${tracksWithPreviews.length} tracks have preview URLs.`);
-    
-    // If we have tracks with previews, prioritize those; otherwise use any track
-    const availableTracks = tracksWithPreviews.length > 0 ? tracksWithPreviews : tracks;
-    
-    // Pick a random track
-    const randomIndex = Math.floor(Math.random() * availableTracks.length);
-    const randomTrack = availableTracks[randomIndex];
+    console.log(`${tracksWithoutPreviews.length} tracks DO NOT have preview URLs.`);
+
+    let chosenTrackPool;
+    if (!BYPASS_PREVIEW_CHECK && tracksWithPreviews.length > 0) {
+        chosenTrackPool = tracksWithPreviews;
+        console.log("Prioritizing tracks with preview URLs for selection.");
+    } else if (BYPASS_PREVIEW_CHECK && tracks.length > 0) {
+        chosenTrackPool = tracks; // Use all tracks if bypassing check
+        console.log("Using all fetched tracks for selection (BYPASS_PREVIEW_CHECK is true).");
+    } else if (tracksWithPreviews.length > 0) { // Fallback to previews if bypass is false but no non-previews
+        chosenTrackPool = tracksWithPreviews;
+        console.log("No tracks without previews, using tracks with preview URLs.");
+    } else {
+        chosenTrackPool = tracks; // Should not happen if tracks.length > 0, but as a safe fallback
+         console.log("Using all available tracks as final fallback for selection.");
+    }
+
+    if (chosenTrackPool.length === 0) {
+        console.error("No tracks available in the chosen pool to pick a random song.");
+        return null;
+    }
+        
+    const randomIndex = Math.floor(Math.random() * chosenTrackPool.length);
+    const randomTrack = chosenTrackPool[randomIndex];
+
     console.log("Selected random song:", randomTrack.title, "-", randomTrack.artist);
-    console.log("Preview URL available:", randomTrack.previewUrl ? "Yes" : "No");
+    console.log("Preview URL available:", randomTrack.previewUrl ? "Yes - " + randomTrack.previewUrl : "No");
+    console.log("Album Art URL available:", randomTrack.albumArt ? "Yes - " + randomTrack.albumArt : "No");
     
     return randomTrack;
 }

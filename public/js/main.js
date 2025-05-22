@@ -1,4 +1,4 @@
-import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory } from './ui.js';
+import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory, displayAlbumArt } from './ui.js';
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, toggleMute, getMuteState } from './audio.js';
 import { initializeSearchIndex, getAutocompleteSuggestions, checkGuess } from './search.js';
@@ -76,17 +76,22 @@ async function startGame() {
     console.log("Game Starting...");
     resetGameState();
     showScreen('game-screen');
-    updatePlayButton(true); // Set to "Play Snippet"
 
     try {
         currentSong = await api.getRandomSong();
-        if (!currentSong || !currentSong.previewUrl) {
-            console.error("Failed to fetch a playable song.", currentSong);
-            alert("Error: Could not load a song. Please try again.");
+        if (!currentSong) { // Simplified check, as getRandomSong now tries hard to return something
+            console.error("CRITICAL: Failed to fetch any song from API.");
+            alert("Error: Could not load a song. Please try again later.");
             showScreen('landing-screen');
             return;
         }
         console.log("Current song for the game:", currentSong);
+        if (currentSong.albumArt) {
+            displayAlbumArt(currentSong.albumArt); // Display album art if available
+        } else {
+            displayAlbumArt(null); // Clear album art if not available
+        }
+        updatePlayButton(true, !!currentSong.previewUrl); // Update button based on preview availability
         startStage();
     } catch (error) {
         console.error("Error starting game:", error);
@@ -123,13 +128,24 @@ function startStage() {
 }
 
 function playCurrentSnippet() {
-    if (!currentSong || !currentSong.previewUrl) {
+    if (!currentSong) {
         console.error("No song loaded to play snippet.");
         return;
     }
-    const duration = snippetDurations[currentStage];
-    playSnippet(currentSong.previewUrl, duration);
-    // Optional: Change button text to "Replay Snippet" or disable during play
+    if (currentSong.previewUrl) {
+        const duration = snippetDurations[currentStage];
+        playSnippet(currentSong.previewUrl, duration);
+        updatePlayButton(false, true); // Indicate playing
+        // Re-enable play button after snippet duration (or a bit more) allowing replay
+        setTimeout(() => updatePlayButton(true, true), (duration * 1000) + 500);
+    } else {
+        // No preview URL - this click could reveal a text hint in the future
+        console.log("Play Snippet clicked, but no previewUrl. Stage:", currentStage + 1);
+        // For now, we can just add a history item or a small visual cue
+        addHistoryItem('hint_attempt', `Hint for Stage ${currentStage + 1}`); 
+        // We might want to disable the button temporarily or change text after "hint"
+        updatePlayButton(true, false); // Keep enabled, text reflects no audio
+    }
 }
 
 function startTimer() {
@@ -196,21 +212,26 @@ function advanceStageOrEndGame(outcome) {
 // --- Game End ---
 function handleSuccess() {
     stopTimer();
-    stopAudio(); // Stop snippet if playing
+    stopAudio(); 
     console.log("Correct! Congratulations!", { trackId: currentSong.id, stage: currentStage + 1, outcome: "Correct" });
-    playFullPreview(currentSong.previewUrl);
-    showSuccessScreen(currentSong.title, currentSong.artist, startGame); // Pass startGame for "Play Next"
+    if (currentSong.previewUrl) {
+        playFullPreview(currentSong.previewUrl);
+    }
+    showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame);
 }
 
 function handleFailure(reason = "No more attempts") {
     debugger;
     stopTimer();
-    stopAudio(); // Stop snippet if playing
-    console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" }); // DEBUG
-    if(currentSong && currentSong.previewUrl) playFullPreview(currentSong.previewUrl);
+    stopAudio();
+    console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
+    if (currentSong && currentSong.previewUrl) {
+        playFullPreview(currentSong.previewUrl);
+    }
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
-    showFailureScreen(songTitle, songArtist, startGame); // Pass startGame for "Try Again"
+    const albumArt = currentSong ? currentSong.albumArt : null;
+    showFailureScreen(songTitle, songArtist, albumArt, startGame);
 }
 
 function handleMuteToggle() {
