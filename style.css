@@ -1,0 +1,208 @@
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px; /* Max width for larger screens */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.screen {
+    display: none; /* Hide screens by default */
+}
+
+.screen.active {
+    display: block; /* Show active screen */
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #2ecc71;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: #27ae60;
+}
+
+/* Landing Screen Specific */
+#landing-screen {
+    display: flex; /* Use flex to center the button */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 40px); /* Adjust height considering padding */
+}
+
+#start-button {
+    padding: 15px 30px;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Mute Button */
+.mute-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #333;
+    color: #fff;
+    padding: 8px 12px;
+}
+.mute-btn:hover {
+    background-color: #555;
+}
+
+/* Game Screen Specific */
+#game-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#guess-input {
+    padding: 10px;
+    font-size: 1rem;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 5px;
+}
+
+.autocomplete-results {
+    background-color: #333;
+    border: 1px solid #555;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.autocomplete-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.autocomplete-item:hover, .autocomplete-item.active {
+    background-color: #2ecc71;
+    color: #fff;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #333;
+    border-radius: 5px;
+    height: 10px;
+    margin-top: 5px; /* Add some space above the progress bar */
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Initial width */
+    background-color: #2ecc71;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+/* Responsive Design: Breakpoint at 600px */
+@media (max-width: 600px) {
+    .game-controls {
+        /* Stack controls vertically by default - already done */
+    }
+    .game-info {
+        flex-direction: column; /* Stack timer, stage, progress bar */
+        gap: 8px;
+        align-items: stretch; /* Make items take full width if needed */
+    }
+    .progress-bar-container {
+        order: -1; /* Move progress bar to the top within game-info */
+    }
+    #stage-counter, #timer {
+        text-align: center;
+    }
+}
+
+/* Overlay Screens (Success/Failure) */
+.overlay {
+    position: fixed; /* Cover the whole screen */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex; /* Used by .active to show */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Make sure it's on top */
+    /* display: none; is handled by .screen class, .active shows it */
+}
+
+.overlay-content {
+    background-color: rgba(18, 18, 18, 0.95); /* Darker, slightly transparent background for the content box */
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 90%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.overlay-content h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.overlay-content p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 25px;
+}
+
+.overlay-success {
+    background-color: rgba(46, 204, 113, 0.8); /* Green overlay */
+}
+
+.overlay-failure {
+    background-color: rgba(231, 76, 60, 0.8); /* Red overlay */
+}
+
+/* Ensure buttons within overlays also have distinct styling if needed, */
+/* but they will inherit .btn and .btn-primary for now */
+.overlay-content .btn-primary {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+} 
