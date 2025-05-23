@@ -133,7 +133,7 @@ export function addHistoryItem(type, guess = '') {
 
     // Add with fade-in animation
     historyItem.style.opacity = '0';
-    historyContainer.appendChild(historyItem);
+    historyContainer.prepend(historyItem);
     setTimeout(() => {
         historyItem.style.opacity = '1';
     }, 10);

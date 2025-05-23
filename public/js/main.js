@@ -16,9 +16,6 @@ const muteToggleButton = document.getElementById('mute-toggle');
 let currentSong = null;
 let currentStage = 0; // 0-indexed for snippetDurations array
 let score = 0; // Could be used for future enhancements
-let timerInterval = null;
-let elapsedTime = 0;
-// let allSongs = []; // No longer pre-fetching all songs for autocomplete
 let debounceTimer = null; // For debouncing autocomplete API calls
 
 const snippetDurations = [0.1, 0.5, 2, 4, 8, 15]; // Seconds
@@ -110,12 +107,9 @@ async function startGame() {
 function resetGameState() {
     currentSong = null;
     currentStage = 0;
-    elapsedTime = 0;
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-    stopAudio(); // Stop any previous audio
+    stopAudio(); // Stop any previous audio & clears its own timer interval
     updateStageCounter(1, MAX_STAGES);
-    updateTimer(elapsedTime);
+    updateTimer(0); // Reset timer display to 0:00
     updateProgressBar(0);
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
@@ -131,9 +125,8 @@ function startStage() {
     }
     updateStageCounter(currentStage + 1, MAX_STAGES);
     updateProgressBar(((currentStage + 1) / MAX_STAGES) * 100);
-    // Ensure currentSong is checked before accessing previewUrl
     updatePlayButton(true, !!(currentSong && currentSong.previewUrl)); 
-    startTimer();
+    updateTimer(0); // Reset timer to 0:00 at the start of a stage, before snippet plays
 }
 
 function playCurrentSnippet() {
@@ -143,10 +136,15 @@ function playCurrentSnippet() {
     }
     if (currentSong.previewUrl) {
         const duration = snippetDurations[currentStage];
-        playSnippet(currentSong.previewUrl, duration);
+        playSnippet(
+            currentSong.previewUrl, 
+            duration,
+            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate callback
+            () => updatePlayButton(true, true) // onSnippetEnd callback to re-enable play button
+        );
         updatePlayButton(false, true); // Indicate playing
         // Re-enable play button after snippet duration (or a bit more) allowing replay
-        setTimeout(() => updatePlayButton(true, true), (duration * 1000) + 500);
+        // setTimeout(() => updatePlayButton(true, true), (duration * 1000) + 500); // Old method, now handled by onSnippetEnd
     } else {
         // No preview URL - this click could reveal a text hint in the future
         console.log("Play Snippet clicked, but no previewUrl. Stage:", currentStage + 1);
@@ -155,20 +153,6 @@ function playCurrentSnippet() {
         // We might want to disable the button temporarily or change text after "hint"
         updatePlayButton(true, false); // Keep enabled, text reflects no audio
     }
-}
-
-function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    elapsedTime = 0; // Reset timer for each stage or continue? Let's reset per game.
-    updateTimer(elapsedTime);
-    timerInterval = setInterval(() => {
-        elapsedTime++;
-        updateTimer(elapsedTime);
-    }, 1000);
-}
-
-function stopTimer() {
-    if (timerInterval) clearInterval(timerInterval);
 }
 
 // --- User Actions ---
@@ -220,22 +204,26 @@ function advanceStageOrEndGame(outcome) {
 
 // --- Game End ---
 function handleSuccess() {
-    stopTimer();
     stopAudio(); 
     console.log("Correct! Congratulations!", { trackId: currentSong.id, stage: currentStage + 1, outcome: "Correct" });
     if (currentSong.previewUrl) {
-        playFullPreview(currentSong.previewUrl);
+        playFullPreview(currentSong.previewUrl, 
+            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate
+            () => updateTimer(0) // onPreviewEnd, reset timer to 0 or show full duration
+        );
     }
     showSuccessScreen(currentSong.title, currentSong.artist, startGame);
 }
 
 function handleFailure(reason = "No more attempts") {
     debugger;
-    stopTimer();
     stopAudio();
     console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
     if (currentSong && currentSong.previewUrl) {
-        playFullPreview(currentSong.previewUrl);
+        playFullPreview(currentSong.previewUrl, 
+            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate
+            () => updateTimer(0) // onPreviewEnd, reset timer to 0 or show full duration
+        );
     }
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
