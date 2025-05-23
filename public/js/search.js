@@ -4,6 +4,7 @@ let songIndex = []; // Stores { title, artist } for searching
  * Initializes the search index with a list of songs.
  * @param {Array<Object>} songs - Array of song objects, each with title and artist.
  */
+/*
 export function initializeSearchIndex(songs) {
     songIndex = songs.map(song => ({
         title: song.title.toLowerCase(),
@@ -13,12 +14,14 @@ export function initializeSearchIndex(songs) {
     }));
     console.log("Search: Index initialized with", songIndex.length, "songs");
 }
+*/
 
 /**
  * Gets autocomplete suggestions based on the input query.
  * @param {string} query - The user's input string (>= 2 characters).
  * @returns {Array<Object>} - Array of matching songs { title, artist }.
  */
+/*
 export function getAutocompleteSuggestions(query) {
     if (query.length < 2) {
         return [];
@@ -36,6 +39,7 @@ export function getAutocompleteSuggestions(query) {
         artist: song.originalArtist
     })); 
 }
+*/
 
 /**
  * Checks if the guessed title and artist match a song in the index.

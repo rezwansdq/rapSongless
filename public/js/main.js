@@ -1,7 +1,7 @@
-import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory, displayAlbumArt } from './ui.js';
+import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory /*, displayAlbumArt */ } from './ui.js';
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, toggleMute, getMuteState } from './audio.js';
-import { initializeSearchIndex, getAutocompleteSuggestions, checkGuess } from './search.js';
+import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 
 // DOM Elements
 const startButton = document.getElementById('start-button');
@@ -18,7 +18,8 @@ let currentStage = 0; // 0-indexed for snippetDurations array
 let score = 0; // Could be used for future enhancements
 let timerInterval = null;
 let elapsedTime = 0;
-let allSongs = []; // For autocomplete
+// let allSongs = []; // No longer pre-fetching all songs for autocomplete
+let debounceTimer = null; // For debouncing autocomplete API calls
 
 const snippetDurations = [0.1, 0.5, 2, 4, 8, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
@@ -26,13 +27,13 @@ const MAX_STAGES = snippetDurations.length;
 // --- Initialization ---
 async function initializeApp() {
     showScreen('landing-screen');
-    try {
+    /*try { // Old logic for pre-fetching all songs
         allSongs = await api.getAllSongs();
         initializeSearchIndex(allSongs);
     } catch (error) {
         console.error("Failed to load initial song data:", error);
         // Handle error, maybe show a message to the user
-    }
+    }*/
     setupEventListeners();
     updateMuteButtonText(getMuteState());
 }
@@ -51,14 +52,20 @@ function setupEventListeners() {
 
     if (guessInput) {
         guessInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer); // Clear previous timer
             const query = guessInput.value;
+
             if (query.length >= 2) {
-                const suggestions = getAutocompleteSuggestions(query);
-                displayAutocompleteSuggestions(suggestions, (selectedValue) => {
-                    guessInput.value = selectedValue;
-                    clearAutocompleteSuggestions();
-                    handleGuess(); // Optionally auto-submit on selection
-                });
+                debounceTimer = setTimeout(async () => {
+                    console.log(`MAIN: Debounced search for: "${query}"`);
+                    const suggestions = await api.fetchSearchSuggestions(query);
+                    // Pass the original query for cases where suggestions might not perfectly match input start
+                    displayAutocompleteSuggestions(suggestions, (selectedValue) => {
+                        guessInput.value = selectedValue;
+                        clearAutocompleteSuggestions();
+                        handleGuess(); // Optionally auto-submit on selection
+                    });
+                }, 300); // 300ms debounce
             } else {
                 clearAutocompleteSuggestions();
             }
@@ -86,11 +93,11 @@ async function startGame() {
             return;
         }
         console.log("Current song for the game:", currentSong);
-        if (currentSong.albumArt) {
+        /*if (currentSong.albumArt) {
             displayAlbumArt(currentSong.albumArt); // Display album art if available
         } else {
             displayAlbumArt(null); // Clear album art if not available
-        }
+        }*/
         updatePlayButton(true, !!currentSong.previewUrl); // Update button based on preview availability
         startStage();
     } catch (error) {
@@ -113,7 +120,7 @@ function resetGameState() {
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
     clearHistory(); // Clear history when resetting game
-    displayAlbumArt(null); // Clear album art on reset
+    // displayAlbumArt(null); // Clear album art on reset
 }
 
 function startStage() {
@@ -219,7 +226,7 @@ function handleSuccess() {
     if (currentSong.previewUrl) {
         playFullPreview(currentSong.previewUrl);
     }
-    showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame);
+    showSuccessScreen(currentSong.title, currentSong.artist, startGame);
 }
 
 function handleFailure(reason = "No more attempts") {
@@ -232,8 +239,7 @@ function handleFailure(reason = "No more attempts") {
     }
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
-    const albumArt = currentSong ? currentSong.albumArt : null;
-    showFailureScreen(songTitle, songArtist, albumArt, startGame);
+    showFailureScreen(songTitle, songArtist, startGame);
 }
 
 function handleMuteToggle() {

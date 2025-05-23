@@ -1,7 +1,7 @@
 // This module will handle interactions with the backend API or Spotify API directly.
 
 // Placeholder for the actual API endpoint
-const API_BASE_URL = 'http://localhost:3000/api'; // Local backend URL
+const API_BASE_URL = 'http://127.0.0.1:8000/api'; // Updated to use 127.0.0.1 and port 8000
 
 /**
  * Fetches a random rap/hip-hop track.
@@ -31,10 +31,36 @@ export async function getRandomSong() {
 }
 
 /**
+ * Fetches song suggestions from the backend based on a search query.
+ * @param {string} query The search term.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of song suggestions.
+ */
+export async function fetchSearchSuggestions(query) {
+    if (!query || query.trim().length < 2) { // Basic validation
+        return [];
+    }
+    console.log(`API: Fetching search suggestions for query: "${query}"...`);
+    try {
+        const response = await fetch(`${API_BASE_URL}/songs/search?term=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const songs = await response.json();
+        console.log("API: Suggestions fetched", songs);
+        return songs;
+    } catch (error) {
+        console.error("API: Error fetching search suggestions:", error);
+        return []; // Return empty on error
+    }
+}
+
+/**
+ * DEPRECATED for autocomplete. Use fetchSearchSuggestions instead.
  * Fetches the full list of candidate tracks for autocomplete.
  */
 export async function getAllSongs() {
-    console.log("API: Fetching all songs for autocomplete from backend...");
+    console.warn("API: getAllSongs() is deprecated for autocomplete. Use fetchSearchSuggestions().");
+    console.log("API: Fetching all songs for autocomplete from backend (DEPRECATED)...");
     try {
         const response = await fetch(`${API_BASE_URL}/songs`);
         if (!response.ok) {

@@ -78,6 +78,7 @@ export function clearAutocompleteSuggestions() {
     }
 }
 
+/*
 export function displayAlbumArt(imageUrl) {
     const imgElement = document.getElementById('album-art-img');
     if (imgElement) {
@@ -90,6 +91,7 @@ export function displayAlbumArt(imageUrl) {
         }
     }
 }
+*/
 
 export function updatePlayButton(isEnabled, hasPreview) {
     const playButton = document.getElementById('play-pause-button');
@@ -144,7 +146,7 @@ export function clearHistory() {
     }
 }
 
-export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext) {
+export function showSuccessScreen(songTitle, artist, /*albumArtUrl,*/ onPlayNext) {
     const modal = document.getElementById('success-modal');
     const songInfo = document.getElementById('success-song-info');
     const playNextButton = document.getElementById('play-next-button');
@@ -164,7 +166,7 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext) {
     });
 }
 
-export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
+export function showFailureScreen(songTitle, artist, /*albumArtUrl,*/ onTryAgain) {
     const modal = document.getElementById('failure-modal');
     const songInfo = document.getElementById('failure-song-info');
     const tryAgainButton = document.getElementById('try-again-button');
