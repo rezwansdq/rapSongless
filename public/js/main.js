@@ -113,17 +113,19 @@ function resetGameState() {
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
     clearHistory(); // Clear history when resetting game
+    displayAlbumArt(null); // Clear album art on reset
 }
 
 function startStage() {
-    console.log(`Starting stage ${currentStage + 1}`);
+    console.log(`Starting stage ${currentStage + 1}. Current song title: ${currentSong ? currentSong.title : 'N/A'}`);
     if (!currentSong || currentStage >= MAX_STAGES) {
         handleFailure("Max stages reached or no song.");
         return;
     }
     updateStageCounter(currentStage + 1, MAX_STAGES);
     updateProgressBar(((currentStage + 1) / MAX_STAGES) * 100);
-    updatePlayButton(true); // Reset play button state
+    // Ensure currentSong is checked before accessing previewUrl
+    updatePlayButton(true, !!(currentSong && currentSong.previewUrl)); 
     startTimer();
 }
 

@@ -3,13 +3,15 @@ const screens = document.querySelectorAll('.screen');
 export function showScreen(screenId) {
     console.log(`UI: Attempting to show screen: ${screenId}`); // DEBUG
     const screens = document.querySelectorAll('.screen');
+    let screenFound = false; // Flag to track if the screen is found
     screens.forEach(screen => {
         screen.classList.remove('active');
         if (screen.id === screenId) {
             screen.classList.add('active');
+            screenFound = true; // Set flag to true if screen is found and activated
         }
     });
-    if (!screens.some(screen => screen.id === screenId)) {
+    if (!screenFound) { // Check the flag
         console.error(`UI: Screen with ID '${screenId}' not found.`); // DEBUG
     }
 }

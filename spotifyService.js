@@ -1,350 +1,252 @@
 require('dotenv').config();
-const SpotifyWebApi = require('spotify-web-api-node');
+// No longer need to create a new SpotifyWebApi instance here, it will be passed from server.js
+// const SpotifyWebApi = require('spotify-web-api-node');
 
-// Define constants for playlist IDs to avoid duplication errors
-const RAP_CAVIAR_ID = '37i9dQZF1DX0XUsuxWHRQd'; // RapCaviar
-const TOP_HITS_ID = '37i9dQZF1DXcBWIGoYBM5M'; // Today's Top Hits
+// Constants for playlist IDs and market remain useful
+const RAP_CAVIAR_ID = '37i9dQZF1DX0XUsuxWHRQd';
+const TOP_HITS_ID = '37i9dQZF1DXcBWIGoYBM5M';
+const DEFAULT_MARKET = 'US';
 
-const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-});
+// Removed BYPASS_PREVIEW_CHECK as we expect previews with user auth
 
-// Default country code for content availability
-const DEFAULT_MARKET = 'US'; 
-let tokenExpirationEpoch;
+// Token refresh mechanism
+// The spotifyApi instance passed to functions will have getAccessToken, getRefreshToken, setAccessToken, setRefreshToken methods.
+async function ensureToken(spotifyApiInstance) {
+    if (!spotifyApiInstance.getAccessToken()) {
+        console.log('SpotifyService: No access token set on the API instance.');
+        // This case should ideally be handled by redirecting the user to /login
+        // For now, we'll let operations fail, server.js will catch and suggest login.
+        throw new Error('No token provided. User may need to log in.');
+    }
 
-// Debug flag to temporarily bypass preview_url filtering
-const BYPASS_PREVIEW_CHECK = true;
+    // Check if the token is expired or close to expiring (e.g., within the next 60 seconds)
+    // The spotify-web-api-node library doesn't directly expose expiration time of the current token in a simple way after it's set.
+    // We rely on the refresh token being available and attempt refresh if a request fails with an auth error (401).
+    // A more proactive approach would involve storing tokenExpirationEpoch alongside cookies if possible, or decoding the JWT (if applicable).
+    // For this example, we'll make refresh more reactive or assume server.js middleware handles basic presence.
+    // A robust ensureToken would ideally check expiration. The library itself might handle some of this if calls fail.
+    // The user-provided example had a ensureToken that checked spotifyApi.getAccessTokenExpiration() < now + 60
+    // However, spotify-web-api-node doesn't have a getAccessTokenExpiration() method directly on the main instance.
+    // We will rely on attempting the API call and refreshing if it fails due to token expiration.
+    // This is a common pattern: try, and if auth error, refresh and retry.
+}
 
-async function getAccessToken() {
-    if (!tokenExpirationEpoch || tokenExpirationEpoch < (Date.now() / 1000)) {
-        console.log('Fetching new Spotify access token...');
-        try {
-            const data = await spotifyApi.clientCredentialsGrant();
-            console.log('Token grant response:', JSON.stringify(data.body, null, 2));
-            spotifyApi.setAccessToken(data.body['access_token']);
-            tokenExpirationEpoch = (Date.now() / 1000) + data.body['expires_in'] - 300;
-            console.log('New Spotify access token obtained, expires at:', new Date(tokenExpirationEpoch * 1000));
-            console.log('Access token (first few chars):', data.body['access_token'].substring(0, 10) + '...');
-        } catch (error) {
-            console.error('Error getting access token from Spotify:', JSON.stringify(error, null, 2));
+// Helper function to make an API call with automatic token refresh
+async function makeApiCall(spotifyApiInstance, apiFunction) {
+    await ensureToken(spotifyApiInstance); // Basic check for token presence
+    try {
+        return await apiFunction();
+    } catch (error) {
+        // Check if error is due to expired token (e.g., 401 status code)
+        if (error.statusCode === 401 && spotifyApiInstance.getRefreshToken()) {
+            console.log('Spotify token expired or invalid, attempting to refresh...');
+            try {
+                const data = await spotifyApiInstance.refreshAccessToken();
+                spotifyApiInstance.setAccessToken(data.body['access_token']);
+                console.log('Spotify token refreshed successfully.');
+                // Update cookie on server.js side would be ideal here if new token is different and has new expiry.
+                // For now, the instance is updated. We might need to pass back the new token/expiry to server.js to update cookies.
+                // server.js would need a way to update cookies without a full redirect.
+                
+                // Retry the original API function with the new token
+                return await apiFunction();
+            } catch (refreshError) {
+                console.error('Error refreshing Spotify token:', JSON.stringify(refreshError, null, 2));
+                // If refresh fails, user might need to log in again.
+                throw new Error('Failed to refresh token. Please log in again.');
+            }
+        } else {
+            // Re-throw other errors
             throw error;
         }
     }
 }
 
-// APPROACH 1: Get recommendations based on genre seeds (now first in our strategy)
-async function getRecommendationsByGenre(genres = ['hip-hop', 'rap'], market = DEFAULT_MARKET, limit = 50) {
-    await getAccessToken();
-    try {
+// --- Modified API functions to use the passed spotifyApi instance and makeApiCall wrapper ---
+
+async function getRecommendationsByGenre(spotifyApiInstance, genres = ['hip-hop', 'rap'], market = DEFAULT_MARKET, limit = 50) {
+    return makeApiCall(spotifyApiInstance, async () => {
         console.log(`Getting recommendations for genres: ${genres.join(', ')} in market: ${market}`);
-        const data = await spotifyApi.getRecommendations({
+        const data = await spotifyApiInstance.getRecommendations({
             seed_genres: genres,
             limit: limit,
             market: market
         });
-
-        console.log(`Got ${data.body.tracks.length} raw tracks from recommendations before filtering.`);
-        
-        // Apply filter conditionally
-        let tracks;
-        if (BYPASS_PREVIEW_CHECK) {
-            tracks = data.body.tracks.map(track => ({
+        console.log(`Got ${data.body.tracks.length} raw tracks from recommendations.`);
+        const tracks = data.body.tracks
+            .filter(track => track.preview_url) // Now we strictly filter for preview_url
+            .map(track => ({
                 id: track.id,
                 title: track.name,
                 artist: track.artists.map(artist => artist.name).join(', '),
-                previewUrl: track.preview_url || null, // Accept null preview URLs
+                previewUrl: track.preview_url,
                 albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
             }));
-            console.log(`Including ALL ${tracks.length} tracks from recommendations, even without preview URLs.`);
-        } else {
-            tracks = data.body.tracks
-                .filter(track => track.preview_url)
-                .map(track => ({
-                    id: track.id,
-                    title: track.name,
-                    artist: track.artists.map(artist => artist.name).join(', '),
-                    previewUrl: track.preview_url,
-                    albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                }));
-            console.log(`Got ${tracks.length} playable tracks (with preview URLs) from recommendations.`);
-        }
-        
+        console.log(`Got ${tracks.length} playable tracks (with preview URLs) from recommendations.`);
         return tracks;
-    } catch (error) {
-        console.error('Error getting recommendations from Spotify:', JSON.stringify(error, null, 2));
-        return [];
-    }
+    });
 }
 
-// APPROACH 2: Get tracks from a playlist (with market parameter)
-async function getRapPlaylistTracks(playlistId, market = DEFAULT_MARKET) {
-    await getAccessToken();
-    try {
+async function getRapPlaylistTracks(spotifyApiInstance, playlistId, market = DEFAULT_MARKET) {
+    return makeApiCall(spotifyApiInstance, async () => {
         console.log(`Fetching tracks from playlist ID: ${playlistId} for market: ${market}`);
-        const data = await spotifyApi.getPlaylistTracks(playlistId, {
+        const data = await spotifyApiInstance.getPlaylistTracks(playlistId, {
             fields: 'items(track(id,name,artists(name),preview_url,album(images)))',
             limit: 50,
             market: market
         });
-
-        console.log(`Got ${data.body.items.length} raw tracks from playlist before filtering.`);
-        
-        // Apply filter conditionally
-        let tracks;
-        if (BYPASS_PREVIEW_CHECK) {
-            tracks = data.body.items
-                .map(item => item.track)
-                .filter(track => track) // Ensure track exists, but don't filter on preview_url
-                .map(track => ({
-                    id: track.id,
-                    title: track.name,
-                    artist: track.artists.map(artist => artist.name).join(', '),
-                    previewUrl: track.preview_url || null, // Accept null preview URLs
-                    albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                }));
-            console.log(`Including ALL ${tracks.length} tracks from playlist, even without preview URLs.`);
-        } else {
-            tracks = data.body.items
-                .map(item => item.track)
-                .filter(track => track && track.preview_url)
-                .map(track => ({
-                    id: track.id,
-                    title: track.name,
-                    artist: track.artists.map(artist => artist.name).join(', '),
-                    previewUrl: track.preview_url,
-                    albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                }));
-            console.log(`Got ${tracks.length} playable tracks (with preview URLs) from playlist.`);
-        }
-        
-        return tracks;
-    } catch (error) {
-        console.error('Error fetching playlist tracks from Spotify:', JSON.stringify(error, null, 2));
-        return [];
-    }
-}
-
-// APPROACH 3: Search for tracks by genre
-async function searchTracksByGenre(genre = 'hip hop', market = DEFAULT_MARKET, limit = 50) {
-    await getAccessToken();
-    try {
-        console.log(`Searching for "${genre}" tracks in market: ${market}`);
-        const data = await spotifyApi.searchTracks(`genre:${genre}`, {
-            limit: limit,
-            market: market
-        });
-
-        console.log(`Got ${data.body.tracks.items.length} raw tracks from search before filtering.`);
-        
-        // Apply filter conditionally
-        let tracks;
-        if (BYPASS_PREVIEW_CHECK) {
-            tracks = data.body.tracks.items.map(track => ({
+        console.log(`Got ${data.body.items.length} raw tracks from playlist.`);
+        const tracks = data.body.items
+            .map(item => item.track)
+            .filter(track => track && track.preview_url) // Strictly filter
+            .map(track => ({
                 id: track.id,
                 title: track.name,
                 artist: track.artists.map(artist => artist.name).join(', '),
-                previewUrl: track.preview_url || null, // Accept null preview URLs
+                previewUrl: track.preview_url,
                 albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
             }));
-            console.log(`Including ALL ${tracks.length} tracks from search, even without preview URLs.`);
-        } else {
-            tracks = data.body.tracks.items
-                .filter(track => track.preview_url)
-                .map(track => ({
-                    id: track.id,
-                    title: track.name,
-                    artist: track.artists.map(artist => artist.name).join(', '),
-                    previewUrl: track.preview_url,
-                    albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                }));
-            console.log(`Got ${tracks.length} playable tracks (with preview URLs) from search.`);
-        }
-        
+        console.log(`Got ${tracks.length} playable tracks (with preview URLs) from playlist.`);
         return tracks;
-    } catch (error) {
-        console.error(`Error searching for ${genre} tracks:`, JSON.stringify(error, null, 2));
-        return [];
-    }
+    });
 }
 
-// APPROACH 4: Get featured playlists and fetch tracks from them
-async function getTracksFromFeaturedPlaylists(market = DEFAULT_MARKET, limit = 2) {
-    await getAccessToken();
-    try {
-        console.log(`Getting featured playlists in market: ${market}`);
-        const featuredPlaylistsData = await spotifyApi.getFeaturedPlaylists({
+async function searchTracksByGenre(spotifyApiInstance, genre = 'hip hop', market = DEFAULT_MARKET, limit = 50) {
+    return makeApiCall(spotifyApiInstance, async () => {
+        console.log(`Searching for "${genre}" tracks in market: ${market}`);
+        // Using the user-provided example: searchTracks(`track:${query}`)
+        // Let's adapt to search for genre, but also provide a query structure if needed.
+        // For a general genre search, `genre:${genre}` is good.
+        // If we want tracks *named* 'hip hop', it would be `track:hip hop`.
+        // Assuming we want tracks *of the genre* hip hop:
+        const data = await spotifyApiInstance.searchTracks(`genre:${genre}`, {
             limit: limit,
             market: market
         });
-        
+        console.log(`Got ${data.body.tracks.items.length} raw tracks from search.`);
+        const tracks = data.body.tracks.items
+            .filter(track => track.preview_url) // Strictly filter
+            .map(track => ({
+                id: track.id,
+                title: track.name,
+                artist: track.artists.map(artist => artist.name).join(', '),
+                previewUrl: track.preview_url,
+                albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
+            }));
+        console.log(`Got ${tracks.length} playable tracks (with preview URLs) from search.`);
+        return tracks;
+    });
+}
+
+async function getTracksFromFeaturedPlaylists(spotifyApiInstance, market = DEFAULT_MARKET, limit = 2) {
+    return makeApiCall(spotifyApiInstance, async () => {
+        console.log(`Getting featured playlists in market: ${market}`);
+        const featuredPlaylistsData = await spotifyApiInstance.getFeaturedPlaylists({
+            limit: limit, // Limit number of playlists to fetch
+            market: market
+        });
         let allTracks = [];
-        
         if (featuredPlaylistsData.body.playlists && featuredPlaylistsData.body.playlists.items.length > 0) {
-            console.log(`Found ${featuredPlaylistsData.body.playlists.items.length} featured playlists.`);
-            
             for (const playlist of featuredPlaylistsData.body.playlists.items) {
                 console.log(`Fetching tracks from featured playlist: ${playlist.name} (${playlist.id})`);
-                try {
-                    const tracksData = await spotifyApi.getPlaylistTracks(playlist.id, {
-                        fields: 'items(track(id,name,artists(name),preview_url,album(images)))',
-                        limit: 20,
-                        market: market
-                    });
-                    
-                    console.log(`Got ${tracksData.body.items.length} raw tracks from featured playlist before filtering.`);
-                    
-                    // Apply filter conditionally
-                    let playlistTracks;
-                    if (BYPASS_PREVIEW_CHECK) {
-                        playlistTracks = tracksData.body.items
-                            .map(item => item.track)
-                            .filter(track => track) // Ensure track exists, but don't filter on preview_url
-                            .map(track => ({
-                                id: track.id,
-                                title: track.name,
-                                artist: track.artists.map(artist => artist.name).join(', '),
-                                previewUrl: track.preview_url || null, // Accept null preview URLs
-                                albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                            }));
-                    } else {
-                        playlistTracks = tracksData.body.items
-                            .map(item => item.track)
-                            .filter(track => track && track.preview_url)
-                            .map(track => ({
-                                id: track.id,
-                                title: track.name,
-                                artist: track.artists.map(artist => artist.name).join(', '),
-                                previewUrl: track.preview_url,
-                                albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
-                            }));
-                    }
-                    
-                    allTracks = [...allTracks, ...playlistTracks];
-                    console.log(`Added ${playlistTracks.length} tracks from this playlist. Total tracks now: ${allTracks.length}`);
-                } catch (error) {
-                    console.error(`Error fetching tracks from playlist ${playlist.id}:`, JSON.stringify(error, null, 2));
-                    // Continue with the next playlist
-                }
+                const tracksData = await spotifyApiInstance.getPlaylistTracks(playlist.id, {
+                    fields: 'items(track(id,name,artists(name),preview_url,album(images)))',
+                    limit: 20, // Limit tracks per playlist
+                    market: market
+                });
+                const playlistTracks = tracksData.body.items
+                    .map(item => item.track)
+                    .filter(track => track && track.preview_url) // Strictly filter
+                    .map(track => ({
+                        id: track.id,
+                        title: track.name,
+                        artist: track.artists.map(artist => artist.name).join(', '),
+                        previewUrl: track.preview_url,
+                        albumArt: track.album.images.length > 0 ? track.album.images[0].url : null,
+                    }));
+                allTracks = [...allTracks, ...playlistTracks];
             }
         }
-        
-        console.log(`Fetched a total of ${allTracks.length} tracks from featured playlists.`);
+        console.log(`Fetched a total of ${allTracks.length} playable tracks from featured playlists.`);
+        return allTracks;
+    });
+}
+
+
+async function getRandomSong(spotifyApiInstance) {
+    console.log("SpotifyService: Attempting to get a random song using user token...");
+    let tracks = [];
+    try {
+        tracks = await getRecommendationsByGenre(spotifyApiInstance, ['hip-hop', 'rap']);
+        if (tracks.length === 0) {
+            console.log("No tracks from recommendations, trying RapCaviar playlist...");
+            tracks = await getRapPlaylistTracks(spotifyApiInstance, RAP_CAVIAR_ID);
+        }
+        if (tracks.length === 0) {
+            console.log("No tracks from RapCaviar, trying Today's Top Hits...");
+            tracks = await getRapPlaylistTracks(spotifyApiInstance, TOP_HITS_ID);
+        }
+        if (tracks.length === 0) {
+            console.log("No tracks from playlists, trying search...");
+            tracks = await searchTracksByGenre(spotifyApiInstance, 'hip hop');
+        }
+        if (tracks.length === 0) {
+            console.log("No tracks from search, trying featured playlists...");
+            tracks = await getTracksFromFeaturedPlaylists(spotifyApiInstance);
+        }
+
+        if (tracks.length === 0) {
+            console.error("SpotifyService: Failed to get any tracks with preview_url from all approaches.");
+            return null;
+        }
+
+        const randomIndex = Math.floor(Math.random() * tracks.length);
+        const randomTrack = tracks[randomIndex];
+        console.log("SpotifyService: Selected random song:", randomTrack.title, "-", randomTrack.artist);
+        console.log("SpotifyService: Preview URL:", randomTrack.previewUrl);
+        console.log("SpotifyService: Album Art URL:", randomTrack.albumArt);
+        return randomTrack;
+    } catch (error) {
+        console.error("SpotifyService: Error in getRandomSong:", JSON.stringify(error, null, 2));
+        if (error.message && error.message.includes('No token provided')) {
+            throw error; // Re-throw for server.js to handle redirect
+        }
+        // For other errors, return null or throw a more generic error
+        return null; 
+    }
+}
+
+async function getAllSongsForAutocomplete(spotifyApiInstance) {
+    console.log("SpotifyService: Fetching all songs for autocomplete using user token...");
+    let allTracks = [];
+    try {
+        const recommendedTracks = await getRecommendationsByGenre(spotifyApiInstance, ['hip-hop'], DEFAULT_MARKET, 30);
+        const playlistTracks = await getRapPlaylistTracks(spotifyApiInstance, RAP_CAVIAR_ID);
+        const searchTracks = await searchTracksByGenre(spotifyApiInstance, 'rap', DEFAULT_MARKET, 30);
+
+        const trackMap = new Map();
+        [...recommendedTracks, ...playlistTracks, ...searchTracks].forEach(track => {
+            if (track && track.id && !trackMap.has(track.id)) { // Ensure track and track.id exist
+                trackMap.set(track.id, track);
+            }
+        });
+        allTracks = Array.from(trackMap.values());
+        console.log(`SpotifyService: Compiled ${allTracks.length} unique tracks (with previews) for autocomplete.`);
         return allTracks;
     } catch (error) {
-        console.error('Error fetching featured playlists from Spotify:', JSON.stringify(error, null, 2));
-        return [];
-    }
-}
-
-// Get a random song using all available methods as fallbacks
-async function getRandomSong() {
-    // Try all approaches in sequence until one works
-    console.log("Attempting to get a random song...");
-    
-    // 1. Try recommendations first (likely to have preview URLs)
-    let tracks = await getRecommendationsByGenre(['hip-hop', 'rap'], DEFAULT_MARKET);
-    
-    // 2. If no tracks, try from RapCaviar playlist
-    if (tracks.length === 0) {
-        console.log("No tracks from recommendations, trying RapCaviar playlist...");
-        tracks = await getRapPlaylistTracks(RAP_CAVIAR_ID, DEFAULT_MARKET);
-    }
-    
-    // 3. If still no tracks, try from Today's Top Hits
-    if (tracks.length === 0) {
-        console.log("No tracks from RapCaviar, trying Today's Top Hits...");
-        tracks = await getRapPlaylistTracks(TOP_HITS_ID, DEFAULT_MARKET);
-    }
-    
-    // 4. If still no tracks, try search
-    if (tracks.length === 0) {
-        console.log("No tracks from playlists, trying search...");
-        tracks = await searchTracksByGenre('hip hop', DEFAULT_MARKET);
-    }
-    
-    // 5. Last resort: featured playlists
-    if (tracks.length === 0) {
-        console.log("No tracks from search, trying featured playlists...");
-        tracks = await getTracksFromFeaturedPlaylists(DEFAULT_MARKET);
-    }
-    
-    // Final check
-    if (tracks.length === 0) {
-        console.error("Failed to get any tracks from all approaches.");
-        return null;
-    }
-    
-    console.log(`Found ${tracks.length} total tracks to choose from (some may lack preview URLs due to BYPASS_PREVIEW_CHECK=${BYPASS_PREVIEW_CHECK}).`);
-    
-    // Prioritize tracks with preview URLs if BYPASS_PREVIEW_CHECK is false, 
-    // or if true, use any track but still note which have previews.
-    const tracksWithPreviews = tracks.filter(track => track.previewUrl);
-    const tracksWithoutPreviews = tracks.filter(track => !track.previewUrl);
-
-    console.log(`Of these, ${tracksWithPreviews.length} tracks have preview URLs.`);
-    console.log(`${tracksWithoutPreviews.length} tracks DO NOT have preview URLs.`);
-
-    let chosenTrackPool;
-    if (!BYPASS_PREVIEW_CHECK && tracksWithPreviews.length > 0) {
-        chosenTrackPool = tracksWithPreviews;
-        console.log("Prioritizing tracks with preview URLs for selection.");
-    } else if (BYPASS_PREVIEW_CHECK && tracks.length > 0) {
-        chosenTrackPool = tracks; // Use all tracks if bypassing check
-        console.log("Using all fetched tracks for selection (BYPASS_PREVIEW_CHECK is true).");
-    } else if (tracksWithPreviews.length > 0) { // Fallback to previews if bypass is false but no non-previews
-        chosenTrackPool = tracksWithPreviews;
-        console.log("No tracks without previews, using tracks with preview URLs.");
-    } else {
-        chosenTrackPool = tracks; // Should not happen if tracks.length > 0, but as a safe fallback
-         console.log("Using all available tracks as final fallback for selection.");
-    }
-
-    if (chosenTrackPool.length === 0) {
-        console.error("No tracks available in the chosen pool to pick a random song.");
-        return null;
-    }
-        
-    const randomIndex = Math.floor(Math.random() * chosenTrackPool.length);
-    const randomTrack = chosenTrackPool[randomIndex];
-
-    console.log("Selected random song:", randomTrack.title, "-", randomTrack.artist);
-    console.log("Preview URL available:", randomTrack.previewUrl ? "Yes - " + randomTrack.previewUrl : "No");
-    console.log("Album Art URL available:", randomTrack.albumArt ? "Yes - " + randomTrack.albumArt : "No");
-    
-    return randomTrack;
-}
-
-// Get all songs for autocomplete
-async function getAllSongsForAutocomplete() {
-    // Combine results from multiple sources for a robust list
-    let allTracks = [];
-    
-    // Try to get tracks from each source
-    const recommendedTracks = await getRecommendationsByGenre(['hip-hop'], DEFAULT_MARKET, 30);
-    const playlistTracks = await getRapPlaylistTracks(RAP_CAVIAR_ID, DEFAULT_MARKET);
-    const searchTracks = await searchTracksByGenre('rap', DEFAULT_MARKET, 30);
-    
-    // Combine all unique tracks by ID
-    const trackMap = new Map();
-    
-    [...recommendedTracks, ...playlistTracks, ...searchTracks].forEach(track => {
-        if (!trackMap.has(track.id)) {
-            trackMap.set(track.id, track);
+        console.error("SpotifyService: Error in getAllSongsForAutocomplete:", JSON.stringify(error, null, 2));
+        if (error.message && error.message.includes('No token provided')) {
+            throw error; // Re-throw for server.js to handle redirect
         }
-    });
-    
-    allTracks = Array.from(trackMap.values());
-    console.log(`Compiled ${allTracks.length} unique tracks for autocomplete.`);
-    
-    return allTracks;
+        return []; // Return empty for other errors
+    }
 }
 
 module.exports = {
     getRandomSong,
     getAllSongsForAutocomplete,
-    getRapPlaylistTracks,
-    searchTracksByGenre,
-    getRecommendationsByGenre
+    // Exposing these might be useful for direct calls if ever needed, but ensure they use makeApiCall or similar
+    // getRapPlaylistTracks, 
+    // searchTracksByGenre,
+    // getRecommendationsByGenre
 }; 

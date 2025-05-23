@@ -1,1 +1,61 @@
-// This module will handle interactions with the backend API or Spotify API directly.\n\n// Placeholder for the actual API endpoint\nconst API_BASE_URL = 'http://localhost:3000/api'; // Local backend URL\n\n/**\n * Fetches a random rap/hip-hop track with >= 100M Spotify streams.\n * For now, returns a mock song.\n */\nexport async function getRandomSong() {\n    console.log(\"API: Fetching random song from backend...\");\n    try {\n        const response = await fetch(\`${API_BASE_URL}/song/random\`);\n        if (!response.ok) {\n            throw new Error(\`HTTP error! status: \${response.status}\`);\n        }\n        const song = await response.json();\n        console.log(\"API: Random song fetched\", song);\n        // Ensure the mock song from backend has a working previewUrl for testing\n        if (song.previewUrl === \"https://p.scdn.co/mp3-preview/YOUR_PREVIEW_URL_HERE.mp3\" || !song.previewUrl) {\n            // Fallback for safety during transition, ideally backend sends good URL\n            song.previewUrl = \"https://p.scdn.co/mp3-preview/297fd17631339939714219609336d5885ae892f0\"; \n        }\n        return song;\n    } catch (error) {\n        console.error(\"API: Error fetching random song:\", error);\n        // Fallback to a very basic mock if backend fails during dev\n        return {\n            id: \"fallbackMockId\",\n            title: \"Fallback Song\",\n            artist: \"Fallback Artist\",\n            previewUrl: \"https://p.scdn.co/mp3-preview/297fd17631339939714219609336d5885ae892f0\",\n            spotifyStreams: 100000000\n        };\n    }\n}\n\n/**\n * Fetches the full list of candidate tracks for autocomplete.\n * For now, returns a mock list.\n */\nexport async function getAllSongs() {\n    console.log(\"API: Fetching all songs for autocomplete from backend...\");\n    try {\n        const response = await fetch(\`${API_BASE_URL}/songs\`);\n        if (!response.ok) {\n            throw new Error(\`HTTP error! status: \${response.status}\`);\n        }\n        const songs = await response.json();\n        console.log(\"API: All songs fetched\", songs);\n        return songs;\n    } catch (error) {\n        console.error(\"API: Error fetching all songs:\", error);\n        // Fallback to basic mock list\n        return [\n            { title: \"HUMBLE.\", artist: \"Kendrick Lamar\" },\n            { title: \"Sicko Mode\", artist: \"Travis Scott\" },\n            // Add a few more for basic autocomplete testing if backend fails\n            { title: \"Test Song 1\", artist: \"Test Artist A\"},\n            { title: \"Another Test\", artist: \"Test Artist B\"}\n        ];\n    }\n}\n\n// Note: If directly using Spotify API on client, OAuth handling would be needed here or in main.js.\n// For simplicity, the current design assumes a backend proxying Spotify calls or serving pre-processed data. 
+// This module will handle interactions with the backend API or Spotify API directly.
+
+// Placeholder for the actual API endpoint
+const API_BASE_URL = 'http://localhost:3000/api'; // Local backend URL
+
+/**
+ * Fetches a random rap/hip-hop track.
+ */
+export async function getRandomSong() {
+    console.log("API: Fetching random song from backend...");
+    try {
+        const response = await fetch(`${API_BASE_URL}/song/random`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const song = await response.json();
+        console.log("API: Random song fetched", song);
+        // Backend should ideally provide valid data, including albumArt
+        return song;
+    } catch (error) {
+        console.error("API: Error fetching random song:", error);
+        // Fallback to a very basic mock if backend fails during dev
+        return {
+            id: "fallbackMockId",
+            title: "Fallback Song",
+            artist: "Fallback Artist",
+            previewUrl: "https://p.scdn.co/mp3-preview/297fd17631339939714219609336d5885ae892f0", // A known working preview
+            albumArt: "https://i.scdn.co/image/ab67616d0000b273d84b0fb7ce7ea54592714689" // Example album art
+        };
+    }
+}
+
+/**
+ * Fetches the full list of candidate tracks for autocomplete.
+ */
+export async function getAllSongs() {
+    console.log("API: Fetching all songs for autocomplete from backend...");
+    try {
+        const response = await fetch(`${API_BASE_URL}/songs`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const songs = await response.json();
+        console.log("API: All songs fetched for autocomplete", songs);
+        return songs;
+    } catch (error) {
+        console.error("API: Error fetching all songs for autocomplete:", error);
+        // Fallback to basic mock list
+        return [
+            { title: "HUMBLE.", artist: "Kendrick Lamar" },
+            { title: "Sicko Mode", artist: "Travis Scott" },
+            { title: "God's Plan", artist: "Drake" },
+            { title: "Test Song 1", artist: "Test Artist A"},
+            { title: "Another Test", artist: "Test Artist B"}
+        ];
+    }
+}
+
+// Note: For simplicity, the current design assumes a backend proxying Spotify calls 
+// or serving pre-processed data. If Spotify API were called directly from client,
+// OAuth handling would be needed here or in main.js.

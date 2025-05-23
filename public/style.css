@@ -45,7 +45,7 @@ body {
 }
 
 /* Landing Screen Specific */
-#landing-screen {
+#landing-screen.active {
     display: flex; /* Use flex to center the button */
     flex-direction: column;
     justify-content: center;
@@ -73,8 +73,17 @@ body {
 }
 
 /* Game Screen Specific */
+/* Remove the general #game-screen rule that was making it always flex */
+/*
 #game-screen {
-    display: flex;
+    display: flex; 
+    flex-direction: column;
+    gap: 20px;
+}
+*/
+
+#game-screen.active {
+    display: flex; /* This will be applied when game-screen is active */
     flex-direction: column;
     gap: 20px;
 }
