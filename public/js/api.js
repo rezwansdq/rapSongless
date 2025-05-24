@@ -1,7 +1,7 @@
 // This module will handle interactions with the backend API or Spotify API directly.
 
 // Placeholder for the actual API endpoint
-const API_BASE_URL = '/api'; // For Vercel deployment with /api directory
+const API_BASE_URL = 'http://127.0.0.1:8000/api'; // For local development
 
 /**
  * Fetches a random rap/hip-hop track.
