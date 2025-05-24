@@ -61,7 +61,7 @@ async function getRandomSong() {
     console.log("iTunesService: Attempting hybrid Spotify/iTunes random song...");
     try {
         // 1. Get a popular track from Spotify (e.g., by Drake)
-        const spotifyTrack = await spotifyService.findPopularTrackByArtist('Drake', { minPopularity: 70, searchLimit: 50 });
+        const spotifyTrack = await spotifyService.findPopularTrackByArtist('Drake', { minPopularity: 50, searchLimit: 50 });
 
         if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
             console.log(`iTunesService: Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id})`);
@@ -69,7 +69,7 @@ async function getRandomSong() {
             // 2. Search iTunes for this specific track to get a previewUrl
             // We will search for "Song Title Artist Name" to be specific
             // No need to filter by recency or preview here, we just need *a* preview for this specific song
-            const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 5, 'US', 'songTerm');
+            const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
 
             if (itunesResults.length > 0) {
                 let matchedItunesTrack = null;
@@ -93,121 +93,27 @@ async function getRandomSong() {
                         previewUrl: matchedItunesTrack.previewUrl // iTunes preview URL
                     };
                 } else {
-                    console.log(`iTunesService: No suitable iTunes match with preview found for Spotify track: ${spotifyTrack.title}`);
+                    console.log(`iTunesService: No suitable iTunes match with preview found for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}. Examining iTunes results (limit ${itunesResults.length}):`);
+                    itunesResults.forEach((item, index) => {
+                        console.log(`  Result ${index + 1}: Name='${item.trackName}', Artist='${item.artistName}', HasPreview=${!!item.previewUrl}`);
+                    });
                 }
             } else {
-                console.log(`iTunesService: Could not find Spotify track '${spotifyTrack.title} - ${spotifyTrack.artist}' on iTunes search.`);
+                console.log(`iTunesService: Could not find Spotify track '${spotifyTrack.title} - ${spotifyTrack.artist}' on iTunes search (0 results).`);
             }
         } else {
             console.log("iTunesService: Spotify did not return a suitable track.");
         }
     } catch (spotifyError) {
         console.error("iTunesService: Error during Spotify-primary lookup:", spotifyError.message);
-        // Proceed to iTunes-only fallback
+        // spotifyError could be due to Spotify API issues or if findPopularTrackByArtist returns null and we try to access its properties
+        // No longer falling back to iTunes-only search here.
+        console.log("iTunesService: Spotify/iTunes hybrid failed. No iTunes-only fallback will be attempted.");
     }
 
-    console.log("iTunesService: Spotify/iTunes hybrid failed. Falling back to iTunes-only search for random song.");
-    // Fallback logic (existing iTunes chart/genre based search)
-    return getRandomSongFromItunesFallback(); 
-}
-
-// Extracted original iTunes fallback logic into its own function
-async function getRandomSongFromItunesFallback() {
-    console.log("iTunesService (Fallback): Attempting to get random song, starting with Top Rap Chart...");
-    const rawChartSongs = await fetchTopRapChartRaw();
-    let enrichedChartSongs = [];
-
-    if (rawChartSongs.length > 0) {
-        for (const chartSong of rawChartSongs) {
-            if (!chartSong.name || !chartSong.artistName) continue;
-            try {
-                const searchResults = await searchItunesRaw(`${chartSong.name} ${chartSong.artistName}`, 'song', 'music', 1);
-                if (searchResults.length > 0) {
-                    const track = searchResults[0];
-                     // Apply filters here for chart songs
-                    if (track.previewUrl && track.kind === 'song' && isRecentEnoughForFallback(track)) {
-                        if (track.artistName.toLowerCase().includes(chartSong.artistName.toLowerCase()) || chartSong.artistName.toLowerCase().includes(track.artistName.toLowerCase())){
-                            enrichedChartSongs.push(transformItunesTrackForFallback(track));
-                        }
-                    }
-                }
-            } catch (error) {
-                // console.warn(`iTunesService (Fallback): Error looking up details for chart song "${chartSong.name}": ${error.message}`);
-            }
-        }
-        console.log(`iTunesService (Fallback): Enriched ${enrichedChartSongs.length} chart songs.`);
-    }
-
-    if (enrichedChartSongs.length > 0) {
-        return enrichedChartSongs[Math.floor(Math.random() * enrichedChartSongs.length)];
-    }
-
-    console.log("iTunesService (Fallback): No suitable songs from chart. Trying direct iTunes genre/offset search...");
-    const MAX_OFFSET_GENRE = 1000;
-    const randomOffset = Math.floor(Math.random() * (MAX_OFFSET_GENRE / 50)) * 50;
-    let itunesFallbackResults = [];
-
-    const terms = ['track', 'hit']; // a general term, hip hop, rap, common artist like Drake
-    for (const term of terms) {
-        let results = await searchItunesRaw(term, 'song', 'music', 50, 'US', null, 18, randomOffset);
-        results = results.filter(track => track.previewUrl && track.kind === 'song' && isRecentEnoughForFallback(track)).map(transformItunesTrackForFallback);
-        if (results.length > 0) {
-            itunesFallbackResults = results; break;
-        }
-    }
-     if (itunesFallbackResults.length === 0) { // Try offset 0
-        for (const term of terms) {
-            let results = await searchItunesRaw(term, 'song', 'music', 50, 'US', null, 18, 0);
-            results = results.filter(track => track.previewUrl && track.kind === 'song' && isRecentEnoughForFallback(track)).map(transformItunesTrackForFallback);
-            if (results.length > 0) {
-                itunesFallbackResults = results; break;
-            }
-        }
-    }
-    // Broader search if still no results
-    if (itunesFallbackResults.length === 0) {
-        let results = await searchItunesRaw('Drake', 'song', 'music', 50, 'US', null, null, 0);
-        itunesFallbackResults = results.filter(track => track.previewUrl && track.kind === 'song' && isRecentEnoughForFallback(track)).map(transformItunesTrackForFallback);
-    }
-    if (itunesFallbackResults.length === 0) {
-        let results = await searchItunesRaw('pop', 'song', 'music', 50, 'US', null, null, 0); // last resort
-        itunesFallbackResults = results.filter(track => track.previewUrl && track.kind === 'song' && isRecentEnoughForFallback(track)).map(transformItunesTrackForFallback);
-    }
-
-
-    if (itunesFallbackResults.length === 0) {
-        console.error("iTunesService (Fallback): Failed to get any songs from iTunes after all fallbacks.");
-        return null;
-    }
-    return itunesFallbackResults[Math.floor(Math.random() * itunesFallbackResults.length)];
-}
-
-// Original fetchTopRapChartRaw - remains largely the same
-async function fetchTopRapChartRaw() {
-    console.log("iTunesService: Fetching top rap chart from Apple RSS for fallback...");
-    try {
-        const response = await fetch(CHARTS_URL);
-        if (!response.ok) {
-            console.error(`iTunesService: Failed to fetch charts (fallback), status: ${response.status}`);
-            return [];
-        }
-        const data = await response.json();
-        if (data.feed && data.feed.results) {
-            return data.feed.results;
-        }
-        if (data.feed && data.feed.entry && Array.isArray(data.feed.entry)) {
-            return data.feed.entry.map(entry => ({
-                id: entry.id?.attributes?.['im:id'],
-                name: entry['im:name']?.label,
-                artistName: entry['im:artist']?.label
-            }));
-        }
-        console.warn("iTunesService: Chart data (fallback) in unexpected format or empty.");
-        return [];
-    } catch (error) {
-        console.error("iTunesService: Error fetching/parsing top rap chart (fallback):", error);
-        return [];
-    }
+    // If the hybrid approach fails to return a song, this function will now effectively return undefined/null.
+    console.log("iTunesService: Hybrid lookup concluded. If no song was returned, it means the process failed.");
+    return null; // Explicitly return null if no song is found through the hybrid approach
 }
 
 // New function for Spotify-based autocomplete

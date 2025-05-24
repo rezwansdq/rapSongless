@@ -35,7 +35,7 @@ function getLargestAlbumArt(images) {
 }
 
 // Function to search tracks for autocomplete (Spotify only)
-async function searchTracksForAutocomplete(query, limit = 10, market = 'US') {
+async function searchTracksForAutocomplete(query, limit = 10, market = 'US', _isRetry = false) {
   try {
     const apiClient = await getSpotifyApiClient();
     // Query format for artist and track: "artist:ArtistName track:TrackName" or just "TrackName" or "ArtistName"
@@ -53,62 +53,85 @@ async function searchTracksForAutocomplete(query, limit = 10, market = 'US') {
     console.log('SpotifyService: No tracks found for autocomplete query -', query);
     return [];
   } catch (error) {
-    console.error('SpotifyService: Error searching tracks for autocomplete:', query, 'Error:', error.message);
-    if (error.statusCode === 401) {
-        console.log('SpotifyService: Attempting token refresh due to 401 error during autocomplete search.');
+    if (error.statusCode === 401 && !_isRetry) {
+        console.log('SpotifyService: Attempting token refresh (401) during autocomplete search.');
         await refreshSpotifyToken();
-        // Optionally, retry the search here once
+        console.log('SpotifyService: Retrying autocomplete search after token refresh.');
+        return searchTracksForAutocomplete(query, limit, market, true); // Retry the call
     }
+    console.error('SpotifyService: Error searching tracks for autocomplete:', query, 'Error:', error.message);
     throw error;
   }
 }
 
 // Function to find a popular track by a given artist
-async function findPopularTrackByArtist(artistName, options = {}) {
+async function findPopularTrackByArtist(artistName, options = {}, _isRetry = false) {
+  // Use minPopularity from options, default to 0 if not provided or invalid
+  let minPopularity = parseInt(options.minPopularity, 10);
+  if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
+    minPopularity = 0; // Default to no minimum if invalid, or set a sensible default like 30-50 if preferred
+  }
   const { searchLimit = 50, market = 'US' } = options;
+
   try {
     const apiClient = await getSpotifyApiClient();
     const query = `artist:${artistName}`;
     const searchData = await apiClient.searchTracks(query, { limit: searchLimit, market });
 
     if (searchData.body.tracks && searchData.body.tracks.items.length > 0) {
-      const tracks = searchData.body.tracks.items;
-      const popularTracks = tracks.filter(track => track.preview_url);
+      let allArtistTracks = searchData.body.tracks.items;
 
-      if (popularTracks.length > 0) {
-        const randomIndex = Math.floor(Math.random() * popularTracks.length);
-        const chosenTrack = popularTracks[randomIndex];
-        console.log(`SpotifyService: Selected popular track for ${artistName}: ${chosenTrack.name}`);
+      // Filter by minPopularity if specified and greater than 0
+      if (minPopularity > 0) {
+        allArtistTracks = allArtistTracks.filter(track => track.popularity >= minPopularity);
+      }
+
+      if (allArtistTracks.length === 0) {
+        console.log(`SpotifyService: No tracks by ${artistName} found after popularity filter (minPopularity: ${minPopularity}). Search limit: ${searchLimit}`);
+        return null;
+      }
+
+      // Prioritize tracks with a preview_url
+      const tracksWithPreview = allArtistTracks.filter(track => track.preview_url);
+
+      let chosenTrack = null; // Initialize chosenTrack to null
+
+      if (tracksWithPreview.length > 0) {
+        const randomIndex = Math.floor(Math.random() * tracksWithPreview.length);
+        chosenTrack = tracksWithPreview[randomIndex];
+        console.log(`SpotifyService: Selected track for ${artistName} (with preview_url, popularity >= ${minPopularity}): ${chosenTrack.name}`);
+      } else {
+        console.log(`SpotifyService: No tracks by ${artistName} found with a direct Spotify preview_url (after popularity filter).`);
+        // Fallback: Pick any track from the filtered list (allArtistTracks)
+        // This list has already been filtered by popularity if minPopularity > 0
+        if (allArtistTracks.length > 0) {
+            const randomIndex = Math.floor(Math.random() * allArtistTracks.length);
+            chosenTrack = allArtistTracks[randomIndex];
+            console.log(`SpotifyService: Fallback - selected track for ${artistName} (may not have Spotify preview_url, popularity >= ${minPopularity}): ${chosenTrack.name}`);
+        }
+      }
+
+      if (chosenTrack) {
         return {
           id: chosenTrack.id,
           title: chosenTrack.name,
           artist: chosenTrack.artists[0] ? chosenTrack.artists[0].name : 'Unknown Artist',
           albumArt: getLargestAlbumArt(chosenTrack.album.images),
-          // Note: Spotify's preview_url is also available here if we want to use it as a direct fallback
-          // preview_url: chosenTrack.preview_url 
-        };
-      }
-      console.log(`SpotifyService: No tracks by ${artistName} found with a preview_url.`);
-      // Optional: Fallback to any track by the artist if no popular ones found
-      if(tracks.length > 0 && tracks[0].preview_url){
-        const fallbackTrack = tracks[0]; // Or a random one from all tracks
-        console.log(`SpotifyService: Fallback - selected first available track by ${artistName}: ${fallbackTrack.name}`);
-        return {
-            id: fallbackTrack.id,
-            title: fallbackTrack.name,
-            artist: fallbackTrack.artists[0] ? fallbackTrack.artists[0].name : 'Unknown Artist',
-            albumArt: getLargestAlbumArt(fallbackTrack.album.images),
+          // preview_url: chosenTrack.preview_url // IMPORTANT: Do not include preview_url here as it might be null
         };
       }
     }
-    console.log(`SpotifyService: No tracks found for artist query - ${artistName}`);
+    // This log means no tracks were returned by Spotify's searchTracks API for the artist at all.
+    console.log(`SpotifyService: No tracks found at all for artist query - ${artistName} (limit: ${searchLimit}, market: ${market})`);
     return null;
   } catch (error) {
-    console.error(`SpotifyService: Error finding popular track for artist ${artistName}:`, error.message);
-    if (error.statusCode === 401) {
-      console.log('SpotifyService: Attempting token refresh due to 401 error.');
+    if (error.statusCode === 401 && !_isRetry) {
+      console.log('SpotifyService: Attempting token refresh (401) during popular track search.');
       await refreshSpotifyToken();
+      console.log('SpotifyService: Retrying popular track search after token refresh.');
+      return findPopularTrackByArtist(artistName, options, true); // Retry the call
     }
+    console.error(`SpotifyService: Error finding popular track for artist ${artistName}:`, error.message);
     throw error;
   }
 }
