@@ -13,11 +13,7 @@
       "dest": "/server.js"
     },
     {
-      "src": "/(.*)",
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
+      "src": "/((?!api/).*)",
       "dest": "/public/index.html"
     }
   ]
