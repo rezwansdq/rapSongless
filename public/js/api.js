@@ -1,7 +1,7 @@
 // This module will handle interactions with the backend API or Spotify API directly.
 
-// Placeholder for the actual API endpoint
-const API_BASE_URL = '/api'; // Relative path for same-origin requests
+// API endpoint path
+const API_BASE_URL = '/api'; // Relative path works for both local and production
 
 /**
  * Fetches a random rap/hip-hop track.
@@ -9,7 +9,7 @@ const API_BASE_URL = '/api'; // Relative path for same-origin requests
 export async function getRandomSong() {
     console.log("API: Fetching random song from backend...");
     try {
-        const response = await fetch(`${API_BASE_URL}/song/random`);
+        const response = await fetch(`${API_BASE_URL}/song-random`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -41,7 +41,7 @@ export async function fetchSearchSuggestions(query) {
     }
     console.log(`API: Fetching search suggestions for query: "${query}"...`);
     try {
-        const response = await fetch(`${API_BASE_URL}/songs/search?term=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_BASE_URL}/songs-search?term=${encodeURIComponent(query)}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
