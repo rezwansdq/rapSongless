@@ -1,7 +1,7 @@
 // This module will handle interactions with the backend API or Spotify API directly.
 
 // Placeholder for the actual API endpoint
-const API_BASE_URL = 'http://127.0.0.1:8000/api'; // Updated to use 127.0.0.1 and port 8000
+const API_BASE_URL = '/api'; // Updated to use a relative path for Vercel
 
 /**
  * Fetches a random rap/hip-hop track.
