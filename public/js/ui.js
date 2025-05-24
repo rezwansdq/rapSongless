@@ -1,4 +1,8 @@
 const screens = document.querySelectorAll('.screen');
+// Store the current snippet duration for progress bar calculation
+let currentSnippetDuration = 0;
+// Track if audio is currently playing
+let isPlaying = false;
 
 export function showScreen(screenId) {
     console.log(`UI: Attempting to show screen: ${screenId}`); // DEBUG
@@ -19,9 +23,27 @@ export function showScreen(screenId) {
 export function updateStageCounter(currentStage, totalStages) {
     const stageElement = document.getElementById('stage-counter');
     if (stageElement) {
-        stageElement.textContent = `Stage ${currentStage}/${totalStages}`;
+        stageElement.textContent = `Stage ${currentStage}`;
     }
-    // console.log(`UI: Stage ${currentStage}/${totalStages}`);
+    
+    // Update the stage duration display
+    const stageDurationElement = document.getElementById('stage-duration');
+    if (stageDurationElement) {
+        const duration = getStageDuration(currentStage - 1); // Convert to 0-indexed
+        stageDurationElement.textContent = `${duration} ${duration === 1 ? 'Second' : 'Seconds'}`;
+    }
+}
+
+// Helper to get stage duration for display
+function getStageDuration(stageIndex) {
+    // These should match the snippetDurations array in main.js
+    const durations = [0.1, 0.5, 2, 4, 8, 15];
+    return durations[stageIndex] || 0;
+}
+
+// Set the current snippet duration for progress bar calculations
+export function setCurrentSnippetDuration(duration) {
+    currentSnippetDuration = duration;
 }
 
 export function updateTimer(elapsedTime) {
@@ -29,14 +51,19 @@ export function updateTimer(elapsedTime) {
     if (timerElement) {
         timerElement.textContent = formatTime(elapsedTime);
     }
-    // console.log(`UI: Timer ${elapsedTime}s`);
+    
+    // Update progress bar based on elapsed time relative to snippet duration
+    if (currentSnippetDuration > 0) {
+        const percentage = Math.min((elapsedTime / currentSnippetDuration) * 100, 100);
+        updateProgressBar(percentage);
+    }
 }
 
 function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    const paddedSeconds = String(remainingSeconds).padStart(2, '0');
-    return `${minutes}:${paddedSeconds}`;
+    // Round up to nearest 0.1 second
+    const roundedSeconds = Math.ceil(seconds * 10) / 10;
+    // Format with 1 decimal place
+    return `${roundedSeconds.toFixed(1)}sec`;
 }
 
 export function updateProgressBar(percentage) {
@@ -93,104 +120,128 @@ export function displayAlbumArt(imageUrl) {
 }
 */
 
-export function updatePlayButton(isEnabled, hasPreview) {
+export function updatePlayButton(isEnabled, hasPreview, isCurrentlyPlaying = null) {
     const playButton = document.getElementById('play-pause-button');
-    if (playButton) {
-        playButton.disabled = !isEnabled;
-        if (!isEnabled && hasPreview) { // Playing audio
-            playButton.textContent = "Playing...";
-        } else if (hasPreview) {
-            playButton.textContent = "Play Snippet";
-        } else {
-            playButton.textContent = "Get Hint (No Audio)"; // Or just "Get Hint"
-        }
+    if (!playButton) return;
+    
+    // Update playing state if provided
+    if (isCurrentlyPlaying !== null) {
+        isPlaying = isCurrentlyPlaying;
+    }
+    
+    // Enable/disable the button
+    playButton.disabled = !isEnabled;
+    
+    // Update the button icon based on play state
+    const iconSpan = playButton.querySelector('span') || document.createElement('span');
+    
+    if (isPlaying) {
+        iconSpan.textContent = '⏸️'; // Pause icon
+        iconSpan.className = 'pause-icon';
+    } else {
+        iconSpan.textContent = '▶'; // Play icon
+        iconSpan.className = 'play-icon';
+    }
+    
+    // If the button doesn't already have the span, add it
+    if (!playButton.querySelector('span')) {
+        playButton.innerHTML = '';
+        playButton.appendChild(iconSpan);
     }
 }
 
-export function addHistoryItem(type, guess = '') {
-    const historyContainer = document.querySelector('.history-container');
-    if (!historyContainer) return;
-
-    const historyItem = document.createElement('div');
-    historyItem.className = `history-item ${type}`;
-
-    const arrow = document.createElement('span');
-    arrow.className = 'arrow';
-    arrow.textContent = '→';
-    historyItem.appendChild(arrow);
-
-    if (guess) {
+// Function to update a specific guess box
+export function updateGuessBox(index, type, guess = '') {
+    const guessBoxes = document.querySelectorAll('.guess-box');
+    if (index < 0 || index >= guessBoxes.length) return;
+    
+    const box = guessBoxes[index];
+    
+    // Remove all existing classes except 'guess-box'
+    box.className = 'guess-box';
+    
+    // Add the appropriate class based on type
+    box.classList.add(type);
+    
+    // Clear existing content
+    box.innerHTML = '';
+    
+    if (type === 'skipped') {
+        // Skipped boxes use ::before and ::after in CSS for content
+    } else if (type === 'wrong' && guess) {
+        // Add guess text
         const guessText = document.createElement('span');
-        guessText.className = 'guess';
+        guessText.className = 'guess-text';
         guessText.textContent = guess;
-        historyItem.appendChild(guessText);
+        box.appendChild(guessText);
+        
+        // Add status
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = 'WRONG';
+        box.appendChild(status);
+    } else if (type === 'correct' && guess) {
+        // Add guess text
+        const guessText = document.createElement('span');
+        guessText.className = 'guess-text';
+        guessText.textContent = guess;
+        box.appendChild(guessText);
+        
+        // Add status
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = 'CORRECT';
+        box.appendChild(status);
     }
-
-    const status = document.createElement('span');
-    status.className = 'status';
-    status.textContent = type.toUpperCase();
-    historyItem.appendChild(status);
-
-    // Add with fade-in animation
-    historyItem.style.opacity = '0';
-    historyContainer.prepend(historyItem);
-    setTimeout(() => {
-        historyItem.style.opacity = '1';
-    }, 10);
 }
 
-export function clearHistory() {
-    const historyContainer = document.querySelector('.history-container');
-    if (historyContainer) {
-        historyContainer.innerHTML = '';
-    }
+// Reset all guess boxes to empty
+export function resetGuessBoxes() {
+    const guessBoxes = document.querySelectorAll('.guess-box');
+    guessBoxes.forEach(box => {
+        box.className = 'guess-box empty';
+        box.innerHTML = '';
+    });
 }
 
-export function showSuccessScreen(songTitle, artist, /*albumArtUrl,*/ onPlayNext) {
+export function addGuessResult(type, guess = '', currentStage) {
+    // Update the appropriate guess box based on the current stage (0-indexed)
+    updateGuessBox(currentStage - 1, type, guess);
+}
+
+export function showSuccessScreen(songTitle, artist, onPlayNext) {
     const modal = document.getElementById('success-modal');
     const songInfo = document.getElementById('success-song-info');
     const playNextButton = document.getElementById('play-next-button');
-    // Optional: Display album art in modal too
-    // const modalAlbumArt = modal.querySelector('.album-art-modal-img'); 
-    // if (modalAlbumArt && albumArtUrl) modalAlbumArt.src = albumArtUrl;
 
-    addHistoryItem('correct', songTitle);
+    // Add correct guess to the current box
+    addGuessResult('correct', songTitle, 6); // Assuming always showing in last box on success
+    
     songInfo.textContent = `${songTitle} - ${artist}`;
     modal.style.display = 'block';
 
     playNextButton.replaceWith(playNextButton.cloneNode(true));
     document.getElementById('play-next-button').addEventListener('click', () => {
         modal.style.display = 'none';
-        clearHistory(); 
+        resetGuessBoxes(); // Reset boxes for new game
         if (onPlayNext) onPlayNext();
     });
 }
 
-export function showFailureScreen(songTitle, artist, /*albumArtUrl,*/ onTryAgain) {
+export function showFailureScreen(songTitle, artist, onTryAgain) {
     const modal = document.getElementById('failure-modal');
     const songInfo = document.getElementById('failure-song-info');
     const tryAgainButton = document.getElementById('try-again-button');
-    // Optional: Display album art in modal too
-    // const modalAlbumArt = modal.querySelector('.album-art-modal-img');
-    // if (modalAlbumArt && albumArtUrl) modalAlbumArt.src = albumArtUrl;
 
-    addHistoryItem('wrong', `Failed. Song was: ${songTitle}`); // More informative history for failure
     songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
     modal.style.display = 'block';
 
     tryAgainButton.replaceWith(tryAgainButton.cloneNode(true));
     document.getElementById('try-again-button').addEventListener('click', () => {
         modal.style.display = 'none';
-        clearHistory(); 
+        resetGuessBoxes(); // Reset boxes for new game
         if (onTryAgain) onTryAgain();
     });
-}
-
-export function updateMuteButtonText(isMuted) {
-    const muteButton = document.getElementById('mute-toggle');
-    if (muteButton) {
-        muteButton.textContent = isMuted ? "Unmute" : "Mute";
-    }
 }
 
 // Placeholder for other UI update functions

@@ -1,6 +1,6 @@
-import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, updateMuteButtonText, addHistoryItem, clearHistory /*, displayAlbumArt */ } from './ui.js';
+import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, addGuessResult, resetGuessBoxes, setCurrentSnippetDuration /*, displayAlbumArt */ } from './ui.js';
 import * as api from './api.js';
-import { playSnippet, playFullPreview, stopAudio, toggleMute, getMuteState } from './audio.js';
+import { playSnippet, playFullPreview, stopAudio, isAudioPlaying } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 
 // DOM Elements
@@ -9,7 +9,6 @@ const playPauseButton = document.getElementById('play-pause-button');
 const guessInput = document.getElementById('guess-input');
 const submitButton = document.getElementById('submit-button');
 const skipButton = document.getElementById('skip-button');
-const muteToggleButton = document.getElementById('mute-toggle');
 // Play Next and Try Again buttons will be handled by UI module or dynamically added
 
 // Game State
@@ -17,6 +16,7 @@ let currentSong = null;
 let currentStage = 0; // 0-indexed for snippetDurations array
 let score = 0; // Could be used for future enhancements
 let debounceTimer = null; // For debouncing autocomplete API calls
+let audioPlaybackState = false; // Track if audio is currently playing
 
 const snippetDurations = [0.1, 0.5, 2, 4, 8, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
@@ -32,12 +32,11 @@ async function initializeApp() {
         // Handle error, maybe show a message to the user
     }*/
     setupEventListeners();
-    updateMuteButtonText(getMuteState());
 }
 
 function setupEventListeners() {
     if (startButton) startButton.addEventListener('click', startGame);
-    if (playPauseButton) playPauseButton.addEventListener('click', playCurrentSnippet);
+    if (playPauseButton) playPauseButton.addEventListener('click', togglePlayPause);
     if (submitButton) submitButton.addEventListener('click', handleGuess);
     if (skipButton) {
         skipButton.addEventListener('click', () => {
@@ -45,7 +44,6 @@ function setupEventListeners() {
             handleSkip();
         });
     }
-    if (muteToggleButton) muteToggleButton.addEventListener('click', handleMuteToggle);
 
     if (guessInput) {
         guessInput.addEventListener('input', () => {
@@ -75,6 +73,29 @@ function setupEventListeners() {
     }
 }
 
+// Toggle play/pause functionality
+function togglePlayPause() {
+    if (!currentSong) {
+        console.error("No song loaded to play/pause.");
+        return;
+    }
+    
+    // Check the actual audio playing state from the audio module
+    const currentlyPlaying = isAudioPlaying();
+    console.log(`Toggle play/pause called. Currently playing: ${currentlyPlaying}`);
+    
+    if (currentlyPlaying) {
+        // If audio is playing, stop it
+        stopAudio();
+        audioPlaybackState = false;
+        updatePlayButton(true, true, false); // Enable button, has preview, not playing
+    } else {
+        // If audio is not playing, play it
+        playCurrentSnippet();
+        audioPlaybackState = true;
+    }
+}
+
 // --- Game Flow ---
 async function startGame() {
     console.log("Game Starting...");
@@ -95,7 +116,7 @@ async function startGame() {
         } else {
             displayAlbumArt(null); // Clear album art if not available
         }*/
-        updatePlayButton(true, !!currentSong.previewUrl); // Update button based on preview availability
+        updatePlayButton(true, !!currentSong.previewUrl, false); // Update button based on preview availability
         startStage();
     } catch (error) {
         console.error("Error starting game:", error);
@@ -107,13 +128,15 @@ async function startGame() {
 function resetGameState() {
     currentSong = null;
     currentStage = 0;
+    audioPlaybackState = false;
     stopAudio(); // Stop any previous audio & clears its own timer interval
     updateStageCounter(1, MAX_STAGES);
     updateTimer(0); // Reset timer display to 0:00
     updateProgressBar(0);
+    setCurrentSnippetDuration(0); // Reset the snippet duration
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
-    clearHistory(); // Clear history when resetting game
+    resetGuessBoxes(); // Reset all guess boxes to empty
     // displayAlbumArt(null); // Clear album art on reset
 }
 
@@ -124,8 +147,9 @@ function startStage() {
         return;
     }
     updateStageCounter(currentStage + 1, MAX_STAGES);
-    updateProgressBar(((currentStage + 1) / MAX_STAGES) * 100);
-    updatePlayButton(true, !!(currentSong && currentSong.previewUrl)); 
+    updateProgressBar(0); // Reset progress bar at the start of each stage
+    setCurrentSnippetDuration(0); // Reset snippet duration
+    updatePlayButton(true, !!(currentSong && currentSong.previewUrl), false); 
     updateTimer(0); // Reset timer to 0:00 at the start of a stage, before snippet plays
 }
 
@@ -136,22 +160,24 @@ function playCurrentSnippet() {
     }
     if (currentSong.previewUrl) {
         const duration = snippetDurations[currentStage];
+        // Set the current snippet duration for progress bar calculation
+        setCurrentSnippetDuration(duration);
+        
         playSnippet(
             currentSong.previewUrl, 
             duration,
-            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate callback
-            () => updatePlayButton(true, true) // onSnippetEnd callback to re-enable play button
+            (currentTime) => updateTimer(currentTime), // onTimeUpdate callback - passing raw time now
+            () => {
+                audioPlaybackState = false;
+                updatePlayButton(true, true, false); // Re-enable play button, not playing
+            }
         );
-        updatePlayButton(false, true); // Indicate playing
-        // Re-enable play button after snippet duration (or a bit more) allowing replay
-        // setTimeout(() => updatePlayButton(true, true), (duration * 1000) + 500); // Old method, now handled by onSnippetEnd
+        audioPlaybackState = true;
+        updatePlayButton(false, true, true); // Disable button while starting, playing
     } else {
         // No preview URL - this click could reveal a text hint in the future
         console.log("Play Snippet clicked, but no previewUrl. Stage:", currentStage + 1);
-        // For now, we can just add a history item or a small visual cue
-        addHistoryItem('hint_attempt', `Hint for Stage ${currentStage + 1}`); 
-        // We might want to disable the button temporarily or change text after "hint"
-        updatePlayButton(true, false); // Keep enabled, text reflects no audio
+        updatePlayButton(true, false, false); // Keep enabled, no preview available
     }
 }
 
@@ -168,8 +194,8 @@ function handleGuess() {
     if (isCorrect) {
         handleSuccess();
     } else {
-        // Add wrong guess to history
-        addHistoryItem('wrong', userGuess);
+        // Add wrong guess to current box
+        addGuessResult('wrong', userGuess, currentStage + 1);
         advanceStageOrEndGame("Wrong guess");
     }
     guessInput.value = ''; // Clear input after guess
@@ -183,9 +209,15 @@ function handleSkip() {
     }
     console.log(`Skip: Stage: ${currentStage + 1}, Track: ${currentSong.id}`);
     
-    // Add skip to history
-    addHistoryItem('skipped');
-    stopAudio(); // Stop current audio if playing
+    // Add skip to current box
+    addGuessResult('skipped', '', currentStage + 1);
+    
+    // Stop audio if playing
+    if (audioPlaybackState) {
+        stopAudio();
+        audioPlaybackState = false;
+    }
+    
     advanceStageOrEndGame("Skipped");
 }
 
@@ -204,37 +236,58 @@ function advanceStageOrEndGame(outcome) {
 
 // --- Game End ---
 function handleSuccess() {
-    stopAudio(); 
-    console.log("Correct! Congratulations!", { trackId: currentSong.id, stage: currentStage + 1, outcome: "Correct" });
-    if (currentSong.previewUrl) {
-        playFullPreview(currentSong.previewUrl, 
-            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate
-            () => updateTimer(0) // onPreviewEnd, reset timer to 0 or show full duration
-        );
+    // Stop audio if playing
+    if (audioPlaybackState) {
+        stopAudio();
+        audioPlaybackState = false;
     }
+    
+    console.log("Correct! Congratulations!", { trackId: currentSong.id, stage: currentStage + 1, outcome: "Correct" });
+    
+    if (currentSong.previewUrl) {
+        // For full preview, set a longer duration (30 seconds is typical for previews)
+        setCurrentSnippetDuration(30);
+        
+        playFullPreview(currentSong.previewUrl, 
+            (currentTime) => updateTimer(currentTime), // onTimeUpdate - passing raw time now
+            () => {
+                audioPlaybackState = false;
+                updateTimer(0); // Reset timer to 0 when preview ends
+            }
+        );
+        audioPlaybackState = true;
+    }
+    
     showSuccessScreen(currentSong.title, currentSong.artist, startGame);
 }
 
 function handleFailure(reason = "No more attempts") {
-    debugger;
-    stopAudio();
-    console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
-    if (currentSong && currentSong.previewUrl) {
-        playFullPreview(currentSong.previewUrl, 
-            (currentTime) => updateTimer(Math.round(currentTime)), // onTimeUpdate
-            () => updateTimer(0) // onPreviewEnd, reset timer to 0 or show full duration
-        );
+    // Stop audio if playing
+    if (audioPlaybackState) {
+        stopAudio();
+        audioPlaybackState = false;
     }
+    
+    console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
+    
+    if (currentSong && currentSong.previewUrl) {
+        // For full preview, set a longer duration (30 seconds is typical for previews)
+        setCurrentSnippetDuration(30);
+        
+        playFullPreview(currentSong.previewUrl, 
+            (currentTime) => updateTimer(currentTime), // onTimeUpdate - passing raw time now
+            () => {
+                audioPlaybackState = false;
+                updateTimer(0); // Reset timer to 0 when preview ends
+            }
+        );
+        audioPlaybackState = true;
+    }
+    
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
     showFailureScreen(songTitle, songArtist, startGame);
 }
-
-function handleMuteToggle() {
-    const isMuted = toggleMute();
-    updateMuteButtonText(isMuted);
-}
-
 
 // --- Start Application ---
 initializeApp(); 

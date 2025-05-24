@@ -1,5 +1,4 @@
 let currentAudio = null;
-let muteState = false; // false = not muted, true = muted
 let audioTimerInterval = null; // Timer for tracking audio playback
 
 export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetEnd) {
@@ -12,7 +11,6 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
     }
 
     currentAudio = new Audio(previewUrl);
-    currentAudio.volume = muteState ? 0 : 1;
     currentAudio.currentTime = 0;
 
     // Call onTimeUpdate immediately with 0 to reset timer display
@@ -31,7 +29,7 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
                     clearInterval(audioTimerInterval);
                     audioTimerInterval = null;
                 }
-            }, 250); // Update timer display roughly 4 times a second
+            }, 100); // Update timer more frequently (10 times per second) for smoother progress
         }
 
         setTimeout(() => {
@@ -45,8 +43,6 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
             }
             // Call onSnippetEnd when the snippet duration is met
             if (onSnippetEnd) onSnippetEnd();
-            // Optionally reset timer display to 0 or snippet duration
-            // if (onTimeUpdate) onTimeUpdate(0); 
         }, duration * 1000);
     } catch (error) {
         console.error("Error playing audio snippet:", error);
@@ -67,7 +63,6 @@ export async function playFullPreview(previewUrl, onTimeUpdate, onPreviewEnd) {
         audioTimerInterval = null;
     }
     currentAudio = new Audio(previewUrl);
-    currentAudio.volume = muteState ? 0 : 1;
     currentAudio.currentTime = 0;
 
     if (onTimeUpdate) onTimeUpdate(0); // Reset timer display
@@ -83,7 +78,7 @@ export async function playFullPreview(previewUrl, onTimeUpdate, onPreviewEnd) {
                     clearInterval(audioTimerInterval);
                     audioTimerInterval = null;
                 }
-            }, 250);
+            }, 100); // Update timer more frequently for smoother progress
         }
         currentAudio.addEventListener('ended', () => {
             console.log("Full preview ended.");
@@ -119,15 +114,7 @@ export function stopAudio() {
     // Caller should update UI timer if needed, e.g., ui.updateTimer(0);
 }
 
-export function toggleMute() {
-    muteState = !muteState;
-    if (currentAudio) {
-        currentAudio.volume = muteState ? 0 : 1;
-    }
-    console.log(muteState ? "Audio Muted" : "Audio Unmuted");
-    return muteState;
-}
-
-export function getMuteState() {
-    return muteState;
+// Check if audio is currently playing
+export function isAudioPlaying() {
+    return currentAudio !== null && !currentAudio.paused;
 } 

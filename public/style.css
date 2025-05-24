@@ -25,6 +25,14 @@ body {
     display: block; /* Show active screen */
 }
 
+.game-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #ffffff;
+    text-align: center;
+}
+
 .btn {
     padding: 10px 20px;
     border: none;
@@ -59,19 +67,6 @@ body {
     font-weight: 700;
 }
 
-/* Mute Button */
-.mute-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: #333;
-    color: #fff;
-    padding: 8px 12px;
-}
-.mute-btn:hover {
-    background-color: #555;
-}
-
 /* Game Screen Specific */
 /* Remove the general #game-screen rule that was making it always flex */
 /*
@@ -88,19 +83,225 @@ body {
     gap: 20px;
 }
 
+/* Guess Boxes */
+.guess-boxes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 15px 0 25px;
+}
+
+.guess-box {
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    position: relative;
+    height: 20px;
+}
+
+.guess-box.empty {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+}
+
+.guess-box.skipped {
+    background-color: #424242;
+}
+
+.guess-box.skipped::before {
+    content: "→";
+    position: absolute;
+    left: 15px;
+    color: #888;
+}
+
+.guess-box.skipped::after {
+    content: "SKIPPED";
+    position: absolute;
+    right: 15px;
+    color: #888;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.guess-box.wrong {
+    background-color: #3a2a2a;
+    color: #e74c3c;
+}
+
+.guess-box.wrong::before {
+    content: "→";
+    position: absolute;
+    left: 15px;
+    color: #888;
+}
+
+.guess-box .guess-text {
+    margin-left: 30px;
+    font-size: 0.95rem;
+}
+
+.guess-box.wrong .status {
+    position: absolute;
+    right: 15px;
+    color: #e74c3c;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.guess-box.correct {
+    background-color: #2a3a2a;
+    color: #2ecc71;
+}
+
+/* Stage and Timer Info */
+.game-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stage-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.stage-label {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2ecc71;
+}
+
+.stage-duration {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+#timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.time-label {
+    font-size: 0.85rem;
+    color: #888;
+    width: 40px;
+}
+
+.current-time {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 5px;
+}
+
+.progress-bar-container {
+    flex-grow: 1;
+    background-color: #333;
+    border-radius: 5px;
+    height: 8px;
+    margin: 0 10px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Initial width */
+    background-color: #2ecc71;
+    border-radius: 5px;
+    transition: width 0.2s ease; /* Faster transition for smoother updates */
+}
+
+/* Play Button */
+.play-control {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0 20px;
+}
+
+.play-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #2ecc71;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.play-btn:hover {
+    background-color: #27ae60;
+    transform: scale(1.05);
+}
+
+.play-btn:active {
+    transform: scale(0.95);
+}
+
+.play-icon {
+    font-size: 1.8rem;
+    color: white;
+    margin-left: 3px; /* Slight adjustment for the play icon */
+}
+
+.pause-icon {
+    font-size: 1.8rem;
+    color: white;
+}
+
+/* Game Controls */
 .game-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
 }
 
 #guess-input {
-    padding: 10px;
+    width: 100%;
+    padding: 12px 15px;
     font-size: 1rem;
     background-color: #333;
     color: #fff;
-    border: 1px solid #555;
+    border: 1px solid #444;
     border-radius: 5px;
+    box-sizing: border-box;
+    padding-left: 35px; /* Space for search icon */
+}
+
+.search-container::before {
+    content: "🔍";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1rem;
 }
 
 .autocomplete-results {
@@ -110,12 +311,16 @@ body {
     border-radius: 0 0 5px 5px;
     max-height: 150px;
     overflow-y: auto;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
 }
 
 .autocomplete-item {
-    padding: 8px 10px;
+    padding: 10px 15px;
     cursor: pointer;
     font-size: 0.9rem;
+    text-align: left;
 }
 
 .autocomplete-item:hover, .autocomplete-item.active {
@@ -123,60 +328,49 @@ body {
     color: #fff;
 }
 
-.game-info {
+.button-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-    font-weight: 500;
+    gap: 10px;
 }
 
-.progress-bar-container {
-    width: 100%;
-    background-color: #333;
-    border-radius: 5px;
-    height: 10px;
-    margin-top: 5px; /* Add some space above the progress bar */
+#skip-button {
+    flex: 1;
+    background-color: #555;
+    color: #fff;
+    font-weight: 600;
 }
 
-.progress-bar-fill {
-    height: 100%;
-    width: 0%; /* Initial width */
-    background-color: #2ecc71;
-    border-radius: 5px;
-    transition: width 0.3s ease;
+#skip-button:hover {
+    background-color: #666;
 }
 
-/*
-.album-art-container {
-    width: 100%;
-    max-width: 200px; /* Or your desired max size */
-    margin: 0 auto 15px auto; /* Center it and add margin below */
+#submit-button {
+    flex: 2;
+    font-weight: 600;
 }
-
-#album-art-img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-*/
 
 /* Responsive Design: Breakpoint at 600px */
 @media (max-width: 600px) {
-    .game-controls {
-        /* Stack controls vertically by default - already done */
+    .game-title {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
     }
-    .game-info {
-        flex-direction: column; /* Stack timer, stage, progress bar */
-        gap: 8px;
-        align-items: stretch; /* Make items take full width if needed */
+    
+    .guess-box {
+        padding: 12px;
     }
-    .progress-bar-container {
-        order: -1; /* Move progress bar to the top within game-info */
+    
+    .play-btn {
+        width: 50px;
+        height: 50px;
     }
-    #stage-counter, #timer {
-        text-align: center;
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    #skip-button, #submit-button {
+        width: 100%;
     }
 }
 

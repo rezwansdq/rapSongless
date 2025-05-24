@@ -8,34 +8,60 @@
 </head>
 <body>
     <div class="container">
-        <button id="mute-toggle" class="btn mute-btn">Mute</button>
         <!-- Landing Screen -->
         <section id="landing-screen" class="screen active">
+            <h1 class="game-title">Rap Songless</h1>
             <button id="start-button" class="btn btn-primary">Start</button>
         </section>
 
         <!-- Game Screen -->
         <section id="game-screen" class="screen">
-            <!-- <div class="album-art-container">
-                <img id="album-art-img" src="" alt="Album Art" style="display: none;">
-            </div> -->
-            <!-- History Display -->
-            <div class="history-container">
-                <!-- History items will be added here dynamically -->
+            <h1 class="game-title">Rap Songless</h1>
+            
+            <!-- Pre-displayed empty guess boxes -->
+            <div class="guess-boxes-container">
+                <div class="guess-box empty" data-index="0"></div>
+                <div class="guess-box empty" data-index="1"></div>
+                <div class="guess-box empty" data-index="2"></div>
+                <div class="guess-box empty" data-index="3"></div>
+                <div class="guess-box empty" data-index="4"></div>
+                <div class="guess-box empty" data-index="5"></div>
             </div>
             
-            <div class="game-controls">
-                <button id="play-pause-button" class="btn">Play Snippet</button>
-                <input type="text" id="guess-input" placeholder="Enter song title...">
-                <div id="autocomplete-results" class="autocomplete-results"></div>
-                <button id="submit-button" class="btn btn-primary">Submit</button>
-                <button id="skip-button" class="btn">Skip</button>
-            </div>
+            <!-- Stage and Timer Info -->
             <div class="game-info">
-                <div id="stage-counter">Stage 1/6</div>
-                <div id="timer">0:00</div>
-                <div class="progress-bar-container">
-                    <div id="progress-bar" class="progress-bar-fill"></div>
+                <div class="stage-info">
+                    <div id="stage-counter" class="stage-label">Stage 1</div>
+                    <div id="stage-duration" class="stage-duration">2 Seconds</div>
+                </div>
+                <div id="timer-container">
+                    <div class="time-display">
+                        <span class="time-label"></span>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar" class="progress-bar-fill"></div>
+                        </div>
+                        <span class="time-label"></span>
+                    </div>
+                    <div id="timer" class="current-time">0.0sec</div>
+                </div>
+            </div>
+            
+            <!-- Play/Pause Button -->
+            <div class="play-control">
+                <button id="play-pause-button" class="play-btn">
+                    <span class="play-icon">▶</span>
+                </button>
+            </div>
+            
+            <!-- Game Controls -->
+            <div class="game-controls">
+                <div class="search-container">
+                    <input type="text" id="guess-input" placeholder="Know it? Search for the title">
+                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                </div>
+                <div class="button-container">
+                    <button id="skip-button" class="btn">SKIP</button>
+                    <button id="submit-button" class="btn btn-primary">SUBMIT</button>
                 </div>
             </div>
         </section>
