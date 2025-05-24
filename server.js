@@ -12,13 +12,13 @@ const app = express();
 const PORT = 8000; // Keep at 8000 as previously set
 
 // Middleware
-app.use(cors({ origin: 'http://127.0.0.1:8000', credentials: true })); // Reverted for local dev
-// app.use(cors({
-//   origin: [ process.env.NODE_ENV === 'production'
-//              ? 'https://sl.rsadeqi.com' // Your Vercel domain
-//              : 'http://127.0.0.1:8000' ],
-//   credentials: true
-// }));
+// app.use(cors({ origin: 'http://127.0.0.1:8000', credentials: true })); // Reverted for local dev
+app.use(cors({
+  origin: [ process.env.NODE_ENV === 'production'
+             ? 'https://sl.rsadeqi.com' // Your Vercel domain
+             : 'http://127.0.0.1:8000' ], // Localhost for development
+  credentials: true
+}));
 // app.use(cookieParser()); // Removed
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -84,8 +84,8 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://127.0.0.1:${PORT}`); // Updated log to reflect 127.0.0.1
-}); 
+// app.listen(PORT, () => {
+//     console.log(`Server is running on http://127.0.0.1:${PORT}`); // Updated log to reflect 127.0.0.1
+// }); 
 
-// module.exports = app; // Commented out for local dev 
+module.exports = app; // Export the Express app for Vercel 
