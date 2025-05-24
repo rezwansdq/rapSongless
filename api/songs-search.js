@@ -1,6 +1,6 @@
 require('dotenv').config();
 const cors = require('cors');
-const itunesService = require('../itunesService');
+const itunesService = require('./itunesService');
 
 // Helper to handle CORS middleware for Vercel functions
 const corsMiddleware = cors();
@@ -17,11 +17,12 @@ module.exports = (req, res) => {
     }
     
     try {
-      const songs = await itunesService.searchItunes(searchTerm, 'song', 'music', 15, 'US', 'songTerm');
-      res.json(songs);
+      // Use the new Spotify-based search function from itunesService
+      const songs = await itunesService.searchSpotifyForAutocomplete(searchTerm);
+      res.json(songs); // songs is an array of {id, title, artist, albumArt, popularity}
     } catch (error) {
-      console.error("Server error during song search for autocomplete:", error);
-      res.status(500).json({ message: "Error searching songs", error: error.message });
+      console.error("Server error during Spotify song search for autocomplete:", error);
+      res.status(500).json({ message: "Error searching songs via Spotify", error: error.message });
     }
   });
 }; 

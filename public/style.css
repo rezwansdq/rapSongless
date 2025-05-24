@@ -28,7 +28,7 @@ body {
 .game-title {
     font-size: 2.2rem;
     font-weight: 700;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     color: #ffffff;
     text-align: center;
 }
@@ -80,26 +80,87 @@ body {
 #game-screen.active {
     display: flex; /* This will be applied when game-screen is active */
     flex-direction: column;
-    gap: 20px;
+    gap: 10px; /* Reduced gap */
+    position: relative; 
+}
+
+/* Volume Slider Styles */
+#volume-control-container {
+    display: flex; 
+    flex-direction: row; 
+    justify-content: center; 
+    align-items: center; 
+    margin-bottom: 15px; /* Reduced margin */
+    width: 80%; /* Make the container take up more width */
+    margin-left: auto; 
+    margin-right: auto; 
+}
+
+#volume-slider {
+    -webkit-appearance: none; /* Override default appearance */
+    appearance: none;
+    width: 100%; /* Make slider fill the container width */
+    max-width: 300px; /* Optional: max width for the slider itself */
+    height: 8px; /* Height of the track */
+    background: #555; /* Track color - grey */
+    border-radius: 5px;
+    cursor: pointer;
+    outline: none; /* Remove outline */
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px; 
+    height: 20px; 
+    background: #2ecc71; /* Thumb color - green */
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -6px; /* Adjust thumb position vertically */
+}
+
+#volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #2ecc71; /* Thumb color - green */
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+#volume-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    background: #555; /* Track color - grey */
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#volume-percentage {
+    font-size: 0.9em;
+    color: #fff;
+    min-width: 45px; /* Ensure space for text like 100% */
+    text-align: left;
+    margin-left: 15px; /* Space between slider and text */
 }
 
 /* Guess Boxes */
 .guess-boxes-container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: 15px 0 25px;
+    gap: 5px; /* Reduced gap */
+    margin: 10px 0 15px; /* Reduced margin */
 }
 
 .guess-box {
     background-color: #2a2a2a;
     border-radius: 5px;
-    padding: 15px;
+    padding: 10px; /* Reduced padding */
     display: flex;
     align-items: center;
     transition: all 0.3s ease;
     position: relative;
-    height: 20px;
+    height: 18px; /* Reduced height */
 }
 
 .guess-box.empty {
@@ -162,15 +223,15 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 10px; /* Reduced gap */
+    margin-bottom: 10px; /* Reduced margin */
 }
 
 .stage-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 3px; /* Reduced gap */
 }
 
 .stage-label {
@@ -188,7 +249,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 5px; /* Reduced gap */
     width: 100%;
 }
 
@@ -209,7 +270,7 @@ body {
     font-size: 1.1rem;
     font-weight: bold;
     color: #fff;
-    margin-top: 5px;
+    margin-top: 3px; /* Reduced margin */
 }
 
 .progress-bar-container {
@@ -232,7 +293,7 @@ body {
 .play-control {
     display: flex;
     justify-content: center;
-    margin: 10px 0 20px;
+    margin: 5px 0 10px; /* Reduced margin */
 }
 
 .play-btn {
@@ -273,8 +334,8 @@ body {
 .game-controls {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 10px;
+    gap: 10px; /* Reduced gap */
+    margin-top: 5px; /* Reduced margin */
 }
 
 .search-container {

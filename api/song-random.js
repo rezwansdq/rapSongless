@@ -1,6 +1,6 @@
 require('dotenv').config();
 const cors = require('cors');
-const itunesService = require('../itunesService');
+const itunesService = require('./itunesService');
 
 // Helper to handle CORS middleware for Vercel functions
 const corsMiddleware = cors();
@@ -14,11 +14,11 @@ module.exports = (req, res) => {
       if (song) {
         res.json(song);
       } else {
-        res.status(404).json({ message: "Could not fetch a random song from iTunes." });
+        res.status(404).json({ message: "Could not fetch a random song." });
       }
     } catch (error) {
       console.error("Server error fetching random song:", error);
-      res.status(500).json({ message: "Error fetching random song from iTunes", error: error.message });
+      res.status(500).json({ message: "Error fetching random song", error: error.message });
     }
   });
 }; 

@@ -1,6 +1,6 @@
 import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, addGuessResult, resetGuessBoxes, setCurrentSnippetDuration /*, displayAlbumArt */ } from './ui.js';
 import * as api from './api.js';
-import { playSnippet, playFullPreview, stopAudio, isAudioPlaying } from './audio.js';
+import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 
 // DOM Elements
@@ -9,6 +9,8 @@ const playPauseButton = document.getElementById('play-pause-button');
 const guessInput = document.getElementById('guess-input');
 const submitButton = document.getElementById('submit-button');
 const skipButton = document.getElementById('skip-button');
+const volumeSlider = document.getElementById('volume-slider');
+const volumePercentage = document.getElementById('volume-percentage');
 // Play Next and Try Again buttons will be handled by UI module or dynamically added
 
 // Game State
@@ -32,6 +34,11 @@ async function initializeApp() {
         // Handle error, maybe show a message to the user
     }*/
     setupEventListeners();
+    // Set initial volume based on slider default
+    if (volumeSlider) {
+        setVolume(parseInt(volumeSlider.value) / 100);
+        if(volumePercentage) volumePercentage.textContent = `${volumeSlider.value}%`;
+    }
 }
 
 function setupEventListeners() {
@@ -71,6 +78,16 @@ function setupEventListeners() {
             }
         });
     }
+
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (event) => {
+            const newVolume = parseInt(event.target.value) / 100;
+            setVolume(newVolume);
+            if (volumePercentage) {
+                volumePercentage.textContent = `${event.target.value}%`;
+            }
+        });
+    }
 }
 
 // Toggle play/pause functionality
@@ -82,7 +99,7 @@ function togglePlayPause() {
     
     // Check the actual audio playing state from the audio module
     const currentlyPlaying = isAudioPlaying();
-    console.log(`Toggle play/pause called. Currently playing: ${currentlyPlaying}`);
+    console.log(`Toggle play/pause called. Currently playing: ${currentlyPlaying}, audioPlaybackState: ${audioPlaybackState}`);
     
     if (currentlyPlaying) {
         // If audio is playing, stop it
@@ -93,6 +110,7 @@ function togglePlayPause() {
         // If audio is not playing, play it
         playCurrentSnippet();
         audioPlaybackState = true;
+        updatePlayButton(false, true, true); // Disable button while starting, playing
     }
 }
 
@@ -173,7 +191,6 @@ function playCurrentSnippet() {
             }
         );
         audioPlaybackState = true;
-        updatePlayButton(false, true, true); // Disable button while starting, playing
     } else {
         // No preview URL - this click could reveal a text hint in the future
         console.log("Play Snippet clicked, but no previewUrl. Stage:", currentStage + 1);

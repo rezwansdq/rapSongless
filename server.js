@@ -6,13 +6,19 @@ const path = require('path'); // Added for serving static files
 // const cookieParser = require('cookie-parser'); // Removed
 
 // Placeholder for the new iTunes service
-const itunesService = require('./itunesService'); 
+const itunesService = require('./api/itunesService'); // Updated path
 
 const app = express();
-const PORT = 8000; // Keep at 8000 as previously set
+const PORT = process.env.PORT || 8000; // Use environment variable for port or default to 8000
 
 // Middleware
-app.use(cors({ origin: 'http://127.0.0.1:8000', credentials: true })); // Reverted for local dev
+app.use(cors({
+  origin: [ 
+    process.env.NODE_ENV === 'production' ? 'https://sl.rsadeqi.com' : 'http://127.0.0.1:8000',
+    'http://localhost:8000' // Also allow generic localhost
+  ],
+  credentials: true
+}));
 // app.use(cors({
 //   origin: [ process.env.NODE_ENV === 'production'
 //              ? 'https://sl.rsadeqi.com' // Your Vercel domain
@@ -31,61 +37,48 @@ app.use(express.static(path.join(__dirname, 'public')));
 // --- API Routes (to be updated to use itunesService) ---
 app.get('/api/song/random', async (req, res) => {
     try {
-        const song = await itunesService.getRandomSong(); // Switched to itunesService
+        const song = await itunesService.getRandomSong(); // This now uses Spotify-first approach
         if (song) {
             res.json(song);
         } else {
-            res.status(404).json({ message: "Could not fetch a random song from iTunes." });
+            // Updated message to be more generic as it could be Spotify or iTunes issue
+            res.status(404).json({ message: "Could not fetch a random song." });
         }
     } catch (error) {
         console.error("Server error fetching random song:", error);
-        res.status(500).json({ message: "Error fetching random song from iTunes", error: error.message });
+        res.status(500).json({ message: "Error fetching random song", error: error.message });
     }
 });
 
-app.get('/api/songs', async (req, res) => {
-    try {
-        const songs = await itunesService.getAllSongsForAutocomplete(); // Switched to itunesService
-        if (songs && songs.length > 0) {
-            res.json(songs);
-        } else {
-            res.status(404).json({ message: "No songs found or error fetching songs from iTunes." });
-        }
-    } catch (error) {
-        console.error("Server error fetching all songs:", error);
-        res.status(500).json({ message: "Error fetching songs from iTunes", error: error.message });
-    }
-});
-
-// New endpoint for dynamic autocomplete search
+// Updated endpoint for dynamic autocomplete search (Spotify-based)
 app.get('/api/songs/search', async (req, res) => {
     const searchTerm = req.query.term;
     if (!searchTerm) {
         return res.status(400).json({ message: "Search term is required" });
     }
     try {
-        // Fetch a smaller list, e.g., 15 results, for autocomplete suggestions
-        // And target song titles specifically with attribute='songTerm'
-        const songs = await itunesService.searchItunes(searchTerm, 'song', 'music', 15, 'US', 'songTerm');
-        res.json(songs);
+        // Uses the new function in itunesService that calls Spotify
+        const songs = await itunesService.searchSpotifyForAutocomplete(searchTerm);
+        res.json(songs); // songs is an array of {id, title, artist, albumArt, popularity}
     } catch (error) {
-        console.error("Server error during song search for autocomplete:", error);
-        res.status(500).json({ message: "Error searching songs", error: error.message });
+        console.error("Server error during Spotify song search for autocomplete:", error);
+        res.status(500).json({ message: "Error searching songs via Spotify", error: error.message });
     }
 });
 
-// Catch-all route to serve index.html
+// Catch-all route to serve index.html for client-side routing
 app.get('*', (req, res) => {
-    // Simplified: only check if it's not an API route before sending index.html
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).send("Not found");
+    if (!req.path.startsWith('/api/')) {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+        // If it starts with /api/ but isn't matched above, it's a 404 for an API route
+        res.status(404).json({ message: "API endpoint not found" });
     }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://127.0.0.1:${PORT}`); // Updated log to reflect 127.0.0.1
+    console.log(`Server is running on port ${PORT}`);
 }); 
 
-// module.exports = app; // Commented out for local dev 
+// module.exports = app; // Keep commented out for local nodemon dev, uncomment for Vercel if needed 

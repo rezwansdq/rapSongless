@@ -124,9 +124,10 @@ export function updatePlayButton(isEnabled, hasPreview, isCurrentlyPlaying = nul
     const playButton = document.getElementById('play-pause-button');
     if (!playButton) return;
     
-    // Update playing state if provided
+    // Always update playing state if provided
     if (isCurrentlyPlaying !== null) {
         isPlaying = isCurrentlyPlaying;
+        console.log(`UI: updatePlayButton called with isCurrentlyPlaying=${isCurrentlyPlaying}`);
     }
     
     // Enable/disable the button
