@@ -78,6 +78,8 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://127.0.0.1:${PORT}`); // Updated log to reflect 127.0.0.1
-}); 
+// app.listen(PORT, () => {
+//     console.log(`Server is running on http://127.0.0.1:${PORT}`); // Updated log to reflect 127.0.0.1
+// }); 
+
+module.exports = app; // Export the Express app for Vercel 
