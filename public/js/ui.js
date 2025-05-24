@@ -79,7 +79,7 @@ export function displayAutocompleteSuggestions(suggestions, onSelectCallback) {
 
     autocompleteResults.innerHTML = ''; // Clear previous suggestions
     if (suggestions.length === 0) {
-        autocompleteResults.style.display = 'none';
+        autocompleteResults.classList.remove('active');
         return;
     }
 
@@ -90,18 +90,18 @@ export function displayAutocompleteSuggestions(suggestions, onSelectCallback) {
         item.addEventListener('click', () => {
             onSelectCallback(`${song.title}`); // Pass the full title or combined, as needed
             autocompleteResults.innerHTML = '';
-            autocompleteResults.style.display = 'none';
+            autocompleteResults.classList.remove('active');
         });
         autocompleteResults.appendChild(item);
     });
-    autocompleteResults.style.display = 'block';
+    autocompleteResults.classList.add('active');
 }
 
 export function clearAutocompleteSuggestions() {
     const autocompleteResults = document.getElementById('autocomplete-results');
     if (autocompleteResults) {
         autocompleteResults.innerHTML = '';
-        autocompleteResults.style.display = 'none';
+        autocompleteResults.classList.remove('active');
     }
 }
 
@@ -247,3 +247,20 @@ export function showFailureScreen(songTitle, artist, onTryAgain) {
 
 // Placeholder for other UI update functions
 // e.g., updateSongInfo, displayAutocomplete, showSuccess, showFailure 
+
+// Loading Screen Overlay functions
+export function showLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        console.log("UI: Loading overlay SHOWN");
+    }
+}
+
+export function hideLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        console.log("UI: Loading overlay HIDDEN");
+    }
+} 

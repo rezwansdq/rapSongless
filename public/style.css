@@ -87,7 +87,7 @@ body {
 /* Volume Slider Styles */
 #volume-control-container {
     display: flex; 
-    flex-direction: row; 
+    flex-direction: column; /* Stack slider and label vertically */
     justify-content: center; 
     align-items: center; 
     margin-bottom: 15px; /* Reduced margin */
@@ -111,17 +111,17 @@ body {
 #volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px; 
-    height: 20px; 
+    width: 16px; 
+    height: 16px; 
     background: #2ecc71; /* Thumb color - green */
     border-radius: 50%;
     cursor: pointer;
-    margin-top: -6px; /* Adjust thumb position vertically */
+    margin-top: -4px; /* Adjust thumb position vertically: (track_height - thumb_height) / 2 = (8 - 16) / 2 = -4px */
 }
 
 #volume-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     background: #2ecc71; /* Thumb color - green */
     border-radius: 50%;
     cursor: pointer;
@@ -136,12 +136,11 @@ body {
     cursor: pointer;
 }
 
-#volume-percentage {
-    font-size: 0.9em;
-    color: #fff;
-    min-width: 45px; /* Ensure space for text like 100% */
-    text-align: left;
-    margin-left: 15px; /* Space between slider and text */
+.volume-label {
+    font-size: 0.9em; /* Similar to old percentage text */
+    color: #fff; /* White color */
+    margin-top: 8px; /* Space between slider and label */
+    text-align: center;
 }
 
 /* Guess Boxes */
@@ -368,13 +367,21 @@ body {
 .autocomplete-results {
     background-color: #333;
     border: 1px solid #555;
-    border-top: none;
-    border-radius: 0 0 5px 5px;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
     max-height: 150px;
     overflow-y: auto;
     position: absolute;
     width: 100%;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 4px;
     z-index: 10;
+    display: none; /* ADDED: Hidden by default */
+}
+
+.autocomplete-results.active {
+    display: block; /* ADDED: Show when active */
 }
 
 .autocomplete-item {
@@ -527,4 +534,34 @@ body {
 .history-item.correct {
     background-color: #2a3a2a;
     color: #2ecc71;
+}
+
+/* Loading Screen Overlay Styles */
+.loading-screen-overlay {
+    position: fixed; /* Fixed position to cover the whole screen */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Ensure it's on top of other content */
+    -webkit-backdrop-filter: blur(5px); /* Blur for Safari */
+    backdrop-filter: blur(5px); /* Standard blur */
+}
+
+.loading-screen-overlay.active {
+    display: flex; /* Show when active */
+}
+
+.loading-message {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 500;
+    padding: 20px;
+    background-color: rgba(18, 18, 18, 0.85); /* Slightly more opaque background for the message itself */
+    border-radius: 8px;
+    text-align: center;
 } 

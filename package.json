@@ -1,7 +1,7 @@
 {
   "name": "rap-songless",
   "version": "1.0.0",
-  "description": "Rap Songless music guessing game",
+  "description": "Songless Unlimited music guessing game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

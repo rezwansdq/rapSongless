@@ -56,64 +56,64 @@ async function searchItunesRaw(term, entity = 'song', media = 'music', limit = 1
     }
 }
 
-
 async function getRandomSong() {
-    console.log("iTunesService: Attempting hybrid Spotify/iTunes random song...");
-    try {
-        // 1. Get a popular track from Spotify (e.g., by Drake)
-        const spotifyTrack = await spotifyService.findPopularTrackByArtist('Drake', { minPopularity: 50, searchLimit: 50 });
+    const MAX_ATTEMPTS = 5; // Maximum number of attempts to find a song
 
-        if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
-            console.log(`iTunesService: Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id})`);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        console.log(`iTunesService: Attempt ${attempt}/${MAX_ATTEMPTS} for hybrid Spotify/iTunes random song...`);
+        try {
+            // 1. Get a popular track from Spotify (e.g., by Drake)
+            const spotifyTrack = await spotifyService.findPopularTrackByArtist('Drake', { minPopularity: 50, searchLimit: 50 });
 
-            // 2. Search iTunes for this specific track to get a previewUrl
-            // We will search for "Song Title Artist Name" to be specific
-            // No need to filter by recency or preview here, we just need *a* preview for this specific song
-            const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
+            if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
+                console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id})`);
 
-            if (itunesResults.length > 0) {
-                let matchedItunesTrack = null;
-                // Iterate to find a good match (e.g., exact title and artist, and has a previewUrl)
-                for (const itunesTrack of itunesResults) {
-                    if (itunesTrack.trackName && itunesTrack.artistName && itunesTrack.previewUrl && 
-                        itunesTrack.trackName.toLowerCase().includes(spotifyTrack.title.toLowerCase()) &&
-                        itunesTrack.artistName.toLowerCase().includes(spotifyTrack.artist.toLowerCase())) {
-                        matchedItunesTrack = itunesTrack;
-                        break;
+                // 2. Search iTunes for this specific track to get a previewUrl
+                const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
+
+                if (itunesResults.length > 0) {
+                    let matchedItunesTrack = null;
+                    // Iterate to find a good match (e.g., exact title and artist, and has a previewUrl)
+                    for (const itunesTrack of itunesResults) {
+                        if (itunesTrack.trackName && itunesTrack.artistName && itunesTrack.previewUrl && 
+                            itunesTrack.trackName.toLowerCase().includes(spotifyTrack.title.toLowerCase()) &&
+                            itunesTrack.artistName.toLowerCase().includes(spotifyTrack.artist.toLowerCase())) {
+                            matchedItunesTrack = itunesTrack;
+                            break;
+                        }
                     }
-                }
 
-                if (matchedItunesTrack) {
-                    console.log(`iTunesService: Found iTunes preview for Spotify track: ${matchedItunesTrack.trackName}`);
-                    return {
-                        id: spotifyTrack.id, // Use Spotify ID as primary
-                        title: spotifyTrack.title, // Spotify title
-                        artist: spotifyTrack.artist, // Spotify artist
-                        albumArt: spotifyTrack.albumArt, // Spotify album art (largest)
-                        previewUrl: matchedItunesTrack.previewUrl // iTunes preview URL
-                    };
+                    if (matchedItunesTrack) {
+                        console.log(`iTunesService (Attempt ${attempt}): Found iTunes preview for Spotify track: ${matchedItunesTrack.trackName}`);
+                        return { // Successfully found a song with preview
+                            id: spotifyTrack.id, // Use Spotify ID as primary
+                            title: spotifyTrack.title, // Spotify title
+                            artist: spotifyTrack.artist, // Spotify artist
+                            albumArt: spotifyTrack.albumArt, // Spotify album art (largest)
+                            previewUrl: matchedItunesTrack.previewUrl // iTunes preview URL
+                        };
+                    } else {
+                        console.log(`iTunesService (Attempt ${attempt}): No suitable iTunes match with preview found for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}. Examining iTunes results (found ${itunesResults.length}):`);
+                        itunesResults.forEach((item, index) => {
+                            console.log(`  Result ${index + 1}: Name='${item.trackName}', Artist='${item.artistName}', HasPreview=${!!item.previewUrl}`);
+                        });
+                    }
                 } else {
-                    console.log(`iTunesService: No suitable iTunes match with preview found for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}. Examining iTunes results (limit ${itunesResults.length}):`);
-                    itunesResults.forEach((item, index) => {
-                        console.log(`  Result ${index + 1}: Name='${item.trackName}', Artist='${item.artistName}', HasPreview=${!!item.previewUrl}`);
-                    });
+                    console.log(`iTunesService (Attempt ${attempt}): Could not find Spotify track '${spotifyTrack.title} - ${spotifyTrack.artist}' on iTunes search (0 results).`);
                 }
             } else {
-                console.log(`iTunesService: Could not find Spotify track '${spotifyTrack.title} - ${spotifyTrack.artist}' on iTunes search (0 results).`);
+                console.log(`iTunesService (Attempt ${attempt}): Spotify did not return a suitable track.`);
             }
-        } else {
-            console.log("iTunesService: Spotify did not return a suitable track.");
+        } catch (error) {
+            console.error(`iTunesService (Attempt ${attempt}): Error during hybrid lookup:`, error.message);
+            // Log error and continue to the next attempt if not maxed out
         }
-    } catch (spotifyError) {
-        console.error("iTunesService: Error during Spotify-primary lookup:", spotifyError.message);
-        // spotifyError could be due to Spotify API issues or if findPopularTrackByArtist returns null and we try to access its properties
-        // No longer falling back to iTunes-only search here.
-        console.log("iTunesService: Spotify/iTunes hybrid failed. No iTunes-only fallback will be attempted.");
+        console.log(`iTunesService (Attempt ${attempt}): Failed to secure a song with preview in this attempt.`);
     }
 
-    // If the hybrid approach fails to return a song, this function will now effectively return undefined/null.
-    console.log("iTunesService: Hybrid lookup concluded. If no song was returned, it means the process failed.");
-    return null; // Explicitly return null if no song is found through the hybrid approach
+    // If loop finishes, all attempts failed
+    console.error(`iTunesService: All ${MAX_ATTEMPTS} attempts failed to get a song with a preview.`);
+    return null; // Explicitly return null if no song is found after all attempts
 }
 
 // New function for Spotify-based autocomplete

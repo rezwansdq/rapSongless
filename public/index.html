@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rap Songless</title>
+    <title>Songless Unlimited</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <div class="container">
         <!-- Landing Screen -->
         <section id="landing-screen" class="screen active">
-            <h1 class="game-title">Rap Songless</h1>
+            <h1 class="game-title">Songless Unlimited</h1>
             <button id="start-button" class="btn btn-primary">Start</button>
         </section>
 
         <!-- Game Screen -->
         <section id="game-screen" class="screen">
-            <h1 class="game-title">Rap Songless</h1>
+            <h1 class="game-title">Songless Unlimited</h1>
             
             <!-- Volume Slider -->
-            <div id="volume-control-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+            <div id="volume-control-container">
                 <input type="range" id="volume-slider" min="0" max="100" value="50" step="10">
-                <span id="volume-percentage">50%</span>
+                <label for="volume-slider" class="volume-label">Volume</label>
             </div>
             
             <!-- Pre-displayed empty guess boxes -->
@@ -89,6 +89,11 @@
                 <button id="try-again-button" class="btn btn-primary">Try Again</button>
             </div>
         </div>
+    </div>
+
+    <!-- Loading Screen Overlay (Hidden by default) -->
+    <div id="loading-overlay" class="loading-screen-overlay">
+        <div class="loading-message">Finding song…</div>
     </div>
 
     <script type="module" src="/js/main.js"></script>

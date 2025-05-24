@@ -2,6 +2,10 @@
 
 const API_BASE_URL = '/api'; // Relative path for Vercel and local
 
+// Cache for autocomplete suggestions
+const suggestionsCache = new Map();
+const CACHE_MAX_SIZE = 20; // Store up to 20 recent search terms
+
 /**
  * Fetches a random song. The backend now uses a Spotify-first approach.
  */
@@ -44,18 +48,39 @@ export async function fetchSearchSuggestions(query) {
     if (!query || query.trim().length < 2) {
         return [];
     }
+    const lowerCaseQuery = query.toLowerCase().trim();
+
+    if (suggestionsCache.has(lowerCaseQuery)) {
+        console.log(`API: Serving suggestions for "${lowerCaseQuery}" from cache.`);
+        return suggestionsCache.get(lowerCaseQuery);
+    }
+
     console.log(`API: Fetching Spotify search suggestions for query: "${query}"...`);
+    console.time(`fetchSuggestions-${lowerCaseQuery}`); // Start timer for fetch
     try {
         const response = await fetch(`${API_BASE_URL}/songs-search?term=${encodeURIComponent(query)}`);
+        console.timeEnd(`fetchSuggestions-${lowerCaseQuery}`); // End timer for fetch
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
         }
         const songs = await response.json();
         console.log("API: Spotify suggestions fetched", songs);
+
+        // Add to cache
+        if (suggestionsCache.size >= CACHE_MAX_SIZE) {
+            // Evict the oldest entry (Map iterates in insertion order)
+            const oldestKey = suggestionsCache.keys().next().value;
+            suggestionsCache.delete(oldestKey);
+            console.log(`API: Cache full. Evicted oldest entry: "${oldestKey}"`);
+        }
+        suggestionsCache.set(lowerCaseQuery, songs);
+
         // The UI expects title and artist. The new backend provides these + id, albumArt, popularity.
         return songs;
     } catch (error) {
+        console.timeEnd(`fetchSuggestions-${lowerCaseQuery}`); // Ensure timer ends on error too
         console.error("API: Error fetching Spotify search suggestions:", error);
         return []; // Return empty on error
     }

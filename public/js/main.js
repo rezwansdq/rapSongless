@@ -1,4 +1,4 @@
-import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, addGuessResult, resetGuessBoxes, setCurrentSnippetDuration /*, displayAlbumArt */ } from './ui.js';
+import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, addGuessResult, resetGuessBoxes, setCurrentSnippetDuration /*, displayAlbumArt */, showLoadingOverlay, hideLoadingOverlay } from './ui.js';
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
@@ -10,7 +10,7 @@ const guessInput = document.getElementById('guess-input');
 const submitButton = document.getElementById('submit-button');
 const skipButton = document.getElementById('skip-button');
 const volumeSlider = document.getElementById('volume-slider');
-const volumePercentage = document.getElementById('volume-percentage');
+// const volumePercentage = document.getElementById('volume-percentage'); // Removed
 // Play Next and Try Again buttons will be handled by UI module or dynamically added
 
 // Game State
@@ -37,7 +37,7 @@ async function initializeApp() {
     // Set initial volume based on slider default
     if (volumeSlider) {
         setVolume(parseInt(volumeSlider.value) / 100);
-        if(volumePercentage) volumePercentage.textContent = `${volumeSlider.value}%`;
+        // if(volumePercentage) volumePercentage.textContent = `${volumeSlider.value}%`; // Removed
     }
 }
 
@@ -83,9 +83,9 @@ function setupEventListeners() {
         volumeSlider.addEventListener('input', (event) => {
             const newVolume = parseInt(event.target.value) / 100;
             setVolume(newVolume);
-            if (volumePercentage) {
-                volumePercentage.textContent = `${event.target.value}%`;
-            }
+            // if (volumePercentage) { // Removed
+            //     volumePercentage.textContent = `${event.target.value}%`; // Removed
+            // }
         });
     }
 }
@@ -117,17 +117,24 @@ function togglePlayPause() {
 // --- Game Flow ---
 async function startGame() {
     console.log("Game Starting...");
+    showLoadingOverlay(); // Show loading screen immediately
+    // Potentially hide or disable the main game screen content here if needed, though overlay should cover it
+    // showScreen('game-screen'); // This might be premature if loading takes time
+
     resetGameState();
-    showScreen('game-screen');
 
     try {
         currentSong = await api.getRandomSong();
-        if (!currentSong) { // Simplified check, as getRandomSong now tries hard to return something
-            console.error("CRITICAL: Failed to fetch any song from API.");
-            alert("Error: Could not load a song. Please try again later.");
-            showScreen('landing-screen');
+        hideLoadingOverlay(); // Hide loading screen after song is fetched
+
+        if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now
+            console.error("CRITICAL: Failed to fetch a complete song with previewUrl from API.");
+            alert("Error: Could not load a song with a playable preview. Please try again later.");
+            showScreen('landing-screen'); // Go back to landing if song is bad
             return;
         }
+        
+        showScreen('game-screen'); // Now show the game screen as song is ready
         console.log("Current song for the game:", currentSong);
         /*if (currentSong.albumArt) {
             displayAlbumArt(currentSong.albumArt); // Display album art if available
@@ -137,6 +144,7 @@ async function startGame() {
         updatePlayButton(true, !!currentSong.previewUrl, false); // Update button based on preview availability
         startStage();
     } catch (error) {
+        hideLoadingOverlay(); // Ensure loading screen is hidden on error too
         console.error("Error starting game:", error);
         alert("Error starting the game. Please check console and try again.");
         showScreen('landing-screen');
