@@ -69,11 +69,15 @@ app.get('/api/songs/search', async (req, res) => {
 // Catch-all route to serve index.html for client-side routing
 app.get('*', (req, res) => {
     if (!req.path.startsWith('/api/')) {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        res.sendFile(path.join(__dirname, 'public', 'home.html'));
     } else {
         // If it starts with /api/ but isn't matched above, it's a 404 for an API route
         res.status(404).json({ message: "API endpoint not found" });
     }
+});
+
+app.get('/game', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server

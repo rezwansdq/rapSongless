@@ -4,7 +4,7 @@ import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume } fr
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 
 // DOM Elements
-const startButton = document.getElementById('start-button');
+// const startButton = document.getElementById('start-button'); // REMOVED
 const playPauseButton = document.getElementById('play-pause-button');
 const guessInput = document.getElementById('guess-input');
 const submitButton = document.getElementById('submit-button');
@@ -25,24 +25,18 @@ const MAX_STAGES = snippetDurations.length;
 
 // --- Initialization ---
 async function initializeApp() {
-    showScreen('landing-screen');
-    /*try { // Old logic for pre-fetching all songs
-        allSongs = await api.getAllSongs();
-        initializeSearchIndex(allSongs);
-    } catch (error) {
-        console.error("Failed to load initial song data:", error);
-        // Handle error, maybe show a message to the user
-    }*/
+    // showScreen('landing-screen'); // REMOVED - index.html is now directly the game page
     setupEventListeners();
     // Set initial volume based on slider default
     if (volumeSlider) {
         setVolume(parseInt(volumeSlider.value) / 100);
         // if(volumePercentage) volumePercentage.textContent = `${volumeSlider.value}%`; // Removed
     }
+    startGame(); // ADDED: Start the game automatically when index.html (game page) loads
 }
 
 function setupEventListeners() {
-    if (startButton) startButton.addEventListener('click', startGame);
+    // if (startButton) startButton.addEventListener('click', startGame); // REMOVED
     if (playPauseButton) playPauseButton.addEventListener('click', togglePlayPause);
     if (submitButton) submitButton.addEventListener('click', handleGuess);
     if (skipButton) {
@@ -76,6 +70,12 @@ function setupEventListeners() {
             if (event.key === 'Enter') {
                 handleGuess();
             }
+        });
+        guessInput.addEventListener('blur', () => { // Added blur event listener
+            // Adding a small delay to allow click on suggestion to register
+            setTimeout(() => {
+                clearAutocompleteSuggestions();
+            }, 100); 
         });
     }
 
@@ -130,7 +130,8 @@ async function startGame() {
         if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now
             console.error("CRITICAL: Failed to fetch a complete song with previewUrl from API.");
             alert("Error: Could not load a song with a playable preview. Please try again later.");
-            showScreen('landing-screen'); // Go back to landing if song is bad
+            // showScreen('landing-screen'); // Old: Go back to landing if song is bad
+            window.location.href = '/home.html'; // New: Redirect to actual home page
             return;
         }
         
@@ -147,7 +148,8 @@ async function startGame() {
         hideLoadingOverlay(); // Ensure loading screen is hidden on error too
         console.error("Error starting game:", error);
         alert("Error starting the game. Please check console and try again.");
-        showScreen('landing-screen');
+        // showScreen('landing-screen'); // Old
+        window.location.href = '/home.html'; // New: Redirect to actual home page
     }
 }
 
