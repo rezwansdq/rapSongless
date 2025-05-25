@@ -36,13 +36,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- API Routes (to be updated to use itunesService) ---
 app.get('/api/song/random', async (req, res) => {
+    const playlistId = req.query.playlistId;
+    const artistName = req.query.artistName; // Get artistName from query
+    let params = {};
+
+    if (playlistId) {
+        params.playlistId = playlistId;
+    } else if (artistName) {
+        params.artistName = artistName;
+    } else {
+        return res.status(400).json({ message: "Playlist ID or Artist Name is required." });
+    }
+
     try {
-        const song = await itunesService.getRandomSong(); // This now uses Spotify-first approach
+        const song = await itunesService.getRandomSong(params); 
         if (song) {
             res.json(song);
         } else {
-            // Updated message to be more generic as it could be Spotify or iTunes issue
-            res.status(404).json({ message: "Could not fetch a random song." });
+            let message = "Could not fetch a random song.";
+            if (params.playlistId) message = `Could not fetch a random song from playlist ${params.playlistId}.`;
+            if (params.artistName) message = `Could not fetch a random song for artist '${params.artistName}'.`;
+            res.status(404).json({ message });
         }
     } catch (error) {
         console.error("Server error fetching random song:", error);

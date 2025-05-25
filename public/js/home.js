@@ -1,71 +1,116 @@
 document.addEventListener('DOMContentLoaded', () => {
     const playlistUrlInput = document.getElementById('playlist-url');
-    const validateButton = document.getElementById('validate-playlist-btn');
-    const messageArea = document.getElementById('playlist-message');
+    const artistNameInput = document.getElementById('artist-name');
+    const validateButton = document.getElementById('validate-input-btn');
+    const messageArea = document.getElementById('validation-message');
     const startGameButton = document.getElementById('go-to-game-button');
 
-    // Load stored playlist URL on page load
+    const inputModeRadios = document.querySelectorAll('input[name="input-mode"]');
+    const playlistInputSection = document.getElementById('playlist-input-section');
+    const artistInputSection = document.getElementById('artist-input-section');
+
+    let currentInputMode = 'playlist';
+
+    function updateInputModeUI(mode) {
+        currentInputMode = mode;
+        if (mode === 'playlist') {
+            playlistInputSection.style.display = 'block';
+            artistInputSection.style.display = 'none';
+            validateButton.textContent = 'Validate Playlist';
+            playlistUrlInput.focus();
+        } else if (mode === 'artist') {
+            playlistInputSection.style.display = 'none';
+            artistInputSection.style.display = 'block';
+            validateButton.textContent = 'Set Artist & Start';
+            artistNameInput.focus();
+        }
+        messageArea.textContent = '';
+    }
+
+    inputModeRadios.forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            updateInputModeUI(event.target.value);
+        });
+    });
+
+    const storedInputMode = localStorage.getItem('userInputMode');
     const storedPlaylistId = localStorage.getItem('userPlaylistId');
-    if (storedPlaylistId) {
-        // For simplicity, we don't reconstruct the full URL, but we can indicate it's set.
-        // Or, you could store the full URL if preferred.
-        // We will re-validate if the user clicks validate again or just allow them to start.
-        messageArea.textContent = 'A playlist ID is already set. You can start the game or validate a new one.';
-        messageArea.style.color = '#2ecc71'; // Green
+    const storedArtistName = localStorage.getItem('userArtistName');
+
+    if (storedInputMode) {
+        const radioToSelect = document.querySelector(`input[name="input-mode"][value="${storedInputMode}"]`);
+        if (radioToSelect) radioToSelect.checked = true;
+        updateInputModeUI(storedInputMode);
+
+        if (storedInputMode === 'playlist' && storedPlaylistId) {
+            messageArea.textContent = 'Previously used playlist ID is set. Validate or start.';
+            messageArea.style.color = '#2ecc71';
+        } else if (storedInputMode === 'artist' && storedArtistName) {
+            artistNameInput.value = storedArtistName;
+            messageArea.textContent = `Previously used artist: ${storedArtistName}. Set new artist or start.`;
+            messageArea.style.color = '#2ecc71';
+        }
+    } else {
+        updateInputModeUI('playlist');
     }
 
     if (validateButton) {
         validateButton.addEventListener('click', async () => {
-            const playlistUrl = playlistUrlInput.value.trim();
-            if (!playlistUrl) {
-                messageArea.textContent = 'Please enter a Spotify playlist URL.';
-                messageArea.style.color = '#e74c3c'; // Red
-                return;
-            }
-
-            const playlistId = extractPlaylistId(playlistUrl);
-
-            if (!playlistId) {
-                messageArea.textContent = 'Invalid Spotify playlist URL format.';
-                messageArea.style.color = '#e74c3c'; // Red
-                return;
-            }
-
-            messageArea.textContent = 'Validating...';
-            messageArea.style.color = '#ccc'; // Neutral
-
-            try {
-                const response = await fetch(`/api/playlist/validate?id=${playlistId}`);
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    messageArea.textContent = `Success! Playlist found: ${result.name || 'Playlist'}`;
-                    messageArea.style.color = '#2ecc71'; // Green
-                    localStorage.setItem('userPlaylistId', playlistId); // Store the validated ID
-                } else {
-                    messageArea.textContent = result.message || 'Failed to validate playlist. Try a different link.';
-                    messageArea.style.color = '#e74c3c'; // Red
-                    localStorage.removeItem('userPlaylistId'); // Clear if validation fails
+            if (currentInputMode === 'playlist') {
+                const playlistUrl = playlistUrlInput.value.trim();
+                if (!playlistUrl) {
+                    messageArea.textContent = 'Please enter a Spotify playlist URL.';
+                    messageArea.style.color = '#e74c3c';
+                    return;
                 }
-            } catch (error) {
-                console.error('Error validating playlist:', error);
-                messageArea.textContent = 'Error validating playlist. Check console or try again.';
-                messageArea.style.color = '#e74c3c'; // Red
-                localStorage.removeItem('userPlaylistId');
-            }
-        });
-    }
+                const playlistId = extractPlaylistId(playlistUrl);
+                if (!playlistId) {
+                    messageArea.textContent = 'Invalid Spotify playlist URL format.';
+                    messageArea.style.color = '#e74c3c';
+                    return;
+                }
 
-    if (startGameButton) {
-        startGameButton.addEventListener('click', (event) => {
-            const currentPlaylistId = localStorage.getItem('userPlaylistId');
-            if (!currentPlaylistId) {
-                event.preventDefault(); // Stop navigation
-                messageArea.textContent = 'Please validate a Spotify playlist URL before starting the game.';
-                messageArea.style.color = '#e74c3c'; // Red
-                alert('Please enter and validate a Spotify playlist URL first!');
+                messageArea.textContent = 'Validating...';
+                messageArea.style.color = '#ccc';
+
+                try {
+                    const response = await fetch(`/api/playlist/validate?id=${playlistId}`);
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        messageArea.textContent = `Success! Playlist '${result.name || 'Playlist'}' ready. Redirecting to game...`;
+                        messageArea.style.color = '#2ecc71';
+                        localStorage.setItem('userPlaylistId', playlistId);
+                        localStorage.setItem('userArtistName', '');
+                        localStorage.setItem('userInputMode', 'playlist');
+                        window.location.href = '/game';
+                    } else {
+                        messageArea.textContent = result.message || 'Failed to validate playlist. Try a different link.';
+                        messageArea.style.color = '#e74c3c';
+                        localStorage.removeItem('userPlaylistId');
+                        localStorage.removeItem('userInputMode');
+                    }
+                } catch (error) {
+                    console.error('Error validating playlist:', error);
+                    messageArea.textContent = 'Error validating playlist. Check console or try again.';
+                    messageArea.style.color = '#e74c3c';
+                    localStorage.removeItem('userPlaylistId');
+                    localStorage.removeItem('userInputMode');
+                }
+            } else if (currentInputMode === 'artist') {
+                const artistName = artistNameInput.value.trim();
+                if (!artistName) {
+                    messageArea.textContent = 'Please enter an artist name.';
+                    messageArea.style.color = '#e74c3c';
+                    return;
+                }
+                messageArea.textContent = `Artist '${artistName}' set. Redirecting to game...`;
+                messageArea.style.color = '#2ecc71';
+                localStorage.setItem('userArtistName', artistName);
+                localStorage.setItem('userPlaylistId', '');
+                localStorage.setItem('userInputMode', 'artist');
+                window.location.href = '/game';
             }
-            // If playlistId exists, the link will proceed to /game
         });
     }
 });
@@ -74,16 +119,14 @@ function extractPlaylistId(url) {
     try {
         const path = new URL(url).pathname;
         const parts = path.split('/');
-        // Expected format: /playlist/PLAYLIST_ID or /user/USER_ID/playlist/PLAYLIST_ID
         const playlistIndex = parts.indexOf('playlist');
         if (playlistIndex !== -1 && parts.length > playlistIndex + 1) {
             const idCandidate = parts[playlistIndex + 1];
-            if (idCandidate && idCandidate.length === 22) { // Spotify IDs are 22 chars
+            if (idCandidate && /^[a-zA-Z0-9]{22}$/.test(idCandidate)) {
                  return idCandidate;
             }
         }
     } catch (e) {
-        // Invalid URL format
         console.error('Error parsing playlist URL:', e);
     }
     return null;

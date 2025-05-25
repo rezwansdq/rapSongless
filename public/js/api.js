@@ -8,38 +8,49 @@ const CACHE_MAX_SIZE = 20; // Store up to 20 recent search terms
 
 /**
  * Fetches a random song. The backend now uses a Spotify-first approach.
- * @param {string} playlistId - The ID of the Spotify playlist to use.
+ * Can fetch based on playlist ID or artist name.
+ * @param {string} parameter - The ID of the Spotify playlist or the name of the artist.
+ * @param {string} mode - Type of parameter: 'playlist' or 'artist'.
  */
-export async function getRandomSong(playlistId) {
-    console.log(`API: Fetching random song from backend (Spotify-first) using playlist ID: ${playlistId}...`);
-    if (!playlistId) {
-        console.error("API: getRandomSong called without a playlistId.");
-        // Fallback or error handling if playlistId is somehow missing
+export async function getRandomSong(parameter, mode = 'playlist') { // Default mode to playlist for safety
+    console.log(`API: Fetching random song from backend. Mode: ${mode}, Parameter: ${parameter}`);
+    
+    if (!parameter) {
+        console.error(`API: getRandomSong called without a ${mode === 'playlist' ? 'playlistId' : 'artistName'}.`);
         return {
             id: "errorMockId",
-            title: "Error: Playlist ID Missing",
-            artist: "Please Select Playlist",
+            title: `Error: ${mode === 'playlist' ? 'Playlist ID' : 'Artist Name'} Missing`,
+            artist: "Please Select Input on Home",
             previewUrl: null, 
             albumArt: null 
         };
     }
+
+    let apiUrl = `${API_BASE_URL}/song-random`;
+    if (mode === 'playlist') {
+        apiUrl += `?playlistId=${encodeURIComponent(parameter)}`;
+    } else if (mode === 'artist') {
+        apiUrl += `?artistName=${encodeURIComponent(parameter)}`;
+    } else {
+        console.error(`API: Invalid mode "${mode}" for getRandomSong.`);
+        // Fallback or error handling
+        return { id: "errorModeId", title: "Error: Invalid Mode", artist: "Check API Call", previewUrl: null, albumArt: null };
+    }
+
     try {
-        const response = await fetch(`${API_BASE_URL}/song-random?playlistId=${encodeURIComponent(playlistId)}`);
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
         }
         const song = await response.json();
-        console.log("API: Random song fetched (Spotify-first)", song);
-        // Expected structure: { id (Spotify), title, artist, albumArt (Spotify), previewUrl (iTunes) }
+        console.log("API: Random song fetched", song);
         if (!song || !song.id || !song.title || !song.artist || !song.previewUrl) {
             console.warn("API: Received incomplete song data from backend:", song);
-            // Depending on strictness, could throw error or use a more robust fallback
         }
         return song;
     } catch (error) {
         console.error("API: Error fetching random song:", error);
-        // Fallback to a very basic mock if backend fails
         return {
             id: "fallbackMockId",
             title: "Fallback: Can't Load Song",

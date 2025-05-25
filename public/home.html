@@ -12,14 +12,27 @@
             <h1 class="game-title">Welcome to Songless Unlimited!</h1>
             <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 20px;">Test your music knowledge and guess the song!</p>
             
-            <div class="playlist-input-container" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+            <div class="input-mode-selector" style="margin-bottom: 20px;">
+                <label style="margin-right: 15px; color: #ddd;">
+                    <input type="radio" name="input-mode" value="playlist" checked> Spotify Playlist URL
+                </label>
+                <label style="color: #ddd;">
+                    <input type="radio" name="input-mode" value="artist"> Artist Name
+                </label>
+            </div>
+
+            <div class="playlist-input-container" id="playlist-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
                 <label for="playlist-url" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Enter Spotify Playlist URL:</label>
                 <input type="text" id="playlist-url" placeholder="https://open.spotify.com/playlist/..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
-                <button id="validate-playlist-btn" class="btn" style="margin-top: 10px; background-color: #555; color: #fff;">Validate Playlist</button>
-                <div id="playlist-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
+            </div>
+
+            <div class="artist-input-container" id="artist-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto; display: none;">
+                <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Enter Artist Name:</label>
+                <input type="text" id="artist-name" placeholder="e.g., Drake" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
             </div>
             
-            <a href="/game" id="go-to-game-button" class="btn btn-primary" style="padding: 15px 30px; font-size: 1.5rem; text-decoration: none;">Start Game</a>
+            <button id="validate-input-btn" class="btn" style="margin-top: 10px; background-color: #555; color: #fff;">Validate Playlist</button>
+            <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
         </section>
     </div>
 

@@ -118,27 +118,46 @@ function togglePlayPause() {
 async function startGame() {
     console.log("Game Starting...");
     showLoadingOverlay(); // Show loading screen immediately
+    
+    const userInputMode = localStorage.getItem('userInputMode');
     const userPlaylistId = localStorage.getItem('userPlaylistId');
+    const userArtistName = localStorage.getItem('userArtistName');
 
-    if (!userPlaylistId) {
-        console.warn("MAIN: No user playlist ID found in localStorage. Redirecting to home.");
+    let gameParameter = null;
+    let mode = null;
+
+    if (userInputMode === 'playlist' && userPlaylistId) {
+        console.log(`MAIN: Starting game with playlist ID: ${userPlaylistId}`);
+        gameParameter = userPlaylistId;
+        mode = 'playlist';
+    } else if (userInputMode === 'artist' && userArtistName) {
+        console.log(`MAIN: Starting game with artist name: ${userArtistName}`);
+        gameParameter = userArtistName;
+        mode = 'artist';
+    } else {
+        console.warn("MAIN: No valid user input (playlist ID or artist name) found in localStorage. Redirecting to home.");
         hideLoadingOverlay();
-        alert("No playlist selected! Please go to the homepage and validate a Spotify playlist URL first.");
+        alert("No playlist or artist selected! Please go to the homepage and set one up first.");
         window.location.href = '/home.html';
         return;
     }
-    console.log(`MAIN: Using user playlist ID: ${userPlaylistId}`);
 
     resetGameState();
 
     try {
-        currentSong = await api.getRandomSong(userPlaylistId);
+        // Pass the mode to getRandomSong for clarity, though the backend will infer from param name
+        currentSong = await api.getRandomSong(gameParameter, mode); 
         hideLoadingOverlay(); // Hide loading screen after song is fetched
 
         if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now
             console.error("CRITICAL: Failed to fetch a complete song with previewUrl from API.");
-            alert("Error: Could not load a song with a playable preview. Please try again later.");
-            // showScreen('landing-screen'); // Old: Go back to landing if song is bad
+            let alertMessage = "Error: Could not load a song with a playable preview.";
+            if (mode === 'artist') {
+                alertMessage += ` For artist: '${gameParameter}'. Try a different artist or a playlist.`;
+            } else {
+                alertMessage += " Please try again later or use a different playlist.";
+            }
+            alert(alertMessage);
             window.location.href = '/home.html'; // New: Redirect to actual home page
             return;
         }

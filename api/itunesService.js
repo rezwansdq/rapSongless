@@ -56,22 +56,37 @@ async function searchItunesRaw(term, entity = 'song', media = 'music', limit = 1
     }
 }
 
-async function getRandomSong(playlistId) {
+async function getRandomSong(params) { // params will be { playlistId: '...' } or { artistName: '...' }
     const MAX_ATTEMPTS = 5;
+    let spotifyTrack = null;
+    let logIdentifier = '';
 
-    if (!playlistId) {
-        console.error("iTunesService: getRandomSong called without playlistId.");
+    if (params.playlistId) {
+        logIdentifier = `playlist ID: ${params.playlistId}`;
+        console.log(`iTunesService:getRandomSong - Mode: Playlist, ID: ${params.playlistId}`);
+    } else if (params.artistName) {
+        logIdentifier = `artist Name: '${params.artistName}'`;
+        console.log(`iTunesService:getRandomSong - Mode: Artist, Name: ${params.artistName}`);
+    } else {
+        console.error("iTunesService: getRandomSong called without playlistId or artistName.");
         return null;
     }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        console.log(`iTunesService: Attempt ${attempt}/${MAX_ATTEMPTS} for random song from playlist ID: ${playlistId}...`);
+        console.log(`iTunesService: Attempt ${attempt}/${MAX_ATTEMPTS} for random song using ${logIdentifier}...`);
         try {
-            // 1. Get a random track from the user-specified Spotify playlist, no popularity filter
-            const spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(playlistId, { minPopularity: 0 });
+            // 1. Get a track from Spotify based on mode
+            if (params.playlistId) {
+                spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(params.playlistId, { minPopularity: 0 });
+            } else if (params.artistName) {
+                // For artist mode, we might want to try different popularity settings or just get any
+                // For now, let's use a default minPopularity or a configurable one if needed.
+                // The findPopularTrackByArtist itself handles picking one if multiple meet criteria.
+                spotifyTrack = await spotifyService.findPopularTrackByArtist(params.artistName, { minPopularity: 30, searchLimit: 20 }); // Example: minPopularity 30
+            }
 
             if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
-                console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id}) from playlist ${playlistId}`);
+                console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id}) using ${logIdentifier}`);
 
                 // 2. Search iTunes for this specific track to get a previewUrl
                 const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
@@ -110,14 +125,14 @@ async function getRandomSong(playlistId) {
                 console.log(`iTunesService (Attempt ${attempt}): Spotify did not return a suitable track.`);
             }
         } catch (error) {
-            console.error(`iTunesService (Attempt ${attempt}): Error during hybrid lookup:`, error.message);
+            console.error(`iTunesService (Attempt ${attempt}): Error during hybrid lookup for ${logIdentifier}:`, error.message);
             // Log error and continue to the next attempt if not maxed out
         }
-        console.log(`iTunesService (Attempt ${attempt}): Failed to secure a song with preview in this attempt.`);
+        console.log(`iTunesService (Attempt ${attempt}): Failed to secure a song with preview in this attempt for ${logIdentifier}.`);
     }
 
     // If loop finishes, all attempts failed
-    console.error(`iTunesService: All ${MAX_ATTEMPTS} attempts failed to get a song with a preview.`);
+    console.error(`iTunesService: All ${MAX_ATTEMPTS} attempts failed to get a song with a preview for ${logIdentifier}.`);
     return null; // Explicitly return null if no song is found after all attempts
 }
 
