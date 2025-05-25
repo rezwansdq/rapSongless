@@ -118,13 +118,21 @@ function togglePlayPause() {
 async function startGame() {
     console.log("Game Starting...");
     showLoadingOverlay(); // Show loading screen immediately
-    // Potentially hide or disable the main game screen content here if needed, though overlay should cover it
-    // showScreen('game-screen'); // This might be premature if loading takes time
+    const userPlaylistId = localStorage.getItem('userPlaylistId');
+
+    if (!userPlaylistId) {
+        console.warn("MAIN: No user playlist ID found in localStorage. Redirecting to home.");
+        hideLoadingOverlay();
+        alert("No playlist selected! Please go to the homepage and validate a Spotify playlist URL first.");
+        window.location.href = '/home.html';
+        return;
+    }
+    console.log(`MAIN: Using user playlist ID: ${userPlaylistId}`);
 
     resetGameState();
 
     try {
-        currentSong = await api.getRandomSong();
+        currentSong = await api.getRandomSong(userPlaylistId);
         hideLoadingOverlay(); // Hide loading screen after song is fetched
 
         if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now

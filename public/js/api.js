@@ -8,11 +8,23 @@ const CACHE_MAX_SIZE = 20; // Store up to 20 recent search terms
 
 /**
  * Fetches a random song. The backend now uses a Spotify-first approach.
+ * @param {string} playlistId - The ID of the Spotify playlist to use.
  */
-export async function getRandomSong() {
-    console.log("API: Fetching random song from backend (Spotify-first)...");
+export async function getRandomSong(playlistId) {
+    console.log(`API: Fetching random song from backend (Spotify-first) using playlist ID: ${playlistId}...`);
+    if (!playlistId) {
+        console.error("API: getRandomSong called without a playlistId.");
+        // Fallback or error handling if playlistId is somehow missing
+        return {
+            id: "errorMockId",
+            title: "Error: Playlist ID Missing",
+            artist: "Please Select Playlist",
+            previewUrl: null, 
+            albumArt: null 
+        };
+    }
     try {
-        const response = await fetch(`${API_BASE_URL}/song-random`);
+        const response = await fetch(`${API_BASE_URL}/song-random?playlistId=${encodeURIComponent(playlistId)}`);
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);

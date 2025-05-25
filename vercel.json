@@ -5,6 +5,7 @@
     { "src": "public/**",      "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/playlist/validate", "dest": "/api/playlist-validate.js" },
     { "src": "/api/(.*)",      "dest": "/api/$1.js" },
     { "src": "/js/(.*)",       "dest": "/public/js/$1" },
     { "src": "/style.css",     "dest": "/public/style.css" },

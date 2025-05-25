@@ -56,17 +56,22 @@ async function searchItunesRaw(term, entity = 'song', media = 'music', limit = 1
     }
 }
 
-async function getRandomSong() {
-    const MAX_ATTEMPTS = 5; // Maximum number of attempts to find a song
+async function getRandomSong(playlistId) {
+    const MAX_ATTEMPTS = 5;
+
+    if (!playlistId) {
+        console.error("iTunesService: getRandomSong called without playlistId.");
+        return null;
+    }
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        console.log(`iTunesService: Attempt ${attempt}/${MAX_ATTEMPTS} for hybrid Spotify/iTunes random song...`);
+        console.log(`iTunesService: Attempt ${attempt}/${MAX_ATTEMPTS} for random song from playlist ID: ${playlistId}...`);
         try {
-            // 1. Get a popular track from Spotify (e.g., by Drake)
-            const spotifyTrack = await spotifyService.findPopularTrackByArtist('Drake', { minPopularity: 50, searchLimit: 50 });
+            // 1. Get a random track from the user-specified Spotify playlist, no popularity filter
+            const spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(playlistId, { minPopularity: 0 });
 
             if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
-                console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id})`);
+                console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id}) from playlist ${playlistId}`);
 
                 // 2. Search iTunes for this specific track to get a previewUrl
                 const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);

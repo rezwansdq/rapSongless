@@ -136,9 +136,123 @@ async function findPopularTrackByArtist(artistName, options = {}, _isRetry = fal
   }
 }
 
+// New function to get a random track from a playlist meeting popularity criteria
+async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = false) {
+  let minPopularity = parseInt(options.minPopularity, 10);
+  if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
+    minPopularity = 0;
+  }
+  const { market = 'US', playlistTracksLimit = 50 } = options;
+
+  console.log(`SpotifyService: Attempting to get random track from playlist ID: ${playlistId} with options:`, { minPopularity, market, playlistTracksLimit });
+
+  try {
+    const apiClient = await getSpotifyApiClient();
+
+    // Step 1: Try to get playlist metadata first for debugging
+    try {
+      console.log(`SpotifyService: Verifying playlist existence with getPlaylist('${playlistId}')...`);
+      const playlistInfo = await apiClient.getPlaylist(playlistId, { fields: 'id,name,uri' }); // Request minimal fields
+      console.log(`SpotifyService: Successfully fetched playlist metadata: ${playlistInfo.body.name} (ID: ${playlistInfo.body.id})`);
+    } catch (playlistError) {
+      console.error(`SpotifyService: CRITICAL - Failed to fetch metadata for playlist ${playlistId} using getPlaylist. Error:`, playlistError.message);
+      if (playlistError.body && playlistError.body.error) {
+        console.error('SpotifyService: Spotify API Error Details (getPlaylist):', playlistError.body.error);
+      }
+      // If we can't even get playlist metadata, propagate this error or return null.
+      // This might be the same 404, which would be very informative.
+      throw playlistError; // Rethrow to be caught by the main try-catch block if it's a 401 or other retryable error.
+    }
+
+    // Step 2: If playlist metadata fetch was okay, proceed to get tracks
+    console.log(`SpotifyService: Fetching tracks for playlist ${playlistId} with limit: ${playlistTracksLimit}, market: ${market}`);
+    const playlistData = await apiClient.getPlaylistTracks(playlistId, {
+      limit: playlistTracksLimit,
+      market: market,
+      // Temporarily remove fields to simplify, or use a minimal set
+      fields: 'items(track(id,name,artists(name),album(images),popularity))' // Removed preview_url from here as it's not used directly
+    });
+
+    if (playlistData.body && playlistData.body.items && playlistData.body.items.length > 0) {
+      let tracks = playlistData.body.items
+        .map(item => item.track)
+        .filter(track => track && typeof track.popularity === 'number'); // Ensure track and popularity exist
+
+      if (minPopularity > 0) {
+        tracks = tracks.filter(track => track.popularity >= minPopularity);
+      }
+
+      if (tracks.length === 0) {
+        console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after popularity filter ${minPopularity}).`);
+        return null;
+      }
+
+      const randomIndex = Math.floor(Math.random() * tracks.length);
+      const chosenTrack = tracks[randomIndex];
+      console.log(`SpotifyService: Selected track from playlist ${playlistId} (pop >= ${minPopularity}): ${chosenTrack.name}`);
+
+      return {
+        id: chosenTrack.id,
+        title: chosenTrack.name,
+        artist: chosenTrack.artists[0] ? chosenTrack.artists[0].name : 'Unknown Artist',
+        albumArt: getLargestAlbumArt(chosenTrack.album.images),
+      };
+    }
+    console.log(`SpotifyService: No tracks returned by getPlaylistTracks for playlist ${playlistId}. Items array might be empty or malformed.`);
+    return null;
+  } catch (error) {
+    if (error.statusCode === 401 && !_isRetry) {
+      console.log('SpotifyService: Attempting token refresh (401) during playlist processing.');
+      await refreshSpotifyToken();
+      console.log('SpotifyService: Retrying playlist processing after token refresh.');
+      return getRandomTrackFromPlaylist(playlistId, options, true);
+    }
+    // Log the specific error source if possible (getPlaylist vs getPlaylistTracks)
+    console.error(`SpotifyService: Error processing playlist ${playlistId}:`, error.message);
+    if (error.body && error.body.error) {
+        console.error('SpotifyService: Spotify API Error Details (outer catch):', error.body.error);
+    }
+    // Do not re-throw here for itunesService to handle attempts, but return null or let it throw if it's a critical unhandled error.
+    // For now, rethrowing to match previous behavior for attempts in itunesService.
+    throw error;
+  }
+}
+
+// Function to get basic details of a playlist for validation
+async function getPlaylistDetails(playlistId, _isRetry = false) {
+  console.log(`SpotifyService: Validating playlist ID: ${playlistId}`);
+  try {
+    const apiClient = await getSpotifyApiClient();
+    const playlistInfo = await apiClient.getPlaylist(playlistId, { fields: 'id,name,uri,public,tracks.total' });
+    console.log(`SpotifyService: Playlist validation successful for ID: ${playlistId}, Name: ${playlistInfo.body.name}`);
+    return {
+      id: playlistInfo.body.id,
+      name: playlistInfo.body.name,
+      uri: playlistInfo.body.uri,
+      isPublic: playlistInfo.body.public,
+      totalTracks: playlistInfo.body.tracks.total
+    };
+  } catch (error) {
+    if (error.statusCode === 401 && !_isRetry) {
+      console.log('SpotifyService: Attempting token refresh (401) during playlist validation.');
+      await refreshSpotifyToken();
+      console.log('SpotifyService: Retrying playlist validation after token refresh.');
+      return getPlaylistDetails(playlistId, true);
+    }
+    console.error(`SpotifyService: Error validating playlist ${playlistId}:`, error.message);
+    if (error.body && error.body.error) {
+      console.error('SpotifyService: Spotify API Error Details (getPlaylistDetails):', error.body.error);
+    }
+    // Instead of throwing, return null or an error indicator for the validation endpoint to handle gracefully
+    return null; 
+  }
+}
+
 module.exports = {
   getSpotifyApiClient, // Renamed for clarity
   searchTracksForAutocomplete,
   findPopularTrackByArtist,
+  getRandomTrackFromPlaylist, // Export the new function
+  getPlaylistDetails, // Export new function
   refreshSpotifyToken
 }; 
