@@ -181,7 +181,7 @@ async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = f
       if (minPopularity > 0) {
         tracks = tracks.filter(track => track.popularity >= minPopularity);
       }
-
+      //checking for popularity and track length
       if (tracks.length === 0) {
         console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after popularity filter ${minPopularity}).`);
         return null;
