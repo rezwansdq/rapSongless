@@ -66,12 +66,8 @@ async function searchTracksForAutocomplete(query, limit = 10, market = 'US', _is
 
 // Function to find a popular track by a given artist
 async function findPopularTrackByArtist(artistName, options = {}, _isRetry = false) {
-  // Use minPopularity from options, default to 0 if not provided or invalid
-  let minPopularity = parseInt(options.minPopularity, 10);
-  if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
-    minPopularity = 0; // Default to no minimum if invalid, or set a sensible default like 30-50 if preferred
-  }
-  const { searchLimit = 50, market = 'US', excludeIds = new Set() } = options;
+  // minPopularity is no longer used.
+  const { searchLimit = 100, market = 'US', excludeIds = new Set() } = options; // Removed minPopularity
 
   try {
     const apiClient = await getSpotifyApiClient();
@@ -93,43 +89,22 @@ async function findPopularTrackByArtist(artistName, options = {}, _isRetry = fal
         return null;
       }
 
-      // Filter by minPopularity if specified and greater than 0
-      if (minPopularity > 0) {
-        allArtistTracks = allArtistTracks.filter(track => track.popularity >= minPopularity);
-      }
+      // Popularity filter removed.
+      // Preview URL prioritization removed.
 
-      if (allArtistTracks.length === 0) {
-        console.log(`SpotifyService: No tracks by ${artistName} found after popularity filter (minPopularity: ${minPopularity}) and exclusion. Search limit: ${searchLimit}`);
-        return null;
-      }
-
-      // Prioritize tracks with a preview_url
-      const tracksWithPreview = allArtistTracks.filter(track => track.preview_url);
-
-      let chosenTrack = null; // Initialize chosenTrack to null
-
-      if (tracksWithPreview.length > 0) {
-        const randomIndex = Math.floor(Math.random() * tracksWithPreview.length);
-        chosenTrack = tracksWithPreview[randomIndex];
-        console.log(`SpotifyService: Selected track for ${artistName} (with preview_url, popularity >= ${minPopularity}): ${chosenTrack.name}`);
-      } else {
-        console.log(`SpotifyService: No tracks by ${artistName} found with a direct Spotify preview_url (after popularity filter).`);
-        // Fallback: Pick any track from the filtered list (allArtistTracks)
-        // This list has already been filtered by popularity if minPopularity > 0
-        if (allArtistTracks.length > 0) {
-            const randomIndex = Math.floor(Math.random() * allArtistTracks.length);
-            chosenTrack = allArtistTracks[randomIndex];
-            console.log(`SpotifyService: Fallback - selected track for ${artistName} (may not have Spotify preview_url, popularity >= ${minPopularity}): ${chosenTrack.name}`);
-        }
-      }
-
+      // Directly choose a random track from the (filtered by excludeIds) list
+      const randomIndex = Math.floor(Math.random() * allArtistTracks.length);
+      const chosenTrack = allArtistTracks[randomIndex];
+      console.log(`SpotifyService: Selected track for ${artistName} (randomly, no popularity/preview filter): ${chosenTrack.name}`);
+      
+      // Ensure chosenTrack is not null before returning (it shouldn't be if allArtistTracks.length > 0)
       if (chosenTrack) {
         return {
           id: chosenTrack.id,
           title: chosenTrack.name,
           artist: chosenTrack.artists[0] ? chosenTrack.artists[0].name : 'Unknown Artist',
           albumArt: getLargestAlbumArt(chosenTrack.album.images),
-          // preview_url: chosenTrack.preview_url // IMPORTANT: Do not include preview_url here as it might be null
+          // preview_url is NOT returned from here. iTunes service will find it.
         };
       }
     }
@@ -138,25 +113,21 @@ async function findPopularTrackByArtist(artistName, options = {}, _isRetry = fal
     return null;
   } catch (error) {
     if (error.statusCode === 401 && !_isRetry) {
-      console.log('SpotifyService: Attempting token refresh (401) during popular track search.');
+      console.log('SpotifyService: Attempting token refresh (401) during artist track search.');
       await refreshSpotifyToken();
-      console.log('SpotifyService: Retrying popular track search after token refresh.');
+      console.log('SpotifyService: Retrying artist track search after token refresh.');
       return findPopularTrackByArtist(artistName, options, true); // Retry the call
     }
-    console.error(`SpotifyService: Error finding popular track for artist ${artistName}:`, error.message);
+    console.error(`SpotifyService: Error finding track for artist ${artistName}:`, error.message);
     throw error;
   }
 }
 
 // New function to get a random track from a playlist meeting popularity criteria
 async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = false) {
-  let minPopularity = parseInt(options.minPopularity, 10);
-  if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
-    minPopularity = 0;
-  }
-  const { market = 'US', playlistTracksLimit = 50, excludeIds = new Set() } = options;
+  const { market = 'US', playlistTracksLimit = 100, excludeIds = new Set() } = options; // Set default playlistTracksLimit to 50
 
-  console.log(`SpotifyService: Attempting to get random track from playlist ID: ${playlistId} with options:`, { minPopularity, market, playlistTracksLimit, excludeIdsCount: excludeIds.size });
+  console.log(`SpotifyService: Attempting to get random track from playlist ID: ${playlistId} with options:`, { market, playlistTracksLimit, excludeIdsCount: excludeIds.size });
 
   try {
     const apiClient = await getSpotifyApiClient();
@@ -188,7 +159,7 @@ async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = f
     if (playlistData.body && playlistData.body.items && playlistData.body.items.length > 0) {
       let tracks = playlistData.body.items
         .map(item => item.track)
-        .filter(track => track && typeof track.popularity === 'number'); // Ensure track and popularity exist
+        .filter(track => track && track.id); // Ensure track and track.id exist, popularity check removed
 
       // Filter out excluded tracks
       const initialCount = tracks.length;
@@ -202,18 +173,16 @@ async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = f
         return null;
       }
 
-      if (minPopularity > 0) {
-        tracks = tracks.filter(track => track.popularity >= minPopularity);
-      }
-      //checking for popularity and track length
+      // Popularity filter removed.
+      //checking for track length (after exclusion)
       if (tracks.length === 0) {
-        console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after exclusion and popularity filter ${minPopularity}).`);
+        console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after exclusion filter).`);
         return null;
       }
 
       const randomIndex = Math.floor(Math.random() * tracks.length);
       const chosenTrack = tracks[randomIndex];
-      console.log(`SpotifyService: Selected track from playlist ${playlistId} (pop >= ${minPopularity}): ${chosenTrack.name}`);
+      console.log(`SpotifyService: Selected track from playlist ${playlistId} (randomly, no popularity filter): ${chosenTrack.name}`);
 
       return {
         id: chosenTrack.id,

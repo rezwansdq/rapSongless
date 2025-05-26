@@ -61,6 +61,7 @@ async function getRandomSong(params) { // params will be { playlistId: '...' } o
     let spotifyTrack = null;
     let logIdentifier = '';
     const playedSpotifyTrackIds = params.playedSpotifyTrackIds instanceof Set ? params.playedSpotifyTrackIds : new Set(); // Ensure it's a Set
+    const unsuitableItunesTracks = new Set(); // New set for tracks without suitable iTunes matches
 
     if (params.playlistId) {
         logIdentifier = `playlist ID: ${params.playlistId}`;
@@ -78,16 +79,19 @@ async function getRandomSong(params) { // params will be { playlistId: '...' } o
         try {
             // 1. Get a track from Spotify based on mode
             if (params.playlistId) {
-                spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(params.playlistId, { minPopularity: 0, excludeIds: playedSpotifyTrackIds });
+                spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(params.playlistId, { excludeIds: playedSpotifyTrackIds });
             } else if (params.artistName) {
-                // For artist mode, we might want to try different popularity settings or just get any
-                // For now, let's use a default minPopularity or a configurable one if needed.
-                // The findPopularTrackByArtist itself handles picking one if multiple meet criteria.
-                spotifyTrack = await spotifyService.findPopularTrackByArtist(params.artistName, { minPopularity: 30, searchLimit: 20, excludeIds: playedSpotifyTrackIds }); // Example: minPopularity 30
+                spotifyTrack = await spotifyService.findPopularTrackByArtist(params.artistName, { searchLimit: 50, excludeIds: playedSpotifyTrackIds });
             }
 
             if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
                 console.log(`iTunesService (Attempt ${attempt}): Spotify found: ${spotifyTrack.title} - ${spotifyTrack.artist} (ID: ${spotifyTrack.id}) using ${logIdentifier}`);
+
+                // Check if the track is in the unsuitable tracks set
+                if (unsuitableItunesTracks.has(spotifyTrack.id)) {
+                    console.log(`iTunesService (Attempt ${attempt}): Skipping track ${spotifyTrack.title} - ${spotifyTrack.artist} as it has been marked unsuitable for iTunes.`);
+                    continue; // Skip to the next attempt
+                }
 
                 // 2. Search iTunes for this specific track to get a previewUrl
                 const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
@@ -114,20 +118,19 @@ async function getRandomSong(params) { // params will be { playlistId: '...' } o
                             previewUrl: matchedItunesTrack.previewUrl // iTunes preview URL
                         };
                     } else {
-                        console.log(`iTunesService (Attempt ${attempt}): No suitable iTunes match with preview found for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}. Examining iTunes results (found ${itunesResults.length}):`);
-                        itunesResults.forEach((item, index) => {
-                            console.log(`  Result ${index + 1}: Name='${item.trackName}', Artist='${item.artistName}', HasPreview=${!!item.previewUrl}`);
-                        });
+                        // Add to unsuitable tracks set if no suitable match found
+                        unsuitableItunesTracks.add(spotifyTrack.id);
+                        console.log(`iTunesService (Attempt ${attempt}): No suitable iTunes match found for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}.`);
                     }
                 } else {
-                    console.log(`iTunesService (Attempt ${attempt}): Could not find Spotify track '${spotifyTrack.title} - ${spotifyTrack.artist}' on iTunes search (0 results).`);
+                    console.log(`iTunesService (Attempt ${attempt}): No results found on iTunes for Spotify track: ${spotifyTrack.title} - ${spotifyTrack.artist}.`);
+                    unsuitableItunesTracks.add(spotifyTrack.id); // Add to unsuitable tracks if no results
                 }
             } else {
                 console.log(`iTunesService (Attempt ${attempt}): Spotify did not return a suitable track.`);
             }
         } catch (error) {
             console.error(`iTunesService (Attempt ${attempt}): Error during hybrid lookup for ${logIdentifier}:`, error.message);
-            // Log error and continue to the next attempt if not maxed out
         }
         console.log(`iTunesService (Attempt ${attempt}): Failed to secure a song with preview in this attempt for ${logIdentifier}.`);
     }
