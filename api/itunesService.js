@@ -56,17 +56,18 @@ async function searchItunesRaw(term, entity = 'song', media = 'music', limit = 1
     }
 }
 
-async function getRandomSong(params) { // params will be { playlistId: '...' } or { artistName: '...' }
+async function getRandomSong(params) { // params will be { playlistId: '...' } or { artistName: '...' } or { playedSpotifyTrackIds: Set(...) }
     const MAX_ATTEMPTS = 5;
     let spotifyTrack = null;
     let logIdentifier = '';
+    const playedSpotifyTrackIds = params.playedSpotifyTrackIds instanceof Set ? params.playedSpotifyTrackIds : new Set(); // Ensure it's a Set
 
     if (params.playlistId) {
         logIdentifier = `playlist ID: ${params.playlistId}`;
-        console.log(`iTunesService:getRandomSong - Mode: Playlist, ID: ${params.playlistId}`);
+        console.log(`iTunesService:getRandomSong - Mode: Playlist, ID: ${params.playlistId}, Exclude count: ${playedSpotifyTrackIds.size}`);
     } else if (params.artistName) {
         logIdentifier = `artist Name: '${params.artistName}'`;
-        console.log(`iTunesService:getRandomSong - Mode: Artist, Name: ${params.artistName}`);
+        console.log(`iTunesService:getRandomSong - Mode: Artist, Name: ${params.artistName}, Exclude count: ${playedSpotifyTrackIds.size}`);
     } else {
         console.error("iTunesService: getRandomSong called without playlistId or artistName.");
         return null;
@@ -77,12 +78,12 @@ async function getRandomSong(params) { // params will be { playlistId: '...' } o
         try {
             // 1. Get a track from Spotify based on mode
             if (params.playlistId) {
-                spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(params.playlistId, { minPopularity: 0 });
+                spotifyTrack = await spotifyService.getRandomTrackFromPlaylist(params.playlistId, { minPopularity: 0, excludeIds: playedSpotifyTrackIds });
             } else if (params.artistName) {
                 // For artist mode, we might want to try different popularity settings or just get any
                 // For now, let's use a default minPopularity or a configurable one if needed.
                 // The findPopularTrackByArtist itself handles picking one if multiple meet criteria.
-                spotifyTrack = await spotifyService.findPopularTrackByArtist(params.artistName, { minPopularity: 30, searchLimit: 20 }); // Example: minPopularity 30
+                spotifyTrack = await spotifyService.findPopularTrackByArtist(params.artistName, { minPopularity: 30, searchLimit: 20, excludeIds: playedSpotifyTrackIds }); // Example: minPopularity 30
             }
 
             if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {

@@ -71,7 +71,7 @@ async function findPopularTrackByArtist(artistName, options = {}, _isRetry = fal
   if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
     minPopularity = 0; // Default to no minimum if invalid, or set a sensible default like 30-50 if preferred
   }
-  const { searchLimit = 50, market = 'US' } = options;
+  const { searchLimit = 50, market = 'US', excludeIds = new Set() } = options;
 
   try {
     const apiClient = await getSpotifyApiClient();
@@ -81,13 +81,25 @@ async function findPopularTrackByArtist(artistName, options = {}, _isRetry = fal
     if (searchData.body.tracks && searchData.body.tracks.items.length > 0) {
       let allArtistTracks = searchData.body.tracks.items;
 
+      // Filter out excluded tracks
+      const initialCount = allArtistTracks.length;
+      allArtistTracks = allArtistTracks.filter(track => !excludeIds.has(track.id));
+      if (initialCount > 0 && allArtistTracks.length < initialCount) {
+        console.log(`SpotifyService: Filtered out ${initialCount - allArtistTracks.length} excluded tracks for artist ${artistName}.`);
+      }
+
+      if (allArtistTracks.length === 0) {
+        console.log(`SpotifyService: No tracks by ${artistName} found after excluding already played tracks. Search limit: ${searchLimit}`);
+        return null;
+      }
+
       // Filter by minPopularity if specified and greater than 0
       if (minPopularity > 0) {
         allArtistTracks = allArtistTracks.filter(track => track.popularity >= minPopularity);
       }
 
       if (allArtistTracks.length === 0) {
-        console.log(`SpotifyService: No tracks by ${artistName} found after popularity filter (minPopularity: ${minPopularity}). Search limit: ${searchLimit}`);
+        console.log(`SpotifyService: No tracks by ${artistName} found after popularity filter (minPopularity: ${minPopularity}) and exclusion. Search limit: ${searchLimit}`);
         return null;
       }
 
@@ -142,9 +154,9 @@ async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = f
   if (isNaN(minPopularity) || minPopularity < 0 || minPopularity > 100) {
     minPopularity = 0;
   }
-  const { market = 'US', playlistTracksLimit = 50 } = options;
+  const { market = 'US', playlistTracksLimit = 50, excludeIds = new Set() } = options;
 
-  console.log(`SpotifyService: Attempting to get random track from playlist ID: ${playlistId} with options:`, { minPopularity, market, playlistTracksLimit });
+  console.log(`SpotifyService: Attempting to get random track from playlist ID: ${playlistId} with options:`, { minPopularity, market, playlistTracksLimit, excludeIdsCount: excludeIds.size });
 
   try {
     const apiClient = await getSpotifyApiClient();
@@ -178,12 +190,24 @@ async function getRandomTrackFromPlaylist(playlistId, options = {}, _isRetry = f
         .map(item => item.track)
         .filter(track => track && typeof track.popularity === 'number'); // Ensure track and popularity exist
 
+      // Filter out excluded tracks
+      const initialCount = tracks.length;
+      tracks = tracks.filter(track => !excludeIds.has(track.id));
+      if (initialCount > 0 && tracks.length < initialCount) {
+        console.log(`SpotifyService: Filtered out ${initialCount - tracks.length} excluded tracks from playlist ${playlistId}.`);
+      }
+      
+      if (tracks.length === 0 && initialCount > 0) { // All tracks were excluded
+        console.log(`SpotifyService: All fetched tracks from playlist ${playlistId} were in the excludeIds list.`);
+        return null;
+      }
+
       if (minPopularity > 0) {
         tracks = tracks.filter(track => track.popularity >= minPopularity);
       }
       //checking for popularity and track length
       if (tracks.length === 0) {
-        console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after popularity filter ${minPopularity}).`);
+        console.log(`SpotifyService: No tracks found in playlist ${playlistId} (fetched ${playlistData.body.items.length}, after exclusion and popularity filter ${minPopularity}).`);
         return null;
       }
 

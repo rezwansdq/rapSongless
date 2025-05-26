@@ -11,9 +11,10 @@ module.exports = (req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const playlistId = parsedUrl.searchParams.get('playlistId');
     const artistName = parsedUrl.searchParams.get('artistName');
+    const excludeIdsString = parsedUrl.searchParams.get('exclude_ids');
 
     // Log received parameters for debugging
-    console.log(`API song-random: Received request. PlaylistId: ${playlistId}, ArtistName: ${artistName}`);
+    console.log(`API song-random: Received request. PlaylistId: ${playlistId}, ArtistName: ${artistName}, Exclude IDs: ${excludeIdsString ? excludeIdsString.substring(0,100) + '...' : 'none'}`);
 
     if (!playlistId && !artistName) {
       console.error('API song-random: Playlist ID or Artist Name is missing from the request.');
@@ -22,11 +23,21 @@ module.exports = (req, res) => {
 
     let song;
     try {
+      let serviceParams = {};
       if (playlistId) {
-        song = await itunesService.getRandomSong({ playlistId });
+        serviceParams.playlistId = playlistId;
       } else if (artistName) {
-        song = await itunesService.getRandomSong({ artistName });
+        serviceParams.artistName = artistName;
       }
+
+      if (excludeIdsString) {
+        serviceParams.playedSpotifyTrackIds = new Set(excludeIdsString.split(',').filter(id => id.trim() !== ''));
+        console.log(`API song-random: Parsed ${serviceParams.playedSpotifyTrackIds.size} IDs to exclude.`);
+      } else {
+        serviceParams.playedSpotifyTrackIds = new Set(); // Ensure it's always a Set
+      }
+
+      song = await itunesService.getRandomSong(serviceParams);
 
       if (song) {
         res.json(song);

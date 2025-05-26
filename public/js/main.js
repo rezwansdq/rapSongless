@@ -19,6 +19,8 @@ let currentStage = 0; // 0-indexed for snippetDurations array
 let score = 0; // Could be used for future enhancements
 let debounceTimer = null; // For debouncing autocomplete API calls
 let audioPlaybackState = false; // Track if audio is currently playing
+let playedTrackIds = new Set(); // To keep track of played song IDs
+let activeGameParameterForPlayedIds = null; // Stores the playlist/artist for the current playedTrackIds set
 
 const snippetDurations = [0.1, 0.5, 2, 4, 8, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
@@ -142,26 +144,42 @@ async function startGame() {
         return;
     }
 
+    // Check if the game parameter has changed. If so, reset playedTrackIds.
+    if (activeGameParameterForPlayedIds !== gameParameter) {
+        console.log(`MAIN: Game parameter changed from '${activeGameParameterForPlayedIds}' to '${gameParameter}'. Clearing playedTrackIds.`);
+        playedTrackIds.clear();
+        activeGameParameterForPlayedIds = gameParameter;
+    } else {
+        console.log(`MAIN: Continuing with game parameter '${gameParameter}'. Played IDs count: ${playedTrackIds.size}`);
+    }
+
     resetGameState();
 
     try {
         // Pass the mode to getRandomSong for clarity, though the backend will infer from param name
-        currentSong = await api.getRandomSong(gameParameter, mode); 
+        // Also pass the playedTrackIds set
+        currentSong = await api.getRandomSong(gameParameter, mode, playedTrackIds); 
         hideLoadingOverlay(); // Hide loading screen after song is fetched
 
         if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now
             console.error("CRITICAL: Failed to fetch a complete song with previewUrl from API.");
-            let alertMessage = "Error: Could not load a song with a playable preview.";
+            let alertMessage = "Error: Could not load a new song.";
             if (mode === 'artist') {
-                alertMessage += ` For artist: '${gameParameter}'. Try a different artist or a playlist.`;
+                alertMessage += ` For artist: '${gameParameter}'. All unique songs may have been played, or no suitable tracks were found. Try a different artist or playlist, or reset.`;
             } else {
-                alertMessage += " Please try again later or use a different playlist.";
+                alertMessage += " All unique songs from this playlist may have been played, or no suitable tracks were found. Please try again later, use a different playlist, or reset.";
             }
             alert(alertMessage);
             window.location.href = '/home.html'; // New: Redirect to actual home page
             return;
         }
         
+        // Add the current song's ID to the set of played tracks
+        if (currentSong && currentSong.id) {
+            playedTrackIds.add(currentSong.id);
+            console.log(`MAIN: Added ${currentSong.id} to playedTrackIds. Current set size: ${playedTrackIds.size}`);
+        }
+
         showScreen('game-screen'); // Now show the game screen as song is ready
         console.log("Current song for the game:", currentSong);
         /*if (currentSong.albumArt) {
@@ -193,6 +211,8 @@ function resetGameState() {
     clearAutocompleteSuggestions();
     resetGuessBoxes(); // Reset all guess boxes to empty
     // displayAlbumArt(null); // Clear album art on reset
+    // DO NOT Clear playedTrackIds here anymore. It's managed at the start of startGame.
+    // console.log("MAIN: playedTrackIds cleared during resetGameState.");
 }
 
 function startStage() {

@@ -11,9 +11,10 @@ const CACHE_MAX_SIZE = 20; // Store up to 20 recent search terms
  * Can fetch based on playlist ID or artist name.
  * @param {string} parameter - The ID of the Spotify playlist or the name of the artist.
  * @param {string} mode - Type of parameter: 'playlist' or 'artist'.
+ * @param {Set<string>} playedIdsSet - A set of Spotify track IDs that have already been played.
  */
-export async function getRandomSong(parameter, mode = 'playlist') { // Default mode to playlist for safety
-    console.log(`API: Fetching random song from backend. Mode: ${mode}, Parameter: ${parameter}`);
+export async function getRandomSong(parameter, mode = 'playlist', playedIdsSet = new Set()) { // Default mode to playlist for safety
+    console.log(`API: Fetching random song from backend. Mode: ${mode}, Parameter: ${parameter}, Excluding: ${playedIdsSet.size} tracks`);
     
     if (!parameter) {
         console.error(`API: getRandomSong called without a ${mode === 'playlist' ? 'playlistId' : 'artistName'}.`);
@@ -27,15 +28,23 @@ export async function getRandomSong(parameter, mode = 'playlist') { // Default m
     }
 
     let apiUrl = `${API_BASE_URL}/song-random`;
+    const queryParams = new URLSearchParams();
+
     if (mode === 'playlist') {
-        apiUrl += `?playlistId=${encodeURIComponent(parameter)}`;
+        queryParams.append('playlistId', parameter);
     } else if (mode === 'artist') {
-        apiUrl += `?artistName=${encodeURIComponent(parameter)}`;
+        queryParams.append('artistName', parameter);
     } else {
         console.error(`API: Invalid mode "${mode}" for getRandomSong.`);
         // Fallback or error handling
         return { id: "errorModeId", title: "Error: Invalid Mode", artist: "Check API Call", previewUrl: null, albumArt: null };
     }
+
+    if (playedIdsSet && playedIdsSet.size > 0) {
+        queryParams.append('exclude_ids', Array.from(playedIdsSet).join(','));
+    }
+    
+    apiUrl += `?${queryParams.toString()}`;
 
     try {
         const response = await fetch(apiUrl);
