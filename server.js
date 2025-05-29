@@ -1,3 +1,7 @@
+/*
+THIS FILE WAS USED TO TEST THE PROGRAM IN ITS INITIAL STAGES, THE SITE IS HOSTED ON VERCEL, THUS ONLY RELIES ON vercel.json
+*/
+
 require('dotenv').config(); // For loading environment variables (Spotify keys)
 const express = require('express');
 const cors = require('cors');
