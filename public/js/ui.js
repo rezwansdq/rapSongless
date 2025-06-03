@@ -55,14 +55,14 @@ export function updateTimer(elapsedTime) {
     // Update progress bar based on fixed duration
     if (currentSnippetDuration > 0) {
         // Calculate the percentage based on the fixed duration
-        const percentage = Math.min(Math.ceil((elapsedTime / currentSnippetDuration) * 100), 100);
+        const percentage = Math.min(Math.floor((elapsedTime / currentSnippetDuration) * 100), 100);
         updateProgressBar(percentage);
     }
 }
 
 function formatTime(seconds) {
     // Round up to nearest 0.1 second
-    const roundedSeconds = Math.ceil(seconds * 10) / 10;
+    const roundedSeconds = Math.floor(seconds * 10) / 10;
     // Format with 1 decimal place
     return `${roundedSeconds.toFixed(1)}sec`;
 }
@@ -130,9 +130,6 @@ export function updatePlayButton(isEnabled, hasPreview, isCurrentlyPlaying = nul
         isPlaying = isCurrentlyPlaying;
         console.log(`UI: updatePlayButton called with isCurrentlyPlaying=${isCurrentlyPlaying}`);
     }
-    
-    // Enable/disable the button
-    playButton.disabled = !isEnabled;
     
     // Update the button icon based on play state
     const iconSpan = playButton.querySelector('span') || document.createElement('span');

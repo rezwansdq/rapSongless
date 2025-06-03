@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const playlistInputSection = document.getElementById('playlist-input-section');
     const artistInputSection = document.getElementById('artist-input-section');
 
+    const howToPlayButton = document.getElementById('how-to-play-btn');
+    const howToPlayModal = document.getElementById('how-to-play-modal');
+    const closeHowToPlayButton = document.getElementById('close-how-to-play-btn');
+
     let currentInputMode = 'playlist';
 
     function updateInputModeUI(mode) {
@@ -111,6 +115,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('userInputMode', 'artist');
                 window.location.href = '/game';
             }
+        });
+    }
+
+    if (howToPlayButton) {
+        howToPlayButton.addEventListener('click', () => {
+            howToPlayModal.classList.add('active');
+        });
+    }
+
+    if (closeHowToPlayButton) {
+        closeHowToPlayButton.addEventListener('click', () => {
+            howToPlayModal.classList.remove('active');
         });
     }
 });

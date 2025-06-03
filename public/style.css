@@ -7,8 +7,13 @@ body {
     flex-direction: column; /* ADDED: For sticky footer */
     min-height: 100vh;
     text-align: center; /* This will still apply to inline/text content within children */
+    transition: filter 0.3s ease; /* Smooth transition for blur */
 }
 
+.blurred {
+    filter: blur(5px); /* Apply blur effect */
+    pointer-events: none; /* Disable interaction with blurred content */
+}
 .container {
     width: 100%;
     max-width: 480px; /* Max width for larger screens */
@@ -147,11 +152,6 @@ body {
     gap: 10px; /* Reduced gap */
     position: relative; 
     transition: filter 0.3s ease; /* Smooth transition for blur */
-}
-
-#game-screen.blurred {
-    filter: blur(5px); /* Apply blur effect */
-    pointer-events: none; /* Disable interaction with blurred content */
 }
 
 /* Volume Slider Styles */
@@ -556,6 +556,53 @@ body {
     padding: 12px 25px;
     font-size: 1.1rem;
     min-width: 120px;
+}
+
+/* How to Play Button */
+.how-to-play-btn {
+    display: block;
+    width: fit-content;
+    margin: 20px auto 10px auto; /* Centered, above footer */
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.how-to-play-btn:hover {
+    background-color: #555;
+}
+
+/* How to Play Modal Content Styling */
+.how-to-play-content {
+    text-align: left;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #ddd;
+    max-height: 70vh; /* Max height to allow scrolling */
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+.how-to-play-content h3 {
+    color: #2ecc71;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.how-to-play-content ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    padding-left: 0;
+    margin-bottom: 15px;
+}
+
+.how-to-play-content li {
+    margin-bottom: 8px;
 }
 
 /* History Display */

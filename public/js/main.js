@@ -1,6 +1,6 @@
 import { showScreen, updateStageCounter, updateTimer, updateProgressBar, displayAutocompleteSuggestions, clearAutocompleteSuggestions, updatePlayButton, showSuccessScreen, showFailureScreen, addGuessResult, resetGuessBoxes, setCurrentSnippetDuration /*, displayAlbumArt */, showLoadingOverlay, hideLoadingOverlay } from './ui.js';
 import * as api from './api.js';
-import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume } from './audio.js';
+import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume, currentAudio } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 
 // DOM Elements
@@ -24,7 +24,7 @@ let debounceTimer = null; // For debouncing autocomplete API calls
 let audioPlaybackState = false; // Track if audio is currently playing
 let playedTrackIds = new Set(); // To keep track of played song IDs
 let activeGameParameterForPlayedIds = null; // Stores the playlist/artist for the current playedTrackIds set
-
+let pausedTime = 0; // To keep track of paused time
 const snippetDurations = [0.3, 0.7, 2.5, 5, 9, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
 
@@ -120,6 +120,7 @@ function togglePlayPause() {
     
     if (currentlyPlaying) {
         // If audio is playing, stop it
+        pausedTime = currentAudio ? currentAudio.currentTime : 0; // Record the current time when pausing
         stopAudio();
         audioPlaybackState = false;
         updatePlayButton(true, true, false); // Enable button, has preview, not playing
@@ -225,6 +226,7 @@ function resetGameState() {
     if(guessInput) guessInput.value = '';
     clearAutocompleteSuggestions();
     resetGuessBoxes(); // Reset all guess boxes to empty
+    pausedTime = 0; // Reset paused time for a new game
     // displayAlbumArt(null); // Clear album art on reset
     // DO NOT Clear playedTrackIds here anymore. It's managed at the start of startGame.
     // console.log("MAIN: playedTrackIds cleared during resetGameState.");
@@ -241,6 +243,7 @@ function startStage() {
     setCurrentSnippetDuration(0); // Reset snippet duration
     updatePlayButton(true, !!(currentSong && currentSong.previewUrl), false); 
     updateTimer(0); // Reset timer to 0:00 at the start of a stage, before snippet plays
+    pausedTime = 0; // Reset paused time for a new stage
 }
 
 function playCurrentSnippet() {
@@ -253,13 +256,14 @@ function playCurrentSnippet() {
         // Set the current snippet duration for progress bar calculation
         setCurrentSnippetDuration(duration);
         
-        playSnippet(
+        playSnippet(pausedTime,
             currentSong.previewUrl, 
             duration,
             (currentTime) => updateTimer(currentTime), // onTimeUpdate callback - passing raw time now
             () => {
                 audioPlaybackState = false;
-                updatePlayButton(true, true, false); // Re-enable play button, not playing
+                updatePlayButton(true, true, false);
+                pausedTime = 0; // Reset pausedTime after snippet finishes or is played through
             }
         );
         audioPlaybackState = true;
@@ -342,6 +346,7 @@ function handleSuccess() {
             () => {
                 audioPlaybackState = false;
                 updateTimer(0); // Reset timer to 0 when preview ends
+                pausedTime = 0; // Reset pausedTime after full preview
             }
         );
         audioPlaybackState = true;
@@ -368,6 +373,7 @@ function handleFailure(reason = "No more attempts") {
             () => {
                 audioPlaybackState = false;
                 updateTimer(0); // Reset timer to 0 when preview ends
+                pausedTime = 0; // Reset pausedTime after full preview
             }
         );
         audioPlaybackState = true;
@@ -383,7 +389,7 @@ function showSettingsModal() {
     if (settingsModal) {
         settingsModal.classList.add('active');
         // Add blur to game screen content
-        document.getElementById('game-screen').classList.add('blurred');
+        document.classList.add('blurred');
     }
 }
 
@@ -391,7 +397,7 @@ function hideSettingsModal() {
     if (settingsModal) {
         settingsModal.classList.remove('active');
         // Remove blur from game screen content
-        document.getElementById('game-screen').classList.remove('blurred');
+        document.classList.remove('blurred');
     }
 }
 

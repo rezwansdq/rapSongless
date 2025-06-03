@@ -1,4 +1,4 @@
-let currentAudio = null;
+export let currentAudio = null;
 let audioTimerInterval = null; // Timer for tracking audio playback
 let currentVolume = 0.5; // Default volume 50%
 
@@ -10,7 +10,7 @@ export function setVolume(volume) {
     console.log(`Audio: Volume set to ${Math.round(currentVolume * 100)}%`);
 }
 
-export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetEnd) {
+export async function playSnippet(pausedTime, previewUrl, duration, onTimeUpdate, onSnippetEnd) {
     if (currentAudio) {
         currentAudio.pause();
     }
@@ -18,13 +18,16 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
         clearInterval(audioTimerInterval);
         audioTimerInterval = null;
     }
-
     currentAudio = new Audio(previewUrl);
-    currentAudio.currentTime = 0;
+    if (pausedTime < duration) {
+        currentAudio.currentTime = pausedTime;
+    } else {
+        currentAudio.currentTime = 0;
+    }
     currentAudio.volume = currentVolume; // Apply current volume
 
     // Call onTimeUpdate immediately with 0 to reset timer display
-    if (onTimeUpdate) onTimeUpdate(0);
+    if (onTimeUpdate) onTimeUpdate(currentAudio.currentTime);
 
     try {
         await currentAudio.play();
@@ -39,22 +42,26 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
                     clearInterval(audioTimerInterval);
                     audioTimerInterval = null;
                 }
+                if (currentAudio.currentTime >= duration) {
+                    currentAudio.pause();
+                    console.log(`Snippet paused after ${duration}s`);
+                }
             }, 100); // Update timer more frequently (10 times per second) for smoother progress
         }
 
-        setTimeout(() => {
-            if (currentAudio && !currentAudio.paused) {
-                console.log(currentAudio.currentTime, currentAudio.paused);
-                currentAudio.pause();
-                console.log(`Snippet paused after ${duration}s`);
-            }
-            if (audioTimerInterval) {
-                clearInterval(audioTimerInterval);
-                audioTimerInterval = null;
-            }
-            // Call onSnippetEnd when the snippet duration is met
-            if (onSnippetEnd) onSnippetEnd();
-        }, duration * 1000);
+        // setTimeout(() => {
+        //     if (currentAudio && !currentAudio.paused) {
+        //         console.log(currentAudio.currentTime, currentAudio.paused);
+        //         currentAudio.pause();
+        //         console.log(`Snippet paused after ${duration}s`);
+        //     }
+        //     if (audioTimerInterval) {
+        //         clearInterval(audioTimerInterval);
+        //         audioTimerInterval = null;
+        //     }
+        //     // Call onSnippetEnd when the snippet duration is met
+        //     if (onSnippetEnd) onSnippetEnd();
+        // }, duration * 1000);
     } catch (error) {
         console.error("Error playing audio snippet:", error);
         if (audioTimerInterval) {

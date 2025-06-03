@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Songless Unlimited - Home</title>
     <link rel="stylesheet" href="/style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
 </head>
 <body>
     <div class="container">
@@ -34,6 +35,10 @@
             <button id="validate-input-btn" class="btn" style="margin-top: 10px; background-color: #555; color: #fff;">Validate Playlist</button>
             <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
         </section>
+
+        <!-- New How to Play Button -->
+        <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
+
     </div>
 
     <!-- Loading Screen Overlay (Hidden by default) - Copied from index.html, might not be used on home.html but good for consistency if needed -->
@@ -50,5 +55,40 @@
         </p>
     </footer>
     <script type="module" src="/js/home.js"></script>
+
+    <!-- How to Play Modal (Hidden by default) -->
+    <div id="how-to-play-modal" class="modal-overlay">
+        <div class="modal-content settings-content">
+            <button id="close-how-to-play-btn" class="close-btn">✖</button>
+            <h2 class="modal-title">How to Play Songless Unlimited</h2>
+            <div class="how-to-play-content">
+                <h3>The Goal</h3>
+                <p>Guess the song title and artist based on short audio snippets. The snippets get longer with each incorrect guess or skip!</p>
+
+                <h3>Gameplay</h3>
+                <ul>
+                    <li><strong>Listen:</strong> Each round starts with a very short snippet of a song.</li>
+                    <li><strong>Guess:</strong> Type your guess into the search bar. Autocomplete will help you find the right song.</li>
+                    <li><strong>Submit:</strong> Press 'SUBMIT' to check your guess.</li>
+                    <li><strong>Skip:</strong> Can't guess? Hit 'SKIP' to move to the next stage. The snippet gets longer!</li>
+                    <li><strong>Stages:</strong> There are 5 stages in total. If you can't guess after the final stage, you fail the round.</li>
+                </ul>
+
+                <h3>Winning & Losing</h3>
+                <ul>
+                    <li><strong>Win:</strong> Guess correctly at any stage to win the round! You'll hear the full preview.</li>
+                    <li><strong>Lose:</strong> If you use all stages without guessing, you'll fail. The correct song will be revealed.</li>
+                </ul>
+
+                <h3>Input Modes</h3>
+                <p>Choose to play with songs from a specific Spotify Playlist (public only) or by a particular Artist.</p>
+
+                <h3>Volume Control</h3>
+                <p>Adjust the game volume at any time via the settings gear icon in the top right corner of the game screen.</p>
+
+                <p>Good luck and have fun!</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 
