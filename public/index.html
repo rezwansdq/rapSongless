@@ -13,13 +13,15 @@
             <div class="game-header">
                  <h1 class="game-title">Songless Unlimited</h1>
                  <a href="/" id="back-to-home-button" class="home-icon-btn">Home</a>
+                 <!-- New Settings Gear Icon -->
+                 <button id="settings-button" class="settings-icon-btn">⚙️</button>
             </div>
             
             <!-- Volume Slider -->
-            <div id="volume-control-container">
+            <!-- REMOVED: <div id="volume-control-container" style="display: none;">
                 <input type="range" id="volume-slider" min="0" max="100" value="50" step="10">
                 <label for="volume-slider" class="volume-label">Volume</label>
-            </div>
+            </div> -->
             
             <!-- Pre-displayed empty guess boxes -->
             <div class="guess-boxes-container">
@@ -91,6 +93,18 @@
     <!-- Loading Screen Overlay (Hidden by default) -->
     <div id="loading-overlay" class="loading-screen-overlay">
         <div class="loading-message">Finding song…</div>
+    </div>
+
+    <!-- Settings Modal (Hidden by default) -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content settings-content">
+            <button id="close-settings-button" class="close-btn">✖</button>
+            <h2 class="modal-title">Settings</h2>
+            <div class="setting-item">
+                <label for="volume-slider-modal" class="volume-label">Volume</label>
+                <input type="range" id="volume-slider-modal" min="0" max="100" value="50" step="10">
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/js/main.js"></script>

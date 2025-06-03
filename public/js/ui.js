@@ -37,7 +37,7 @@ export function updateStageCounter(currentStage, totalStages) {
 // Helper to get stage duration for display
 function getStageDuration(stageIndex) {
     // These should match the snippetDurations array in main.js
-    const durations = [0.1, 0.5, 2, 4, 8, 15];
+    const durations = [0.3, 0.7, 2.5, 5, 9, 15];
     return durations[stageIndex] || 0;
 }
 
@@ -52,9 +52,10 @@ export function updateTimer(elapsedTime) {
         timerElement.textContent = formatTime(elapsedTime);
     }
     
-    // Update progress bar based on elapsed time relative to snippet duration
+    // Update progress bar based on fixed duration
     if (currentSnippetDuration > 0) {
-        const percentage = Math.min((elapsedTime / currentSnippetDuration) * 100, 100);
+        // Calculate the percentage based on the fixed duration
+        const percentage = Math.min(Math.ceil((elapsedTime / currentSnippetDuration) * 100), 100);
         updateProgressBar(percentage);
     }
 }

@@ -37,7 +37,7 @@ body {
     align-items: center;
     width: 100%;
     padding: 10px 0; /* Add some padding */
-    margin-bottom: 10px; /* Space below header */
+    margin-bottom: 0px; /* Space below header */
 }
 
 .game-title {
@@ -45,7 +45,7 @@ body {
     font-weight: 700;
     color: #ffffff;
     text-align: center;
-    margin-top: 25px;
+    margin-top: 25px ;
     margin-bottom: 5px;
     flex-grow: 1; /* Allow title to take space and center correctly */
 }
@@ -56,7 +56,7 @@ body {
     left: 0; /* Position to the far right */
     transform: translateY(-50%); /* Vertically center */
     font-size: 1rem; /* Adjust icon size */
-    color: #fff;
+    color: #2ecc71;
     text-decoration: none;
     padding: 5px 10px;
     border-radius: 5px;
@@ -70,6 +70,25 @@ body {
 .home-icon-btn:hover {
     color: #2ecc71; /* Highlight color on hover */
     /* background-color: #333; */ /* Optional hover background */
+}
+
+/* New Settings Gear Icon Button */
+.settings-icon-btn {
+    position: absolute;
+    top: 10%; /* Center vertically */
+    right: 0; /* Position to the far right */
+    transform: translateY(-50%); /* Vertically center */
+    background: none; /* No background */
+    border: none; /* No border */
+    font-size: 1.35rem; /* Size of the gear icon */
+    cursor: pointer;
+    color: #aaa; /* Default color */
+    transition: color 0.3s ease;
+    padding: 0; /* Remove padding */
+}
+
+.settings-icon-btn:hover {
+    color: #fff; /* White on hover */
 }
 
 .btn {
@@ -127,9 +146,16 @@ body {
     flex-direction: column;
     gap: 10px; /* Reduced gap */
     position: relative; 
+    transition: filter 0.3s ease; /* Smooth transition for blur */
+}
+
+#game-screen.blurred {
+    filter: blur(5px); /* Apply blur effect */
+    pointer-events: none; /* Disable interaction with blurred content */
 }
 
 /* Volume Slider Styles */
+/* The original volume-control-container is now hidden, these styles apply to the one inside the modal */
 #volume-control-container {
     display: flex; 
     flex-direction: column; /* Stack slider and label vertically */
@@ -140,7 +166,7 @@ body {
     margin-right: auto; 
 }
 
-#volume-slider {
+#volume-slider-modal {
     -webkit-appearance: none; /* Override default appearance */
     appearance: none;
     width: 100%; /* Make slider fill the container width */
@@ -152,7 +178,7 @@ body {
     outline: none; /* Remove outline */
 }
 
-#volume-slider::-webkit-slider-thumb {
+#volume-slider-modal::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 16px; 
@@ -163,7 +189,7 @@ body {
     margin-top: -4px; /* Adjust thumb position vertically: (track_height - thumb_height) / 2 = (8 - 16) / 2 = -4px */
 }
 
-#volume-slider::-moz-range-thumb {
+#volume-slider-modal::-moz-range-thumb {
     width: 16px;
     height: 16px;
     background: #2ecc71; /* Thumb color - green */
@@ -172,7 +198,7 @@ body {
     border: none;
 }
 
-#volume-slider::-moz-range-track {
+#volume-slider-modal::-moz-range-track {
     width: 100%;
     height: 8px;
     background: #555; /* Track color - grey */
@@ -192,13 +218,13 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px; /* Reduced gap */
-    margin: 10px 0 15px; /* Reduced margin */
+    margin: 0px 0 15px; /* Reduced margin */
 }
 
 .guess-box {
     background-color: #2a2a2a;
     border-radius: 5px;
-    padding: 10px; /* Reduced padding */
+    padding: 15px; /* Reduced padding */
     display: flex;
     align-items: center;
     transition: all 0.3s ease;
@@ -328,7 +354,7 @@ body {
     width: 0%; /* Initial width */
     background-color: #2ecc71;
     border-radius: 5px;
-    transition: width 0.2s ease; /* Faster transition for smoother updates */
+    transition: width 0.15s ease; /* Faster transition for smoother updates */
 }
 
 /* Play Button */
@@ -633,4 +659,72 @@ footer a {
 
 footer a:hover {
     text-decoration: underline;
+}
+
+/* New Modal Overlay for Settings */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001; /* Above game content, below loading overlay */
+    -webkit-backdrop-filter: blur(5px); /* For Safari */
+    backdrop-filter: blur(5px); /* Standard blur */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.settings-content {
+    background-color: #1e1e1e; /* Darker background for settings modal */
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    position: relative; /* For positioning close button */
+    min-width: 320px; /* Minimum width for the modal */
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+    color: #fff;
 } 

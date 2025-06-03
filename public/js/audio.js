@@ -44,6 +44,7 @@ export async function playSnippet(previewUrl, duration, onTimeUpdate, onSnippetE
 
         setTimeout(() => {
             if (currentAudio && !currentAudio.paused) {
+                console.log(currentAudio.currentTime, currentAudio.paused);
                 currentAudio.pause();
                 console.log(`Snippet paused after ${duration}s`);
             }

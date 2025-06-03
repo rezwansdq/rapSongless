@@ -9,7 +9,10 @@ const playPauseButton = document.getElementById('play-pause-button');
 const guessInput = document.getElementById('guess-input');
 const submitButton = document.getElementById('submit-button');
 const skipButton = document.getElementById('skip-button');
-const volumeSlider = document.getElementById('volume-slider');
+const volumeSlider = document.getElementById('volume-slider-modal'); // Updated ID
+const settingsButton = document.getElementById('settings-button'); // New
+const settingsModal = document.getElementById('settings-modal'); // New
+const closeSettingsButton = document.getElementById('close-settings-button'); // New
 // const volumePercentage = document.getElementById('volume-percentage'); // Removed
 // Play Next and Try Again buttons will be handled by UI module or dynamically added
 
@@ -22,7 +25,7 @@ let audioPlaybackState = false; // Track if audio is currently playing
 let playedTrackIds = new Set(); // To keep track of played song IDs
 let activeGameParameterForPlayedIds = null; // Stores the playlist/artist for the current playedTrackIds set
 
-const snippetDurations = [0.1, 0.5, 2, 4, 8, 15]; // Seconds
+const snippetDurations = [0.3, 0.7, 2.5, 5, 9, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
 
 // --- Initialization ---
@@ -45,6 +48,18 @@ function setupEventListeners() {
         skipButton.addEventListener('click', () => {
             console.log("Skip button clicked"); // Debug log
             handleSkip();
+        });
+    }
+
+    if (settingsButton) {
+        settingsButton.addEventListener('click', () => {
+            showSettingsModal();
+        });
+    }
+
+    if (closeSettingsButton) {
+        closeSettingsButton.addEventListener('click', () => {
+            hideSettingsModal();
         });
     }
 
@@ -361,6 +376,23 @@ function handleFailure(reason = "No more attempts") {
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
     showFailureScreen(songTitle, songArtist, startGame);
+}
+
+// New functions for settings modal
+function showSettingsModal() {
+    if (settingsModal) {
+        settingsModal.classList.add('active');
+        // Add blur to game screen content
+        document.getElementById('game-screen').classList.add('blurred');
+    }
+}
+
+function hideSettingsModal() {
+    if (settingsModal) {
+        settingsModal.classList.remove('active');
+        // Remove blur from game screen content
+        document.getElementById('game-screen').classList.remove('blurred');
+    }
 }
 
 // --- Start Application ---
