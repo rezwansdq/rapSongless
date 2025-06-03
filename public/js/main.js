@@ -142,6 +142,7 @@ async function startGame() {
     const userInputMode = localStorage.getItem('userInputMode');
     const userPlaylistId = localStorage.getItem('userPlaylistId');
     const userArtistName = localStorage.getItem('userArtistName');
+    const userGenreName = localStorage.getItem('userGenreName'); // New
 
     let gameParameter = null;
     let mode = null;
@@ -154,15 +155,20 @@ async function startGame() {
         console.log(`MAIN: Starting game with artist name: ${userArtistName}`);
         gameParameter = userArtistName;
         mode = 'artist';
+    } else if (userInputMode === 'genre' && userPlaylistId && userGenreName) { // Use userPlaylistId for genre too
+        console.log(`MAIN: Starting game with genre: ${userGenreName} (Playlist ID: ${userPlaylistId})`);
+        gameParameter = userPlaylistId; // The playlist ID associated with the genre
+        mode = 'playlist'; // Still fetching from a playlist, just pre-selected
     } else {
-        console.warn("MAIN: No valid user input (playlist ID or artist name) found in localStorage. Redirecting to home.");
+        console.warn("MAIN: No valid user input (playlist ID, artist name, or genre) found in localStorage. Redirecting to home.");
         hideLoadingOverlay();
-        alert("No playlist or artist selected! Please go to the homepage and set one up first.");
+        alert("No playlist, artist, or genre selected! Please go to the homepage and set one up first.");
         window.location.href = '/home.html';
         return;
     }
 
     // Check if the game parameter has changed. If so, reset playedTrackIds.
+    // For genre mode, activeGameParameterForPlayedIds will store the playlist ID.
     if (activeGameParameterForPlayedIds !== gameParameter) {
         console.log(`MAIN: Game parameter changed from '${activeGameParameterForPlayedIds}' to '${gameParameter}'. Clearing playedTrackIds.`);
         playedTrackIds.clear();

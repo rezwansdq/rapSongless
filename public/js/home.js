@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputModeRadios = document.querySelectorAll('input[name="input-mode"]');
     const playlistInputSection = document.getElementById('playlist-input-section');
     const artistInputSection = document.getElementById('artist-input-section');
+    const genreInputSection = document.getElementById('genre-input-section');
+    const genreSelect = document.getElementById('genre-select');
 
     const howToPlayButton = document.getElementById('how-to-play-btn');
     const howToPlayModal = document.getElementById('how-to-play-modal');
@@ -15,18 +17,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentInputMode = 'playlist';
 
+    const genres = [
+        { name: "R&B", playlistId: "0X4K4T2IqcV3MAZ7HhB8Qy" },
+        { name: "Pop", playlistId: "6mtYuOxzl58vSGnEDtZ9uB" },
+        { name: "Rap", playlistId: "01MRi9jFGeSEEttKOk7VgR" },
+        { name: "Recent Hits", playlistId: "5KJDMJe9EJ7QRz8FG2MIpI" },
+        { name: "2010s Hits", playlistId: "5XALIurWS8TuF6kk8bj438" },
+        { name: "2000s Hits", playlistId: "1udqwx26htiKljZx4HwVxs" }
+    ];
+
+    function populateGenres() {
+        if (genreSelect) {
+            genreSelect.innerHTML = ''; // Clear existing options
+            genres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre.playlistId; // Store playlist ID as value
+                option.textContent = genre.name;
+                genreSelect.appendChild(option);
+            });
+        }
+    }
+
     function updateInputModeUI(mode) {
         currentInputMode = mode;
+        playlistInputSection.style.display = 'none';
+        artistInputSection.style.display = 'none';
+        genreInputSection.style.display = 'none';
+
         if (mode === 'playlist') {
             playlistInputSection.style.display = 'block';
-            artistInputSection.style.display = 'none';
             validateButton.textContent = 'Validate Playlist';
             playlistUrlInput.focus();
         } else if (mode === 'artist') {
-            playlistInputSection.style.display = 'none';
             artistInputSection.style.display = 'block';
             validateButton.textContent = 'Set Artist & Start';
             artistNameInput.focus();
+        } else if (mode === 'genre') {
+            genreInputSection.style.display = 'block';
+            populateGenres(); // Populate dropdown when genre mode is active
+            validateButton.textContent = 'Set Genre & Start';
+            if (genreSelect) genreSelect.focus();
         }
         messageArea.textContent = '';
     }
@@ -40,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const storedInputMode = localStorage.getItem('userInputMode');
     const storedPlaylistId = localStorage.getItem('userPlaylistId');
     const storedArtistName = localStorage.getItem('userArtistName');
+    const storedGenreName = localStorage.getItem('userGenreName');
 
     if (storedInputMode) {
         const radioToSelect = document.querySelector(`input[name="input-mode"][value="${storedInputMode}"]`);
@@ -52,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (storedInputMode === 'artist' && storedArtistName) {
             artistNameInput.value = storedArtistName;
             messageArea.textContent = `Previously used artist: ${storedArtistName}. Set new artist or start.`;
+            messageArea.style.color = '#2ecc71';
+        } else if (storedInputMode === 'genre' && storedGenreName) {
+            if (genreSelect) genreSelect.value = storedPlaylistId || '';
+            messageArea.textContent = `Previously used genre: ${storedGenreName}. Set new genre or start.`;
             messageArea.style.color = '#2ecc71';
         }
     } else {
@@ -87,12 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('userPlaylistId', playlistId);
                         localStorage.setItem('userArtistName', '');
                         localStorage.setItem('userInputMode', 'playlist');
+                        localStorage.setItem('userGenreName', '');
                         window.location.href = '/game';
                     } else {
                         messageArea.textContent = result.message || 'Failed to validate playlist. Try a different link.';
                         messageArea.style.color = '#e74c3c';
                         localStorage.removeItem('userPlaylistId');
                         localStorage.removeItem('userInputMode');
+                        localStorage.removeItem('userGenreName');
                     }
                 } catch (error) {
                     console.error('Error validating playlist:', error);
@@ -100,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     messageArea.style.color = '#e74c3c';
                     localStorage.removeItem('userPlaylistId');
                     localStorage.removeItem('userInputMode');
+                    localStorage.removeItem('userGenreName');
                 }
             } else if (currentInputMode === 'artist') {
                 const artistName = artistNameInput.value.trim();
@@ -113,6 +151,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('userArtistName', artistName);
                 localStorage.setItem('userPlaylistId', '');
                 localStorage.setItem('userInputMode', 'artist');
+                localStorage.setItem('userGenreName', '');
+                window.location.href = '/game';
+            } else if (currentInputMode === 'genre') {
+                const selectedPlaylistId = genreSelect ? genreSelect.value : null;
+                const selectedGenreName = genreSelect ? genreSelect.options[genreSelect.selectedIndex].text : '';
+                if (!selectedPlaylistId) {
+                    messageArea.textContent = 'Please select a genre.';
+                    messageArea.style.color = '#e74c3c';
+                    return;
+                }
+                messageArea.textContent = `Genre '${selectedGenreName}' selected. Redirecting to game...`;
+                messageArea.style.color = '#2ecc71';
+                localStorage.setItem('userPlaylistId', selectedPlaylistId);
+                localStorage.setItem('userArtistName', '');
+                localStorage.setItem('userInputMode', 'genre');
+                localStorage.setItem('userGenreName', selectedGenreName);
                 window.location.href = '/game';
             }
         });

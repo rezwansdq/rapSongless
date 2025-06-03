@@ -17,8 +17,11 @@
                 <label style="margin-right: 15px; color: #ddd;">
                     <input type="radio" name="input-mode" value="playlist" checked> Spotify Playlist URL
                 </label>
-                <label style="color: #ddd;">
+                <label style="margin-right: 15px; color: #ddd;">
                     <input type="radio" name="input-mode" value="artist"> Artist Name
+                </label>
+                <label style="color: #ddd;">
+                    <input type="radio" name="input-mode" value="genre"> Genre
                 </label>
             </div>
 
@@ -31,8 +34,15 @@
                 <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Enter Artist Name:</label>
                 <input type="text" id="artist-name" placeholder="e.g., Drake" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
             </div>
+
+            <div class="genre-input-container" id="genre-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto; display: none;">
+                <label for="genre-select" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Select a Genre:</label>
+                <select id="genre-select" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box; max-height: 150px; overflow-y: auto; cursor: pointer;">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
             
-            <button id="validate-input-btn" class="btn" style="margin-top: 10px; background-color: #555; color: #fff;">Validate Playlist</button>
+            <button id="validate-input-btn" class="btn" style="margin-top: 10px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold;">Validate Playlist</button>
             <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
         </section>
 
