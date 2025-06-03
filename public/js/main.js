@@ -126,6 +126,8 @@ function togglePlayPause() {
         updatePlayButton(true, true, false); // Enable button, has preview, not playing
     } else {
         // If audio is not playing, play it
+        if (currentAudio)
+            if (currentAudio.currentTime != 0) pausedTime = currentAudio ? currentAudio.currentTime : 0; // Reset paused time if snippet has ended
         playCurrentSnippet();
         audioPlaybackState = true;
         updatePlayButton(false, true, true); // Disable button while starting, playing
