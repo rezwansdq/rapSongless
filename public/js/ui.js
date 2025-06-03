@@ -37,7 +37,7 @@ export function updateStageCounter(currentStage, totalStages) {
 // Helper to get stage duration for display
 function getStageDuration(stageIndex) {
     // These should match the snippetDurations array in main.js
-    const durations = [0.3, 0.7, 2.5, 5, 9, 15];
+    const durations = [0.2, 0.7, 2.5, 5, 9, 15];
     return durations[stageIndex] || 0;
 }
 

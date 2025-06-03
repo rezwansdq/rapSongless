@@ -25,7 +25,7 @@ let audioPlaybackState = false; // Track if audio is currently playing
 let playedTrackIds = new Set(); // To keep track of played song IDs
 let activeGameParameterForPlayedIds = null; // Stores the playlist/artist for the current playedTrackIds set
 let pausedTime = 0; // To keep track of paused time
-const snippetDurations = [0.3, 0.7, 2.5, 5, 9, 15]; // Seconds
+const snippetDurations = [0.2, 0.7, 2.5, 5, 9, 15]; // Seconds
 const MAX_STAGES = snippetDurations.length;
 
 // --- Initialization ---
