@@ -9,20 +9,15 @@
 </head>
 <body>
     <div class="container">
-        <section id="home-page-content" class="screen active" style="text-align: center; padding-top: 50px;">
+        <section id="home-page-content" class="screen active" style="text-align: center; padding-top: 10px;">
             <h1 class="game-title">Welcome to Songless Unlimited!</h1>
             <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 20px;">Test your music knowledge and guess the song!</p>
-            
+            <hr style="border: 1px solid #ccc; margin: 50px 0;">
+            <h2 class="section-title">Game Mode</h2>
             <div class="input-mode-selector" style="margin-bottom: 20px;">
-                <label style="margin-right: 15px; color: #ddd;">
-                    <input type="radio" name="input-mode" value="playlist" checked> Spotify Playlist URL
-                </label>
-                <label style="margin-right: 15px; color: #ddd;">
-                    <input type="radio" name="input-mode" value="artist"> Artist Name
-                </label>
-                <label style="color: #ddd;">
-                    <input type="radio" name="input-mode" value="genre"> Genre
-                </label>
+                <button type="button" class="mode-btn" data-mode="playlist">Spotify Playlist URL</button>
+                <button type="button" class="mode-btn" data-mode="artist">Artist Name</button>
+                <button type="button" class="mode-btn" data-mode="genre">Genre</button>
             </div>
 
             <div class="playlist-input-container" id="playlist-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">

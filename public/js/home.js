@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageArea = document.getElementById('validation-message');
     const startGameButton = document.getElementById('go-to-game-button');
 
-    const inputModeRadios = document.querySelectorAll('input[name="input-mode"]');
+    const modeButtons = document.querySelectorAll('.input-mode-selector .mode-btn');
     const playlistInputSection = document.getElementById('playlist-input-section');
     const artistInputSection = document.getElementById('artist-input-section');
     const genreInputSection = document.getElementById('genre-input-section');
@@ -44,6 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
         artistInputSection.style.display = 'none';
         genreInputSection.style.display = 'none';
 
+        modeButtons.forEach(btn => {
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
         if (mode === 'playlist') {
             playlistInputSection.style.display = 'block';
             validateButton.textContent = 'Validate Playlist';
@@ -61,9 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         messageArea.textContent = '';
     }
 
-    inputModeRadios.forEach(radio => {
-        radio.addEventListener('change', (event) => {
-            updateInputModeUI(event.target.value);
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const mode = button.dataset.mode;
+            updateInputModeUI(mode);
+            localStorage.setItem('userInputMode', mode); // Persist selected mode
         });
     });
 
@@ -73,8 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storedGenreName = localStorage.getItem('userGenreName');
 
     if (storedInputMode) {
-        const radioToSelect = document.querySelector(`input[name="input-mode"][value="${storedInputMode}"]`);
-        if (radioToSelect) radioToSelect.checked = true;
         updateInputModeUI(storedInputMode);
 
         if (storedInputMode === 'playlist' && storedPlaylistId) {

@@ -1,3 +1,4 @@
+import {updatePlayButton} from './ui.js';
 export let currentAudio = null;
 let audioTimerInterval = null; // Timer for tracking audio playback
 let currentVolume = 0.5; // Default volume 50%
@@ -45,6 +46,7 @@ export async function playSnippet(pausedTime, previewUrl, duration, onTimeUpdate
                 if (currentAudio.currentTime >= duration) {
                     currentAudio.pause();
                     console.log(`Snippet paused after ${duration}s`);
+                    updatePlayButton(true, true, false);    // Update play button state
                 }
             }, 100); // Update timer more frequently (10 times per second) for smoother progress
         }

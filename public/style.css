@@ -780,9 +780,37 @@ footer a:hover {
 .input-mode-selector {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 10px; /* Adjust gap between buttons */
     margin-bottom: 25px;
     font-size: 1rem;
+}
+
+.mode-btn {
+    padding: 10px 15px;
+    border: 1px solid #555; /* Subtle border */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background-color: #333; /* Grey background */
+    color: #ddd; /* Light grey text */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.mode-btn:hover {
+    background-color: #444; /* Slightly lighter grey on hover */
+    border-color: #666;
+}
+
+.mode-btn.active {
+    background-color: rgba(30, 136, 74, 0.973); /* Green background */
+    color: #fff; /* White text */
+    border-color: #2ecc71; /* Green border */
+}
+
+.mode-btn.active:hover {
+    background-color: #27ae60; /* Darker green on hover for active state */
+    border-color: #27ae60;
 }
 
 .input-mode-selector label {
