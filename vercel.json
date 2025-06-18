@@ -2,7 +2,8 @@
   "version": 2,
   "builds": [
     { "src": "api/**/*.js",   "use": "@vercel/node"   },
-    { "src": "public/**",      "use": "@vercel/static" }
+    { "src": "public/**",      "use": "@vercel/static" },
+    { "src": "images/**",      "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/playlist/validate", "dest": "/api/playlist-validate.js" },
@@ -10,6 +11,7 @@
     { "src": "/js/(.*)",       "dest": "/public/js/$1" },
     { "src": "/style.css",     "dest": "/public/style.css" },
     { "src": "/game",          "dest": "/public/index.html" },
+    { "src": "/images/(.*)",   "dest": "/images/$1" },
     { "src": "/(.*)",          "dest": "/public/home.html" }
   ]
 } 
