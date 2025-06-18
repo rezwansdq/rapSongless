@@ -16,11 +16,8 @@ body {
 }
 .container {
     width: 100%;
-    max-width: 480px; /* Max width for larger screens */
     padding: 20px;
     box-sizing: border-box;
-    margin-left: auto; /* ADDED: To center the container in the flex body */
-    margin-right: auto; /* ADDED: To center the container in the flex body */
     flex-grow: 1; /* ADDED: Allows container to take up space, pushing footer down */
     display: flex; /* ADDED: To allow its children (screens) to be managed if needed */
     flex-direction: column; /* ADDED: To stack screens vertically within container */
