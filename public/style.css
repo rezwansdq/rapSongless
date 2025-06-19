@@ -18,6 +18,8 @@ body {
     width: 100%;
     padding: 20px;
     box-sizing: border-box;
+    max-width: 800px;
+    margin: 0 auto; /* Center the container */
     flex-grow: 1; /* ADDED: Allows container to take up space, pushing footer down */
     display: flex; /* ADDED: To allow its children (screens) to be managed if needed */
     flex-direction: column; /* ADDED: To stack screens vertically within container */
