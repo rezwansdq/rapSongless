@@ -297,6 +297,12 @@ function handleGuess() {
     } else {
         // Add wrong guess to current box
         addGuessResult('wrong', userGuess, currentStage + 1);
+        // Stop audio if playing and reset pausedTime
+        if (audioPlaybackState) {
+            stopAudio();
+            audioPlaybackState = false;
+            pausedTime = 0; // Reset paused time
+        }
         advanceStageOrEndGame("Wrong guess");
     }
     guessInput.value = ''; // Clear input after guess
@@ -360,7 +366,7 @@ function handleSuccess() {
         audioPlaybackState = true;
     }
     
-    showSuccessScreen(currentSong.title, currentSong.artist, startGame);
+    showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame, currentStage + 1);
 }
 
 function handleFailure(reason = "No more attempts") {
@@ -389,7 +395,7 @@ function handleFailure(reason = "No more attempts") {
     
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
-    showFailureScreen(songTitle, songArtist, startGame);
+    showFailureScreen(songTitle, songArtist, currentSong ? currentSong.albumArt : null, startGame);
 }
 
 // New functions for settings modal

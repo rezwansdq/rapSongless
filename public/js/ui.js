@@ -188,7 +188,7 @@ export function updateGuessBox(index, type, guess = '') {
         
         // Add status
         const status = document.createElement('span');
-        status.className = 'status';
+        status.className = 'status correct-status'; /* Added correct-status class */
         status.textContent = 'CORRECT';
         box.appendChild(status);
     }
@@ -208,15 +208,24 @@ export function addGuessResult(type, guess = '', currentStage) {
     updateGuessBox(currentStage - 1, type, guess);
 }
 
-export function showSuccessScreen(songTitle, artist, onPlayNext) {
+export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, currentStage) {
     const modal = document.getElementById('success-modal');
     const songInfo = document.getElementById('success-song-info');
     const playNextButton = document.getElementById('play-next-button');
+    const albumArtElement = document.getElementById('success-album-art');
 
     // Add correct guess to the current box
-    addGuessResult('correct', songTitle, 6); // Assuming always showing in last box on success
+    addGuessResult('correct', songTitle, currentStage);
     
     songInfo.textContent = `${songTitle} - ${artist}`;
+    
+    if (albumArtElement && albumArtUrl) {
+        albumArtElement.src = albumArtUrl;
+        albumArtElement.style.display = 'block';
+    } else if (albumArtElement) {
+        albumArtElement.style.display = 'none';
+    }
+
     modal.style.display = 'block';
 
     playNextButton.replaceWith(playNextButton.cloneNode(true));
@@ -227,12 +236,21 @@ export function showSuccessScreen(songTitle, artist, onPlayNext) {
     });
 }
 
-export function showFailureScreen(songTitle, artist, onTryAgain) {
+export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
     const modal = document.getElementById('failure-modal');
     const songInfo = document.getElementById('failure-song-info');
     const tryAgainButton = document.getElementById('try-again-button');
+    const albumArtElement = document.getElementById('failure-album-art');
 
     songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
+    
+    if (albumArtElement && albumArtUrl) {
+        albumArtElement.src = albumArtUrl;
+        albumArtElement.style.display = 'block';
+    } else if (albumArtElement) {
+        albumArtElement.style.display = 'none';
+    }
+
     modal.style.display = 'block';
 
     tryAgainButton.replaceWith(tryAgainButton.cloneNode(true));

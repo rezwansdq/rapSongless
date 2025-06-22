@@ -283,6 +283,17 @@ body {
 .guess-box.correct {
     background-color: #2a3a2a;
     color: #2ecc71;
+    justify-content: space-between; /* Distribute items with space between them */
+}
+
+.guess-box.correct .guess-text {
+    margin-left: 0; /* Remove left margin as flexbox handles spacing */
+}
+
+.guess-box.correct .status.correct-status {
+    position: static; /* Remove absolute positioning */
+    right: auto; /* Remove right positioning */
+    margin-left: auto; /* Push to the right */
 }
 
 /* Stage and Timer Info */
@@ -541,6 +552,14 @@ body {
     font-weight: 500;
     margin: 0 0 25px 0;
     color: #ffffff;
+}
+
+.modal-album-art {
+    max-width: 150px; /* Adjust as needed */
+    height: auto;
+    border-radius: 8px;
+    margin: 15px auto; /* Center the image and add vertical spacing */
+    display: block; /* Ensure it takes up its own line and can be centered */
 }
 
 .modal-content.success {
