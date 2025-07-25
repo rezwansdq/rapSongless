@@ -71,6 +71,29 @@ export async function getRandomSong(parameter, mode = 'playlist', playedIdsSet =
 }
 
 /**
+ * Fetches the daily song for the current date.
+ * @returns {Promise<Object|null>} A promise that resolves to the daily song object or null if not found.
+ */
+export async function getDailySong() {
+    console.log("API: Fetching daily song from backend.");
+    const apiUrl = `${API_BASE_URL}/song-daily`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
+        }
+        const song = await response.json();
+        console.log("API: Daily song fetched", song);
+        return song;
+    } catch (error) {
+        console.error("API: Error fetching daily song:", error);
+        return null;
+    }
+}
+
+/**
  * Fetches song suggestions from the backend (now Spotify-based) for autocomplete.
  * @param {string} query The search term.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of song suggestions

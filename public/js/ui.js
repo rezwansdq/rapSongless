@@ -210,9 +210,14 @@ export function addGuessResult(type, guess = '', currentStage) {
 
 export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, currentStage) {
     const modal = document.getElementById('success-modal');
+    const failureModal = document.getElementById('failure-modal'); // Get failure modal
     const songInfo = document.getElementById('success-song-info');
     const playNextButton = document.getElementById('play-next-button');
     const albumArtElement = document.getElementById('success-album-art');
+
+    if (failureModal) { // Explicitly hide failure modal
+        failureModal.style.display = 'none';
+    }
 
     // Add correct guess to the current box
     addGuessResult('correct', songTitle, currentStage);
@@ -228,8 +233,9 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, cu
 
     modal.style.display = 'block';
 
-    playNextButton.replaceWith(playNextButton.cloneNode(true));
-    document.getElementById('play-next-button').addEventListener('click', () => {
+    const newPlayNextButton = playNextButton.cloneNode(true);
+    playNextButton.parentNode.replaceChild(newPlayNextButton, playNextButton);
+    newPlayNextButton.addEventListener('click', () => {
         modal.style.display = 'none';
         resetGuessBoxes(); // Reset boxes for new game
         if (onPlayNext) onPlayNext();
@@ -238,9 +244,14 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, cu
 
 export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
     const modal = document.getElementById('failure-modal');
+    const successModal = document.getElementById('success-modal'); // Get success modal
     const songInfo = document.getElementById('failure-song-info');
     const tryAgainButton = document.getElementById('try-again-button');
     const albumArtElement = document.getElementById('failure-album-art');
+
+    if (successModal) { // Explicitly hide success modal
+        successModal.style.display = 'none';
+    }
 
     songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
     
@@ -253,8 +264,9 @@ export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
 
     modal.style.display = 'block';
 
-    tryAgainButton.replaceWith(tryAgainButton.cloneNode(true));
-    document.getElementById('try-again-button').addEventListener('click', () => {
+    const newTryAgainButton = tryAgainButton.cloneNode(true);
+    tryAgainButton.parentNode.replaceChild(newTryAgainButton, tryAgainButton);
+    newTryAgainButton.addEventListener('click', () => {
         modal.style.display = 'none';
         resetGuessBoxes(); // Reset boxes for new game
         if (onTryAgain) onTryAgain();

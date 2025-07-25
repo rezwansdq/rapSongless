@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const spotifyService = require('./spotifyService');
+const crypto = require('crypto');
 
 const ITUNES_API_BASE_URL = 'https://itunes.apple.com/search';
 const CHARTS_URL = 'https://itunes.apple.com/us/rss/topsongs/limit=100/genre=18/json';
@@ -140,6 +141,78 @@ async function getRandomSong(params) { // params will be { playlistId: '...' } o
     return null; // Explicitly return null if no song is found after all attempts
 }
 
+async function getDailySong(params) {
+    const { playlistId } = params;
+    const MAX_ATTEMPTS = 10; // Try up to 10 songs from the daily list if previews are missing
+    let logIdentifier = `daily song from playlist ID: ${playlistId}`;
+
+    console.log(`iTunesService:getDailySong - Mode: Daily, Playlist ID: ${playlistId}`);
+
+    try {
+        // 1. Get all tracks from the Spotify playlist
+        const tracks = await spotifyService.getAllTracksFromPlaylist(playlistId);
+        if (!tracks || tracks.length === 0) {
+            console.error(`iTunesService: No tracks found for daily challenge playlist ${playlistId}`);
+            return null;
+        }
+
+        // 2. Deterministically select a song based on the date
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            // Create a hash of the date and attempt number to get a "random" but deterministic index
+            const hash = crypto.createHash('sha256');
+            hash.update(dateString + i.toString());
+            const digest = hash.digest('hex');
+            const index = parseInt(digest, 16) % tracks.length;
+
+            const spotifyTrack = tracks[index];
+
+            if (spotifyTrack && spotifyTrack.id && spotifyTrack.title && spotifyTrack.artist) {
+                console.log(`iTunesService (Daily Attempt ${i + 1}): Selected track: ${spotifyTrack.title} - ${spotifyTrack.artist}`);
+
+                // 3. Search iTunes for this specific track to get a previewUrl
+                const itunesResults = await searchItunesRaw(`${spotifyTrack.title} ${spotifyTrack.artist}`, 'song', 'music', 10, 'US', null);
+
+                if (itunesResults.length > 0) {
+                    let matchedItunesTrack = null;
+                    for (const itunesTrack of itunesResults) {
+                        if (itunesTrack.trackName && itunesTrack.artistName && itunesTrack.previewUrl &&
+                            itunesTrack.trackName.toLowerCase().includes(spotifyTrack.title.toLowerCase()) &&
+                            itunesTrack.artistName.toLowerCase().includes(spotifyTrack.artist.toLowerCase())) {
+                            matchedItunesTrack = itunesTrack;
+                            break;
+                        }
+                    }
+
+                    if (matchedItunesTrack) {
+                        console.log(`iTunesService (Daily Attempt ${i + 1}): Found iTunes preview for daily track: ${matchedItunesTrack.trackName}`);
+                        return {
+                            id: spotifyTrack.id,
+                            title: spotifyTrack.title,
+                            artist: spotifyTrack.artist,
+                            albumArt: spotifyTrack.albumArt,
+                            previewUrl: matchedItunesTrack.previewUrl
+                        };
+                    } else {
+                        console.log(`iTunesService (Daily Attempt ${i + 1}): No suitable iTunes match with preview for: ${spotifyTrack.title}. Trying next song.`);
+                    }
+                } else {
+                    console.log(`iTunesService (Daily Attempt ${i + 1}): No iTunes results for: ${spotifyTrack.title}. Trying next song.`);
+                }
+            }
+        }
+
+        console.error(`iTunesService: Failed to find a daily song with a preview after ${MAX_ATTEMPTS} attempts.`);
+        return null;
+
+    } catch (error) {
+        console.error(`iTunesService: Error in getDailySong for ${logIdentifier}:`, error);
+        return null;
+    }
+}
+
 // New function for Spotify-based autocomplete
 async function searchSpotifyForAutocomplete(term) {
     console.log(`iTunesService: Searching Spotify for autocomplete with term: "${term}"...`);
@@ -155,7 +228,8 @@ async function searchSpotifyForAutocomplete(term) {
 
 module.exports = {
     getRandomSong,
+    getDailySong,
     searchSpotifyForAutocomplete, // For autocomplete endpoint
     searchItunesRaw // Expose if needed for direct iTunes search, but primarily internal now
     // getAllSongsForAutocomplete has been removed
-}; 
+};

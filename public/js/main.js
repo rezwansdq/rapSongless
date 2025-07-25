@@ -26,7 +26,11 @@ let playedTrackIds = new Set(); // To keep track of played song IDs
 let activeGameParameterForPlayedIds = null; // Stores the playlist/artist for the current playedTrackIds set
 let pausedTime = 0; // To keep track of paused time
 const snippetDurations = [0.2, 0.7, 2.5, 5, 9, 15]; // Seconds
-const MAX_STAGES = snippetDurations.length;
+let MAX_STAGES = snippetDurations.length;
+let isDailyChallenge = false;
+let dailySongs = [];
+let dailySongIndex = 0;
+let guessesLeft = 0;
 
 // --- Initialization ---
 async function initializeApp() {
@@ -147,23 +151,34 @@ async function startGame() {
     let gameParameter = null;
     let mode = null;
 
-    if (userInputMode === 'playlist' && userPlaylistId) {
+    isDailyChallenge = userInputMode === 'daily';
+
+    if (isDailyChallenge) {
+        console.log("MAIN: Starting game in Daily Challenge mode.");
+
+        
+        gameParameter = userPlaylistId;
+        mode = 'daily';
+    } else if (userInputMode === 'playlist' && userPlaylistId) {
         console.log(`MAIN: Starting game with playlist ID: ${userPlaylistId}`);
+        MAX_STAGES = snippetDurations.length;
         gameParameter = userPlaylistId;
         mode = 'playlist';
     } else if (userInputMode === 'artist' && userArtistName) {
         console.log(`MAIN: Starting game with artist name: ${userArtistName}`);
+        MAX_STAGES = snippetDurations.length;
         gameParameter = userArtistName;
         mode = 'artist';
     } else if (userInputMode === 'genre' && userPlaylistId && userGenreName) { // Use userPlaylistId for genre too
         console.log(`MAIN: Starting game with genre: ${userGenreName} (Playlist ID: ${userPlaylistId})`);
+        MAX_STAGES = snippetDurations.length;
         gameParameter = userPlaylistId; // The playlist ID associated with the genre
         mode = 'playlist'; // Still fetching from a playlist, just pre-selected
     } else {
         console.warn("MAIN: No valid user input (playlist ID, artist name, or genre) found in localStorage. Redirecting to home.");
         hideLoadingOverlay();
         alert("No playlist, artist, or genre selected! Please go to the homepage and set one up first.");
-        window.location.href = '/home.html';
+        window.location.href = '/';
         return;
     }
 
@@ -182,24 +197,34 @@ async function startGame() {
     try {
         // Pass the mode to getRandomSong for clarity, though the backend will infer from param name
         // Also pass the playedTrackIds set
-        currentSong = await api.getRandomSong(gameParameter, mode, playedTrackIds); 
+        if (isDailyChallenge) {
+            dailySongs = await api.getDailySong();
+            console.log('[MAIN] Daily songs received from API:', dailySongs);
+            if (dailySongs && dailySongs.length > 0) {
+                currentSong = dailySongs[dailySongIndex];
+            }
+        } else {
+            currentSong = await api.getRandomSong(gameParameter, mode, playedTrackIds);
+        }
         hideLoadingOverlay(); // Hide loading screen after song is fetched
 
         if (!currentSong || !currentSong.previewUrl) { // Check for previewUrl as well now
             console.error("CRITICAL: Failed to fetch a complete song with previewUrl from API.");
             let alertMessage = "Error: Could not load a new song.";
-            if (mode === 'artist') {
+            if (isDailyChallenge) {
+                alertMessage = "Error: Could not load the daily song. Please try again later.";
+            } else if (mode === 'artist') {
                 alertMessage += ` For artist: '${gameParameter}'. All unique songs may have been played, or no suitable tracks were found. Try a different artist or playlist, or reset.`;
             } else {
                 alertMessage += " All unique songs from this playlist may have been played, or no suitable tracks were found. Please try again later, use a different playlist, or reset.";
             }
             alert(alertMessage);
-            window.location.href = '/home.html'; // New: Redirect to actual home page
+            window.location.href = '/'; // New: Redirect to actual home page
             return;
         }
         
         // Add the current song's ID to the set of played tracks
-        if (currentSong && currentSong.id) {
+        if (currentSong && currentSong.id && !isDailyChallenge) {
             playedTrackIds.add(currentSong.id);
             console.log(`MAIN: Added ${currentSong.id} to playedTrackIds. Current set size: ${playedTrackIds.size}`);
         }
@@ -218,7 +243,7 @@ async function startGame() {
         console.error("Error starting game:", error);
         alert("Error starting the game. Please check console and try again.");
         // showScreen('landing-screen'); // Old
-        window.location.href = '/home.html'; // New: Redirect to actual home page
+        window.location.href = '/'; // New: Redirect to actual home page
     }
 }
 
@@ -293,6 +318,7 @@ function handleGuess() {
     const isCorrect = checkGuess(userGuess, currentSong.title, currentSong.artist);
 
     if (isCorrect) {
+        console.log("MAIN: handleGuess - Guess is correct. Calling handleSuccess.");
         handleSuccess();
     } else {
         // Add wrong guess to current box
@@ -343,6 +369,7 @@ function advanceStageOrEndGame(outcome) {
 
 // --- Game End ---
 function handleSuccess() {
+    console.log("MAIN: handleSuccess called. currentSong:", currentSong);
     // Stop audio if playing
     if (audioPlaybackState) {
         stopAudio();
@@ -366,10 +393,26 @@ function handleSuccess() {
         audioPlaybackState = true;
     }
     
-    showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame, currentStage + 1);
+
+    if (isDailyChallenge) {
+        const callback = (dailySongIndex < dailySongs.length - 1) ? () => {
+            dailySongIndex++;
+            resetGameState(); // Reset state first
+            currentSong = dailySongs[dailySongIndex]; // Then set the new song
+            startStage();
+        } : dailyChallengeComplete;
+        showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, callback, currentStage + 1);
+    } else {
+        showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame, currentStage + 1);
+    }
+}
+
+function dailyChallengeComplete() {
+    window.location.href = '/';
 }
 
 function handleFailure(reason = "No more attempts") {
+    console.log("MAIN: handleFailure called. Reason:", reason, "currentSong:", currentSong);
     // Stop audio if playing
     if (audioPlaybackState) {
         stopAudio();
@@ -395,7 +438,23 @@ function handleFailure(reason = "No more attempts") {
     
     const songTitle = currentSong ? currentSong.title : "Unknown Title";
     const songArtist = currentSong ? currentSong.artist : "Unknown Artist";
-    showFailureScreen(songTitle, songArtist, currentSong ? currentSong.albumArt : null, startGame);
+    if (isDailyChallenge) {
+        showFailureScreen(songTitle, songArtist, currentSong ? currentSong.albumArt : null, nextDailySong);
+    } else {
+        showFailureScreen(songTitle, songArtist, currentSong ? currentSong.albumArt : null, startGame);
+    }
+}
+
+function nextDailySong() {
+    if (dailySongIndex < dailySongs.length - 1) {
+        dailySongIndex++;
+        resetGameState(); // Reset state first
+        currentSong = dailySongs[dailySongIndex]; // Then set the new song
+        startStage();
+    } else {
+        // After the last daily song, go home.
+        window.location.href = '/';
+    }
 }
 
 // New functions for settings modal

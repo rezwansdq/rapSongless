@@ -11,12 +11,18 @@ module.exports = (req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const playlistId = parsedUrl.searchParams.get('playlistId');
     const artistName = parsedUrl.searchParams.get('artistName');
+    const mode = parsedUrl.searchParams.get('mode');
     const excludeIdsString = parsedUrl.searchParams.get('exclude_ids');
 
     // Log received parameters for debugging
-    console.log(`API song-random: Received request. PlaylistId: ${playlistId}, ArtistName: ${artistName}, Exclude IDs: ${excludeIdsString ? excludeIdsString.substring(0,100) + '...' : 'none'}`);
+    console.log(`API song-random: Received request. Mode: ${mode}, PlaylistId: ${playlistId}, ArtistName: ${artistName}, Exclude IDs: ${excludeIdsString ? excludeIdsString.substring(0,100) + '...' : 'none'}`);
 
-    if (!playlistId && !artistName) {
+    if (mode === 'daily') {
+        if (!playlistId) {
+            console.error('API song-random: Playlist ID is missing for daily mode.');
+            return res.status(400).json({ message: "Playlist ID is required for daily mode." });
+        }
+    } else if (!playlistId && !artistName) {
       console.error('API song-random: Playlist ID or Artist Name is missing from the request.');
       return res.status(400).json({ message: "Playlist ID or Artist Name is required for fetching a random song." });
     }
@@ -37,14 +43,19 @@ module.exports = (req, res) => {
         serviceParams.playedSpotifyTrackIds = new Set(); // Ensure it's always a Set
       }
 
-      song = await itunesService.getRandomSong(serviceParams);
+      if (mode === 'daily') {
+        song = await itunesService.getDailySong(serviceParams);
+      } else {
+        song = await itunesService.getRandomSong(serviceParams);
+      }
 
       if (song) {
         res.json(song);
       } else {
         let message = "Could not fetch a random song.";
-        if (playlistId) message = `Could not fetch a random song from playlist ${playlistId}.`;
-        if (artistName) message = `Could not fetch a random song for artist '${artistName}'.`;
+        if (mode === 'daily') message = `Could not fetch the daily song.`;
+        else if (playlistId) message = `Could not fetch a random song from playlist ${playlistId}.`;
+        else if (artistName) message = `Could not fetch a random song for artist '${artistName}'.`;
         res.status(404).json({ message });
       }
     } catch (error) {

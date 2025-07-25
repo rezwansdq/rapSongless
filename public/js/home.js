@@ -9,13 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const playlistInputSection = document.getElementById('playlist-input-section');
     const artistInputSection = document.getElementById('artist-input-section');
     const genreInputSection = document.getElementById('genre-input-section');
+    const dailySongSection = document.getElementById('daily-song-section');
     const genreSelect = document.getElementById('genre-select');
 
     const howToPlayButton = document.getElementById('how-to-play-btn');
     const howToPlayModal = document.getElementById('how-to-play-modal');
     const closeHowToPlayButton = document.getElementById('close-how-to-play-btn');
 
-    let currentInputMode = 'playlist';
+    let currentInputMode = 'daily';
 
     const genres = [
         { name: "R&B", playlistId: "0X4K4T2IqcV3MAZ7HhB8Qy" },
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playlistInputSection.style.display = 'none';
         artistInputSection.style.display = 'none';
         genreInputSection.style.display = 'none';
+        if(dailySongSection) dailySongSection.style.display = 'none';
 
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === mode) {
@@ -65,6 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
             populateGenres(); // Populate dropdown when genre mode is active
             validateButton.textContent = 'Set Genre & Start';
             if (genreSelect) genreSelect.focus();
+        } else if (mode === 'daily') {
+            if(dailySongSection) dailySongSection.style.display = 'block';
+            validateButton.textContent = 'Start Daily Challenge';
         }
         messageArea.textContent = '';
     }
@@ -96,9 +101,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (genreSelect) genreSelect.value = storedPlaylistId || '';
             messageArea.textContent = `Previously used genre: ${storedGenreName}. Set new genre or start.`;
             messageArea.style.color = '#2ecc71';
+        } else if (storedInputMode === 'daily') {
+            messageArea.textContent = 'Daily challenge is ready. Press start to play.';
+            messageArea.style.color = '#2ecc71';
         }
     } else {
-        updateInputModeUI('playlist');
+        updateInputModeUI('daily');
     }
 
     if (validateButton) {
@@ -175,6 +183,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('userArtistName', '');
                 localStorage.setItem('userInputMode', 'genre');
                 localStorage.setItem('userGenreName', selectedGenreName);
+                window.location.href = '/game';
+            } else if (currentInputMode === 'daily') {
+                messageArea.textContent = 'Starting the daily challenge...';
+                messageArea.style.color = '#2ecc71';
+                localStorage.setItem('userPlaylistId', ''); // No longer needed
+                localStorage.setItem('userArtistName', '');
+                localStorage.setItem('userInputMode', 'daily');
+                localStorage.setItem('userGenreName', 'Daily Song');
                 window.location.href = '/game';
             }
         });
