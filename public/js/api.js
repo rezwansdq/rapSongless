@@ -120,8 +120,21 @@ export async function fetchSearchSuggestions(query) {
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
         }
-        const songs = await response.json();
+        let songs = await response.json();
         console.log("API: Spotify suggestions fetched", songs);
+
+        // Deduplicate songs based on title and artist
+        const seenSongs = new Set();
+        const uniqueSongs = [];
+        for (const song of songs) {
+            const songIdentifier = `${song.title.toLowerCase()} - ${song.artist.toLowerCase()}`;
+            if (!seenSongs.has(songIdentifier)) {
+                seenSongs.add(songIdentifier);
+                uniqueSongs.push(song);
+            }
+        }
+        songs = uniqueSongs;
+        console.log("API: Deduplicated suggestions", songs);
 
         // Add to cache
         if (suggestionsCache.size >= CACHE_MAX_SIZE) {
