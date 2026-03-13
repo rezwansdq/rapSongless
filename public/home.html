@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,45 +8,52 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
 </head>
+
 <body>
     <div class="container">
         <section id="home-page-content" class="screen active" style="text-align: center; padding-top: 10px;">
             <h1 class="game-title">Welcome to Songless Unlimited!</h1>
-            <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 80px;">Test your music knowledge and guess the song!</p>
+            <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 15px;">Test your music knowledge and guess the
+                song!</p>
+            <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
             <h2 class="section-title">Game Select</h2>
             <div class="input-mode-selector" style="margin-bottom: 20px;">
                 <button type="button" class="mode-btn" data-mode="daily">Daily Songs</button>
-                <button type="button" class="mode-btn" data-mode="playlist">Spotify Playlist URL</button>
                 <button type="button" class="mode-btn" data-mode="artist">Artist Name</button>
                 <button type="button" class="mode-btn" data-mode="genre">Genre</button>
             </div>
 
-            <div class="daily-song-container" id="daily-song-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto; display: none;">
+            <div style="height: 100px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px;">
+                <div class="daily-song-container" id="daily-song-section"
+                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                </div>
+
+                <div class="artist-input-container" id="artist-input-section"
+                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                    <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Enter
+                        Artist Name:</label>
+                    <input type="text" id="artist-name" placeholder="e.g., Yeat"
+                        style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
+                </div>
+
+                <div class="genre-input-container" id="genre-input-section"
+                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                    <label for="genre-select"
+                        style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Select a Genre:</label>
+                    <select id="genre-select"
+                        style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box; max-height: 150px; overflow-y: auto; cursor: pointer;">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
             </div>
 
-            <div class="playlist-input-container" id="playlist-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                <label for="playlist-url" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Enter Spotify Playlist URL:</label>
-                <input type="text" id="playlist-url" placeholder="https://open.spotify.com/playlist/..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
-            </div>
-
-            <div class="artist-input-container" id="artist-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto; display: none;">
-                <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Enter Artist Name:</label>
-                <input type="text" id="artist-name" placeholder="e.g., Drake" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
-            </div>
-
-            <div class="genre-input-container" id="genre-input-section" style="margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto; display: none;">
-                <label for="genre-select" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd;">Select a Genre:</label>
-                <select id="genre-select" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box; max-height: 150px; overflow-y: auto; cursor: pointer;">
-                    <!-- Options will be populated by JavaScript -->
-                </select>
-            </div>
-            
-            <button id="validate-input-btn" class="btn" style="margin-top: 10px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold;">Validate Playlist</button>
+            <button id="validate-input-btn" class="btn"
+                style="margin-top: 5px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold; width: 100%; max-width: 500px; padding: 15px; font-size: 1.1rem;">Start
+                Game</button>
             <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
         </section>
 
-        <!-- New How to Play Button -->
-        <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
+        <!-- How to Play Button was previously here -->
 
     </div>
 
@@ -55,7 +63,7 @@
     </div>
 
     <footer>
-        <p>Rezwan Sadeqi &copy; 2025</p>
+        <p>Rezwan Sadeqi &copy; 2026</p>
 
     </footer>
     <script type="module" src="/js/home.js"></script>
@@ -68,32 +76,41 @@
             <h2 class="modal-title">How to Play Songless Unlimited</h2>
             <div class="how-to-play-content">
                 <h3>The Goal</h3>
-                <p>Guess the song title and artist based on short audio snippets. The snippets get longer with each incorrect guess or skip!</p>
+                <p>Guess the song title and artist based on short audio snippets. The snippets get longer with each
+                    incorrect guess or skip!</p>
 
                 <h3>Gameplay</h3>
                 <ul>
                     <li><strong>Listen:</strong> Each round starts with a very short snippet of a song.</li>
-                    <li><strong>Guess:</strong> Type your guess into the search bar. Autocomplete will help you find the right song.</li>
+                    <li><strong>Guess:</strong> Type your guess into the search bar. Autocomplete will help you find the
+                        right song.</li>
                     <li><strong>Submit:</strong> Press 'SUBMIT' to check your guess.</li>
-                    <li><strong>Skip:</strong> Can't guess? Hit 'SKIP' to move to the next stage. The snippet gets longer!</li>
-                    <li><strong>Stages:</strong> There are 5 stages in total. If you can't guess after the final stage, you fail the round.</li>
+                    <li><strong>Skip:</strong> Can't guess? Hit 'SKIP' to move to the next stage. The snippet gets
+                        longer!</li>
+                    <li><strong>Stages:</strong> There are 5 stages in total. If you can't guess after the final stage,
+                        you fail the round.</li>
                 </ul>
 
                 <h3>Winning & Losing</h3>
                 <ul>
-                    <li><strong>Win:</strong> Guess correctly at any stage to win the round! You'll hear the full preview.</li>
-                    <li><strong>Lose:</strong> If you use all stages without guessing, you'll fail. The correct song will be revealed.</li>
+                    <li><strong>Win:</strong> Guess correctly at any stage to win the round! You'll hear the full
+                        preview.</li>
+                    <li><strong>Lose:</strong> If you use all stages without guessing, you'll fail. The correct song
+                        will be revealed.</li>
                 </ul>
 
                 <h3>Input Modes</h3>
-                <p>Choose to play with songs from a specific Spotify Playlist (public only) or by a particular Artist.</p>
+                <p>Choose to play with songs from a specific Artist, a Top Chart Genre, or try the Daily Song Challenge.
+                </p>
 
                 <h3>Volume Control</h3>
-                <p>Adjust the game volume at any time via the settings gear icon in the top right corner of the game screen.</p>
+                <p>Adjust the game volume at any time via the settings gear icon in the top right corner of the game
+                    screen.</p>
 
                 <p>Good luck and have fun!</p>
             </div>
         </div>
     </div>
 </body>
-</html> 
+
+</html>

@@ -144,7 +144,7 @@ async function startGame() {
     showLoadingOverlay(); // Show loading screen immediately
     
     const userInputMode = localStorage.getItem('userInputMode');
-    const userPlaylistId = localStorage.getItem('userPlaylistId');
+    const userGenreId = localStorage.getItem('userGenreId');
     const userArtistName = localStorage.getItem('userArtistName');
     const userGenreName = localStorage.getItem('userGenreName'); // New
 
@@ -156,28 +156,22 @@ async function startGame() {
     if (isDailyChallenge) {
         console.log("MAIN: Starting game in Daily Challenge mode.");
 
-        
-        gameParameter = userPlaylistId;
+        gameParameter = userGenreId; // Daily mode uses genre id behind the scenes
         mode = 'daily';
-    } else if (userInputMode === 'playlist' && userPlaylistId) {
-        console.log(`MAIN: Starting game with playlist ID: ${userPlaylistId}`);
-        MAX_STAGES = snippetDurations.length;
-        gameParameter = userPlaylistId;
-        mode = 'playlist';
     } else if (userInputMode === 'artist' && userArtistName) {
         console.log(`MAIN: Starting game with artist name: ${userArtistName}`);
         MAX_STAGES = snippetDurations.length;
         gameParameter = userArtistName;
         mode = 'artist';
-    } else if (userInputMode === 'genre' && userPlaylistId && userGenreName) { // Use userPlaylistId for genre too
-        console.log(`MAIN: Starting game with genre: ${userGenreName} (Playlist ID: ${userPlaylistId})`);
+    } else if (userInputMode === 'genre' && userGenreId) {
+        console.log(`MAIN: Starting game with genre: ${userGenreName} (Genre ID: ${userGenreId})`);
         MAX_STAGES = snippetDurations.length;
-        gameParameter = userPlaylistId; // The playlist ID associated with the genre
-        mode = 'playlist'; // Still fetching from a playlist, just pre-selected
+        gameParameter = userGenreId; 
+        mode = 'genre'; 
     } else {
-        console.warn("MAIN: No valid user input (playlist ID, artist name, or genre) found in localStorage. Redirecting to home.");
+        console.warn("MAIN: No valid user input (artist name or genre) found in localStorage. Redirecting to home.");
         hideLoadingOverlay();
-        alert("No playlist, artist, or genre selected! Please go to the homepage and set one up first.");
+        alert("No artist or genre selected! Please go to the homepage and set one up first.");
         window.location.href = '/';
         return;
     }
@@ -214,9 +208,9 @@ async function startGame() {
             if (isDailyChallenge) {
                 alertMessage = "Error: Could not load the daily song. Please try again later.";
             } else if (mode === 'artist') {
-                alertMessage += ` For artist: '${gameParameter}'. All unique songs may have been played, or no suitable tracks were found. Try a different artist or playlist, or reset.`;
+                alertMessage += ` For artist: '${gameParameter}'. All unique songs may have been played, or no suitable tracks were found. Try a different artist or genre, or reset.`;
             } else {
-                alertMessage += " All unique songs from this playlist may have been played, or no suitable tracks were found. Please try again later, use a different playlist, or reset.";
+                alertMessage += " All unique songs from this genre may have been played, or no suitable tracks were found. Please try again later, use a different genre, or reset.";
             }
             alert(alertMessage);
             window.location.href = '/'; // New: Redirect to actual home page

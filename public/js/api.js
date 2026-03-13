@@ -7,20 +7,20 @@ const suggestionsCache = new Map();
 const CACHE_MAX_SIZE = 20; // Store up to 20 recent search terms
 
 /**
- * Fetches a random song. The backend now uses a Spotify-first approach.
- * Can fetch based on playlist ID or artist name.
- * @param {string} parameter - The ID of the Spotify playlist or the name of the artist.
- * @param {string} mode - Type of parameter: 'playlist' or 'artist'.
- * @param {Set<string>} playedIdsSet - A set of Spotify track IDs that have already been played.
+ * Fetches a random song. The backend now uses iTunes APIs.
+ * Can fetch based on genre ID or artist name.
+ * @param {string} parameter - The iTunes genre ID or the name of the artist.
+ * @param {string} mode - Type of parameter: 'genre' or 'artist'.
+ * @param {Set<string>} playedIdsSet - A set of track IDs that have already been played.
  */
-export async function getRandomSong(parameter, mode = 'playlist', playedIdsSet = new Set()) { // Default mode to playlist for safety
+export async function getRandomSong(parameter, mode = 'genre', playedIdsSet = new Set()) { // Default mode to genre for safety
     console.log(`API: Fetching random song from backend. Mode: ${mode}, Parameter: ${parameter}, Excluding: ${playedIdsSet.size} tracks`);
     
     if (!parameter) {
-        console.error(`API: getRandomSong called without a ${mode === 'playlist' ? 'playlistId' : 'artistName'}.`);
+        console.error(`API: getRandomSong called without a ${mode === 'genre' ? 'genreId' : 'artistName'}.`);
         return {
             id: "errorMockId",
-            title: `Error: ${mode === 'playlist' ? 'Playlist ID' : 'Artist Name'} Missing`,
+            title: `Error: ${mode === 'genre' ? 'Genre ID' : 'Artist Name'} Missing`,
             artist: "Please Select Input on Home",
             previewUrl: null, 
             albumArt: null 
@@ -30,8 +30,8 @@ export async function getRandomSong(parameter, mode = 'playlist', playedIdsSet =
     let apiUrl = `${API_BASE_URL}/song-random`;
     const queryParams = new URLSearchParams();
 
-    if (mode === 'playlist') {
-        queryParams.append('playlistId', parameter);
+    if (mode === 'genre') {
+        queryParams.append('genreId', parameter);
     } else if (mode === 'artist') {
         queryParams.append('artistName', parameter);
     } else {
@@ -110,7 +110,7 @@ export async function fetchSearchSuggestions(query) {
         return suggestionsCache.get(lowerCaseQuery);
     }
 
-    console.log(`API: Fetching Spotify search suggestions for query: "${query}"...`);
+    console.log(`API: Fetching iTunes search suggestions for query: "${query}"...`);
     console.time(`fetchSuggestions-${lowerCaseQuery}`); // Start timer for fetch
     try {
         const response = await fetch(`${API_BASE_URL}/songs-search?term=${encodeURIComponent(query)}`);
@@ -121,7 +121,7 @@ export async function fetchSearchSuggestions(query) {
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
         }
         let songs = await response.json();
-        console.log("API: Spotify suggestions fetched", songs);
+        console.log("API: iTunes suggestions fetched", songs);
 
         // Deduplicate songs based on title and artist
         const seenSongs = new Set();
@@ -154,7 +154,6 @@ export async function fetchSearchSuggestions(query) {
     }
 }
 
-// getAllSongs() function has been removed as it was deprecated and functionality is replaced
 // by dynamic search with fetchSearchSuggestions.
 
-// Note: Backend now handles Spotify and iTunes interactions.
+// Note: Backend now handles iTunes interactions natively.

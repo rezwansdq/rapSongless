@@ -17,12 +17,12 @@ module.exports = (req, res) => {
     }
     
     try {
-      // Use the new Spotify-based search function from itunesService
-      const songs = await itunesService.searchSpotifyForAutocomplete(searchTerm);
+      // Use the new iTunes search function
+      const songs = await itunesService.searchItunesForAutocomplete(searchTerm);
       res.json(songs); // songs is an array of {id, title, artist, albumArt, popularity}
     } catch (error) {
-      console.error("Server error during Spotify song search for autocomplete:", error);
-      res.status(500).json({ message: "Error searching songs via Spotify", error: error.message });
+      console.error("Server error during iTunes artist search for autocomplete:", error);
+      res.status(500).json({ message: "Error searching artists via iTunes", error: error.message });
     }
   });
 }; 
