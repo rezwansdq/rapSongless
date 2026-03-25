@@ -1031,14 +1031,13 @@ footer a:hover {
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
-    box-sizing: border-box;
+    border: none; /* border removed — use box-shadow for visual stroke so height is not affected */
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .home-share-btn {
     background-color: #2ecc71;
     color: #fff;
-    border: none;
 }
 
 .home-share-btn:hover {
@@ -1049,12 +1048,13 @@ footer a:hover {
 .home-copy-btn {
     background-color: #252525;
     color: #ccc;
-    border: 1px solid #3a3a3a;
+    box-shadow: inset 0 0 0 1px #3a3a3a; /* visual border that adds zero height */
 }
 
 .home-copy-btn:hover {
     background-color: #333;
     color: #fff;
+    box-shadow: inset 0 0 0 1px #555;
 }
 
 /* Greyed-out disabled CTA state for "Come back tomorrow!" */
