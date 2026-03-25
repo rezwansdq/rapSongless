@@ -77,13 +77,74 @@ document.addEventListener('DOMContentLoaded', () => {
         if (done) {
             statsEl.textContent = `✅ ${completed}/${DAILY_TOTAL} · ${correct} correct · ${guesses} guesses`;
             statsEl.className = 'daily-stats daily-stats--complete';
+            showDailyShareButtons(correct, guesses);
         } else if (completed > 0) {
             statsEl.textContent = `${completed}/${DAILY_TOTAL} songs · ${correct} correct · ${guesses} guesses`;
             statsEl.className = 'daily-stats';
+            hideDailyShareButtons();
         } else {
             statsEl.textContent = '';
             statsEl.className = 'daily-stats';
+            hideDailyShareButtons();
         }
+    }
+
+    function buildShareText(correct, guesses) {
+        const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
+        const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const emojiRow = log.length
+            ? log.map(e => e.correct ? '✅' : '❌').join(' ')
+            : Array.from({ length: DAILY_TOTAL }, (_, i) => i < correct ? '✅' : '❌').join(' ');
+        return [
+            `🎵 Songless Unlimited — ${today}`,
+            emojiRow,
+            `${correct}/${DAILY_TOTAL} correct · ${guesses} guesses`,
+            'playsongless.win',
+        ].join('\n');
+    }
+
+    function showDailyShareButtons(correct, guesses) {
+        const shareRow = document.getElementById('daily-share-row');
+        if (!shareRow) return;
+        shareRow.style.display = 'flex';
+
+        const shareBtn = document.getElementById('home-share-btn');
+        const copyBtn  = document.getElementById('home-copy-btn');
+
+        // Clone to remove stale listeners
+        if (shareBtn) {
+            const newShare = shareBtn.cloneNode(true);
+            shareBtn.parentNode.replaceChild(newShare, shareBtn);
+            newShare.addEventListener('click', () => {
+                const text = buildShareText(correct, guesses);
+                if (navigator.share) {
+                    navigator.share({ title: 'Songless Unlimited', text }).catch(() => {});
+                } else {
+                    // Desktop: fall through to clipboard
+                    navigator.clipboard.writeText(text).then(() => {
+                        newShare.textContent = '✓ Copied!';
+                        setTimeout(() => { newShare.textContent = '🔗 Share'; }, 2000);
+                    }).catch(() => {});
+                }
+            });
+        }
+
+        if (copyBtn) {
+            const newCopy = copyBtn.cloneNode(true);
+            copyBtn.parentNode.replaceChild(newCopy, copyBtn);
+            newCopy.addEventListener('click', () => {
+                const text = buildShareText(correct, guesses);
+                navigator.clipboard.writeText(text).then(() => {
+                    newCopy.textContent = '✓ Copied!';
+                    setTimeout(() => { newCopy.textContent = '📋 Copy Result'; }, 2000);
+                }).catch(() => {});
+            });
+        }
+    }
+
+    function hideDailyShareButtons() {
+        const shareRow = document.getElementById('daily-share-row');
+        if (shareRow) shareRow.style.display = 'none';
     }
 
     function applyDailyButtonState() {
