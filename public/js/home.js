@@ -197,6 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
         genreInputSection.style.display = 'none';
         if (dailySongSection) dailySongSection.style.display = 'none';
 
+        // Always reset button to a clean enabled state before applying mode-specific logic.
+        // This prevents the daily-mode disabled state from bleeding into artist/genre modes.
+        validateButton.disabled = false;
+        validateButton.classList.remove('btn--disabled');
+
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === mode) {
                 btn.classList.add('active');
