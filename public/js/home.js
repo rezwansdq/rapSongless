@@ -201,6 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // This prevents the daily-mode disabled state from bleeding into artist/genre modes.
         validateButton.disabled = false;
         validateButton.classList.remove('btn--disabled');
+        // Force animation restart: removing + re-adding btn-primary resets the keyframe.
+        validateButton.classList.remove('btn-primary');
+        // Trigger a reflow so the browser treats the re-add as a fresh animation start.
+        void validateButton.offsetWidth;
+        validateButton.classList.add('btn-primary');
 
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === mode) {
