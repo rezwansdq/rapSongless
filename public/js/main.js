@@ -224,6 +224,10 @@ async function startGame() {
             dailySongs = await api.getDailySong();
             console.log('[MAIN] Daily songs received from API:', dailySongs);
             if (dailySongs && dailySongs.length > 0) {
+                // Resume from however many songs the user has already finished today
+                const completed = parseInt(localStorage.getItem('dailySongsCompleted') || '0');
+                dailySongIndex = Math.min(completed, dailySongs.length - 1);
+                console.log(`[MAIN] Resuming daily challenge at song index ${dailySongIndex} (completed: ${completed})`);
                 currentSong = dailySongs[dailySongIndex];
             }
         } else {

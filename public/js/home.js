@@ -93,6 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
             validateButton.disabled = true;
             validateButton.textContent = 'Come back tomorrow!';
             validateButton.classList.add('btn--disabled');
+        } else if (completed === 1) {
+            validateButton.disabled = false;
+            validateButton.textContent = 'Resume · Song 2 of 3';
+            validateButton.classList.remove('btn--disabled');
+        } else if (completed === 2) {
+            validateButton.disabled = false;
+            validateButton.textContent = 'Resume · Song 3 of 3';
+            validateButton.classList.remove('btn--disabled');
         } else {
             validateButton.disabled = false;
             validateButton.textContent = 'Start Daily Challenge';
@@ -147,7 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (genreSelect) genreSelect.focus();
         } else if (mode === 'daily') {
             if (dailySongSection) dailySongSection.style.display = 'block';
-            validateButton.textContent = 'Start Daily Challenge';
+            const { completed } = getDailyStats();
+            if (completed > 0 && completed < DAILY_TOTAL) {
+                // Resuming mid-session
+                validateButton.textContent = `Resume · Song ${completed + 1} of ${DAILY_TOTAL}`;
+            } else {
+                validateButton.textContent = 'Start Daily Challenge';
+            }
             renderDailyStats();
             applyDailyButtonState();
         }
@@ -190,7 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             messageArea.style.color = '#aaa';
         } else if (storedInputMode === 'daily') {
-            messageArea.textContent = 'Daily challenge is ready. Press start to play.';
+            const { completed } = getDailyStats();
+            if (completed > 0 && completed < DAILY_TOTAL) {
+                messageArea.textContent = `Welcome back! You're on song ${completed + 1} of ${DAILY_TOTAL}.`;
+            } else {
+                messageArea.textContent = 'Daily challenge is ready. Press start to play.';
+            }
             messageArea.style.color = '#aaa';
         }
     } else {
