@@ -2,6 +2,7 @@ import { showScreen, updateStageCounter, updateTimer, updateProgressBar, display
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume, currentAudio } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
+import './notesBg.js';
 
 // DOM Elements
 // const startButton = document.getElementById('start-button'); // REMOVED
@@ -31,6 +32,34 @@ let isDailyChallenge = false;
 let dailySongs = [];
 let dailySongIndex = 0;
 let guessesLeft = 0;
+let currentSongGuessCount = 0; // counts guesses (including skips) for the active song
+
+// ── Daily Progress Tracking ───────────────────────────────────────────────────
+function recordDailyGuess() {
+    if (!isDailyChallenge) return;
+    currentSongGuessCount++;
+    const prev = parseInt(localStorage.getItem('dailySongsTotalGuesses') || '0');
+    localStorage.setItem('dailySongsTotalGuesses', String(prev + 1));
+}
+
+function recordDailySongEnd(wasCorrect) {
+    if (!isDailyChallenge) return;
+    const prevCompleted = parseInt(localStorage.getItem('dailySongsCompleted') || '0');
+    localStorage.setItem('dailySongsCompleted', String(prevCompleted + 1));
+    if (wasCorrect) {
+        const prevCorrect = parseInt(localStorage.getItem('dailySongsCorrect') || '0');
+        localStorage.setItem('dailySongsCorrect', String(prevCorrect + 1));
+    }
+    // Append per-song log entry
+    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
+    log.push({
+        title: currentSong ? currentSong.title : 'Unknown',
+        correct: wasCorrect,
+        guesses: currentSongGuessCount,
+    });
+    localStorage.setItem('dailySongsLog', JSON.stringify(log));
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // --- Initialization ---
 async function initializeApp() {
@@ -244,6 +273,7 @@ async function startGame() {
 function resetGameState() {
     currentSong = null;
     currentStage = 0;
+    currentSongGuessCount = 0; // reset per-song guess counter
     audioPlaybackState = false;
     stopAudio(); // Stop any previous audio & clears its own timer interval
     updateStageCounter(1, MAX_STAGES);
@@ -310,6 +340,7 @@ function handleGuess() {
     console.log(`Guess: ${userGuess}, Stage: ${currentStage + 1}, Track: ${currentSong.id}`);
 
     const isCorrect = checkGuess(userGuess, currentSong.title, currentSong.artist);
+    recordDailyGuess(); // count every real guess attempt
 
     if (isCorrect) {
         console.log("MAIN: handleGuess - Guess is correct. Calling handleSuccess.");
@@ -336,6 +367,8 @@ function handleSkip() {
     }
     console.log(`Skip: Stage: ${currentStage + 1}, Track: ${currentSong.id}`);
     
+    recordDailyGuess(); // a skip counts as a guess
+
     // Add skip to current box
     addGuessResult('skipped', '', currentStage + 1);
     
@@ -371,6 +404,7 @@ function handleSuccess() {
     }
     
     console.log("Correct! Congratulations!", { trackId: currentSong.id, stage: currentStage + 1, outcome: "Correct" });
+    recordDailySongEnd(true);
     
     if (currentSong.previewUrl) {
         // For full preview, set a longer duration (30 seconds is typical for previews)
@@ -389,12 +423,13 @@ function handleSuccess() {
     
 
     if (isDailyChallenge) {
-        const callback = (dailySongIndex < dailySongs.length - 1) ? () => {
+        const isLastSong = dailySongIndex >= dailySongs.length - 1;
+        const callback = isLastSong ? dailyChallengeComplete : () => {
             dailySongIndex++;
-            resetGameState(); // Reset state first
-            currentSong = dailySongs[dailySongIndex]; // Then set the new song
+            resetGameState();
+            currentSong = dailySongs[dailySongIndex];
             startStage();
-        } : dailyChallengeComplete;
+        };
         showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, callback, currentStage + 1);
     } else {
         showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, startGame, currentStage + 1);
@@ -402,8 +437,97 @@ function handleSuccess() {
 }
 
 function dailyChallengeComplete() {
-    window.location.href = '/';
+    showRecapModal();
 }
+
+// ── End-of-Day Recap Modal ────────────────────────────────────────────────────
+function showRecapModal() {
+    const modal = document.getElementById('recap-modal');
+    if (!modal) return;
+
+    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
+    const totalGuesses = parseInt(localStorage.getItem('dailySongsTotalGuesses') || '0');
+    const totalCorrect = parseInt(localStorage.getItem('dailySongsCorrect') || '0');
+    const totalSongs = log.length;
+
+    // Populate song rows
+    const songList = modal.querySelector('.recap-song-list');
+    if (songList) {
+        songList.innerHTML = '';
+        log.forEach(entry => {
+            const row = document.createElement('div');
+            row.className = 'recap-song-row';
+            const icon = entry.correct ? '✅' : '❌';
+            const guessWord = entry.guesses === 1 ? 'guess' : 'guesses';
+            row.innerHTML = `<span class="recap-song-title">${entry.title}</span><span class="recap-song-meta">${icon} &middot; ${entry.guesses} ${guessWord}</span>`;
+            songList.appendChild(row);
+        });
+    }
+
+    // Summary line
+    const summary = modal.querySelector('.recap-summary');
+    if (summary) {
+        summary.textContent = `${totalCorrect}/${totalSongs} correct · ${totalGuesses} total guesses`;
+    }
+
+    // Hide any open success/failure modals
+    const sm = document.getElementById('success-modal');
+    const fm = document.getElementById('failure-modal');
+    if (sm) sm.style.display = 'none';
+    if (fm) fm.style.display = 'none';
+
+    modal.classList.add('active');
+
+    // Share button
+    const shareBtn = modal.querySelector('#recap-share-btn');
+    if (shareBtn) {
+        // Clone to remove old listeners
+        const newShareBtn = shareBtn.cloneNode(true);
+        shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+        newShareBtn.addEventListener('click', () => handleShare(log, totalCorrect, totalGuesses));
+    }
+
+    // Close button
+    const closeBtn = modal.querySelector('#recap-close-btn');
+    if (closeBtn) {
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        newCloseBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            window.location.href = '/';
+        });
+    }
+}
+
+function handleShare(log, totalCorrect, totalGuesses) {
+    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    const emojiRow = log.map(e => e.correct ? '✅' : '❌').join(' ');
+    const text = [
+        `🎵 Songless Unlimited — ${today}`,
+        emojiRow,
+        `${totalCorrect}/${log.length} correct · ${totalGuesses} guesses`,
+        'playsongless.win',
+    ].join('\n');
+
+    const shareBtn = document.getElementById('recap-share-btn');
+
+    if (navigator.share) {
+        navigator.share({ title: 'Songless Unlimited', text }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(text).then(() => {
+            if (shareBtn) {
+                shareBtn.textContent = 'Copied!';
+                setTimeout(() => { shareBtn.textContent = 'Share'; }, 2000);
+            }
+        }).catch(() => {
+            if (shareBtn) {
+                shareBtn.textContent = 'Copied!';
+                setTimeout(() => { shareBtn.textContent = 'Share'; }, 2000);
+            }
+        });
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function handleFailure(reason = "No more attempts") {
     console.log("MAIN: handleFailure called. Reason:", reason, "currentSong:", currentSong);
@@ -414,6 +538,7 @@ function handleFailure(reason = "No more attempts") {
     }
     
     console.log(`MAIN: handleFailure called. Reason: ${reason}`, { trackId: currentSong ? currentSong.id : 'N/A', stage: currentStage + 1, outcome: "Failure" });
+    recordDailySongEnd(false);
     
     if (currentSong && currentSong.previewUrl) {
         // For full preview, set a longer duration (30 seconds is typical for previews)
@@ -442,12 +567,12 @@ function handleFailure(reason = "No more attempts") {
 function nextDailySong() {
     if (dailySongIndex < dailySongs.length - 1) {
         dailySongIndex++;
-        resetGameState(); // Reset state first
-        currentSong = dailySongs[dailySongIndex]; // Then set the new song
+        resetGameState();
+        currentSong = dailySongs[dailySongIndex];
         startStage();
     } else {
-        // After the last daily song, go home.
-        window.location.href = '/';
+        // After the last daily song, show the recap.
+        dailyChallengeComplete();
     }
 }
 

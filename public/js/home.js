@@ -1,3 +1,30 @@
+import './notesBg.js';
+
+// ── Floating Title Words ──────────────────────────────────────────────────────
+(function initTitleWords() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) return;
+
+    function animateWords() {
+        const words = document.querySelectorAll('.title-word');
+        if (!words.length) {
+            requestAnimationFrame(animateWords);
+            return;
+        }
+        const t = performance.now() * 0.002;
+        words.forEach((el, i) => {
+            const wave = Math.sin(t + i * 0.4);
+            const y = wave * 3;          // ±3 px vertical
+            const r = wave * 1;          // ±1 deg rotation
+            el.style.transform = `translateY(${y}px) rotate(${r}deg)`;
+        });
+        requestAnimationFrame(animateWords);
+    }
+
+    requestAnimationFrame(animateWords);
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
     const artistNameInput = document.getElementById('artist-name');
     const validateButton = document.getElementById('validate-input-btn');
@@ -14,6 +41,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeHowToPlayButton = document.getElementById('close-how-to-play-btn');
 
     let currentInputMode = 'daily';
+
+    // ── Daily Progress Helpers ──────────────────────────────────────────────
+    const DAILY_TOTAL = 3;
+
+    function todayStr() {
+        return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function resetDailyStatsIfNewDay() {
+        const stored = localStorage.getItem('dailySongsDate');
+        if (stored !== todayStr()) {
+            localStorage.setItem('dailySongsDate', todayStr());
+            localStorage.setItem('dailySongsCompleted', '0');
+            localStorage.setItem('dailySongsCorrect', '0');
+            localStorage.setItem('dailySongsTotalGuesses', '0');
+            localStorage.setItem('dailySongsLog', '[]');
+        }
+    }
+
+    function getDailyStats() {
+        resetDailyStatsIfNewDay();
+        return {
+            completed: parseInt(localStorage.getItem('dailySongsCompleted') || '0'),
+            correct:   parseInt(localStorage.getItem('dailySongsCorrect')   || '0'),
+            guesses:   parseInt(localStorage.getItem('dailySongsTotalGuesses') || '0'),
+        };
+    }
+
+    function renderDailyStats() {
+        const statsEl = document.getElementById('daily-stats');
+        if (!statsEl) return;
+        const { completed, correct, guesses } = getDailyStats();
+        const done = completed >= DAILY_TOTAL;
+        if (done) {
+            statsEl.textContent = `✅ ${completed}/${DAILY_TOTAL} · ${correct} correct · ${guesses} guesses`;
+            statsEl.className = 'daily-stats daily-stats--complete';
+        } else if (completed > 0) {
+            statsEl.textContent = `${completed}/${DAILY_TOTAL} songs · ${correct} correct · ${guesses} guesses`;
+            statsEl.className = 'daily-stats';
+        } else {
+            statsEl.textContent = '';
+            statsEl.className = 'daily-stats';
+        }
+    }
+
+    function applyDailyButtonState() {
+        if (currentInputMode !== 'daily') return;
+        const { completed } = getDailyStats();
+        if (completed >= DAILY_TOTAL) {
+            validateButton.disabled = true;
+            validateButton.textContent = 'Come back tomorrow!';
+            validateButton.classList.add('btn--disabled');
+        } else {
+            validateButton.disabled = false;
+            validateButton.textContent = 'Start Daily Challenge';
+            validateButton.classList.remove('btn--disabled');
+        }
+    }
+    // ───────────────────────────────────────────────────────────────────────
 
     const genres = [
         { name: "Rap & Hip-Hop", genreId: "18" },
@@ -40,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentInputMode = mode;
         artistInputSection.style.display = 'none';
         genreInputSection.style.display = 'none';
-        if(dailySongSection) dailySongSection.style.display = 'none';
+        if (dailySongSection) dailySongSection.style.display = 'none';
 
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === mode) {
@@ -60,8 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
             validateButton.textContent = 'Set Genre & Start';
             if (genreSelect) genreSelect.focus();
         } else if (mode === 'daily') {
-            if(dailySongSection) dailySongSection.style.display = 'block';
+            if (dailySongSection) dailySongSection.style.display = 'block';
             validateButton.textContent = 'Start Daily Challenge';
+            renderDailyStats();
+            applyDailyButtonState();
         }
         messageArea.textContent = '';
     }
@@ -93,11 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
             messageArea.style.color = '#aaa';
         } else if (storedInputMode === 'genre') {
             if (genreSelect && storedGenreId) {
-                 // Try to set the select to the stored genre ID if it exists in the new list
-                 const exists = Array.from(genreSelect.options).some(opt => opt.value === storedGenreId);
-                 if (exists) genreSelect.value = storedGenreId;
+                // Try to set the select to the stored genre ID if it exists in the new list
+                const exists = Array.from(genreSelect.options).some(opt => opt.value === storedGenreId);
+                if (exists) genreSelect.value = storedGenreId;
             }
-            if(storedGenreName) {
+            if (storedGenreName) {
                 messageArea.textContent = `Previously used genre: ${storedGenreName}. Set new genre or start.`;
             }
             messageArea.style.color = '#aaa';
@@ -141,10 +229,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('userGenreName', selectedGenreName);
                 window.location.href = '/game';
             } else if (currentInputMode === 'daily') {
+                const { completed } = getDailyStats();
+                if (completed >= DAILY_TOTAL) return; // already blocked by UI
                 messageArea.textContent = 'Starting the daily challenge...';
                 messageArea.style.color = '#2ecc71';
                 // Daily defaults to rap/hip-hop for now
-                localStorage.setItem('userGenreId', '18'); 
+                localStorage.setItem('userGenreId', '18');
                 localStorage.setItem('userArtistName', '');
                 localStorage.setItem('userInputMode', 'daily');
                 localStorage.setItem('userGenreName', 'Daily Song');

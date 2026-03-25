@@ -10,50 +10,58 @@
 </head>
 
 <body>
+    <canvas id="notesBg"></canvas>
     <div class="container">
-        <section id="home-page-content" class="screen active" style="text-align: center; padding-top: 10px;">
-            <h1 class="game-title">Welcome to Songless Unlimited!</h1>
-            <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 15px;">Test your music knowledge and guess the
-                song!</p>
-            <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
-            <h2 class="section-title">Game Select</h2>
-            <div class="input-mode-selector" style="margin-bottom: 20px;">
-                <button type="button" class="mode-btn" data-mode="daily">Daily Songs</button>
-                <button type="button" class="mode-btn" data-mode="artist">Artist Name</button>
-                <button type="button" class="mode-btn" data-mode="genre">Genre</button>
+        <section id="home-page-content" class="screen active">
+            <div class="section-block">
+                <h1 class="game-title"><span class="title-word">Welcome</span> <span class="title-word">to</span> <span class="title-word">Songless</span> <span class="title-word">Unlimited!</span></h1>
+                <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 0;">Test your music knowledge and guess the song!</p>
             </div>
-
-            <div style="height: 100px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px;">
-                <div class="daily-song-container" id="daily-song-section"
-                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
-                </div>
-
-                <div class="artist-input-container" id="artist-input-section"
-                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
-                    <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Enter
-                        Artist Name:</label>
-                    <input type="text" id="artist-name" placeholder="e.g., Yeat"
-                        style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
-                </div>
-
-                <div class="genre-input-container" id="genre-input-section"
-                    style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
-                    <label for="genre-select"
-                        style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Select a Genre:</label>
-                    <select id="genre-select"
-                        style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box; max-height: 150px; overflow-y: auto; cursor: pointer;">
-                        <!-- Options will be populated by JavaScript -->
-                    </select>
+            
+            <div class="section-block">
+                <h2 class="section-title">Game Select</h2>
+                <div class="input-mode-selector">
+                    <button type="button" class="mode-btn" data-mode="daily">Daily Songs</button>
+                    <button type="button" class="mode-btn" data-mode="artist">Artist Name</button>
+                    <button type="button" class="mode-btn" data-mode="genre">Genre</button>
                 </div>
             </div>
 
-            <button id="validate-input-btn" class="btn"
-                style="margin-top: 5px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold; width: 100%; max-width: 500px; padding: 15px; font-size: 1.1rem;">Start
-                Game</button>
-            <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
+            <div class="section-block">
+                <div style="height: 100px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px;">
+                    <div class="daily-song-container" id="daily-song-section"
+                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                        <p id="daily-stats" class="daily-stats"></p>
+                    </div>
+
+                    <div class="artist-input-container" id="artist-input-section"
+                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                        <label for="artist-name" style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Enter
+                            Artist Name:</label>
+                        <input type="text" id="artist-name" placeholder="e.g., Yeat"
+                            style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
+                    </div>
+
+                    <div class="genre-input-container" id="genre-input-section"
+                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                        <label for="genre-select"
+                            style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Select a Genre:</label>
+                        <select id="genre-select">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+
+                <button id="validate-input-btn" class="btn btn-primary"
+                    style="margin-top: 5px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold; width: 100%; max-width: 500px; padding: 15px; font-size: 1.1rem;">Start Game</button>
+                <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
+            </div>
+
+            <div class="section-block how-to-block">
+                <p class="how-to-hint">First time playing?</p>
+                <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
+            </div>
         </section>
-
-        <!-- How to Play Button was previously here -->
 
     </div>
 
