@@ -14,65 +14,68 @@
     <div class="container">
         <!-- Game Screen -->
         <section id="game-screen" class="screen">
-            <div class="game-header">
-                <h1 class="game-title">Songless Unlimited</h1>
-                <a href="/" id="back-to-home-button" class="home-icon-btn">Home</a>
-                <!-- New Settings Gear Icon -->
-                <button id="settings-button" class="settings-icon-btn">⚙️</button>
-            </div>
 
-            <!-- Volume Slider -->
-            <!-- REMOVED: <div id="volume-control-container" style="display: none;">
-                <input type="range" id="volume-slider" min="0" max="100" value="50" step="10">
-                <label for="volume-slider" class="volume-label">Volume</label>
-            </div> -->
+            <!-- Daily progress sidebar (shown only in daily mode via JS) -->
+            <aside id="daily-progress-panel" class="daily-progress-panel">
+                <p class="progress-panel-label">Songs</p>
+                <div id="progress-panel-items" class="progress-panel-items"></div>
+            </aside>
 
-            <!-- Pre-displayed empty guess boxes -->
-            <div class="guess-boxes-container">
-                <div class="guess-box empty" data-index="0"></div>
-                <div class="guess-box empty" data-index="1"></div>
-                <div class="guess-box empty" data-index="2"></div>
-                <div class="guess-box empty" data-index="3"></div>
-                <div class="guess-box empty" data-index="4"></div>
-                <div class="guess-box empty" data-index="5"></div>
-            </div>
-
-            <!-- Stage and Timer Info -->
-            <div class="game-info">
-                <div class="stage-info">
-                    <div id="stage-counter" class="stage-label">Stage 1</div>
-                    <div id="stage-duration" class="stage-duration">2 Seconds</div>
+            <!-- Main game content -->
+            <div class="game-main">
+                <div class="game-header">
+                    <h1 class="game-title">Songless Unlimited</h1>
+                    <a href="/" id="back-to-home-button" class="home-icon-btn">Home</a>
+                    <button id="settings-button" class="settings-icon-btn">⚙️</button>
                 </div>
-                <div id="timer-container">
-                    <div class="time-display">
-                        <span class="time-label"></span>
-                        <div class="progress-bar-container">
-                            <div id="progress-bar" class="progress-bar-fill"></div>
-                        </div>
-                        <span class="time-label"></span>
+
+                <!-- Pre-displayed empty guess boxes -->
+                <div class="guess-boxes-container">
+                    <div class="guess-box empty" data-index="0"></div>
+                    <div class="guess-box empty" data-index="1"></div>
+                    <div class="guess-box empty" data-index="2"></div>
+                    <div class="guess-box empty" data-index="3"></div>
+                    <div class="guess-box empty" data-index="4"></div>
+                    <div class="guess-box empty" data-index="5"></div>
+                </div>
+
+                <!-- Stage and Timer Info -->
+                <div class="game-info">
+                    <div class="stage-info">
+                        <div id="stage-counter" class="stage-label">Stage 1</div>
+                        <div id="stage-duration" class="stage-duration">2 Seconds</div>
                     </div>
-                    <div id="timer" class="current-time">0.0sec</div>
+                    <div id="timer-container">
+                        <div class="time-display">
+                            <span class="time-label"></span>
+                            <div class="progress-bar-container">
+                                <div id="progress-bar" class="progress-bar-fill"></div>
+                            </div>
+                            <span class="time-label"></span>
+                        </div>
+                        <div id="timer" class="current-time">0.0sec</div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Play/Pause Button -->
-            <div class="play-control">
-                <button id="play-pause-button" class="play-btn">
-                    <span class="play-icon">▶</span>
-                </button>
-            </div>
+                <!-- Play/Pause Button -->
+                <div class="play-control">
+                    <button id="play-pause-button" class="play-btn">
+                        <span class="play-icon">▶</span>
+                    </button>
+                </div>
 
-            <!-- Game Controls -->
-            <div class="game-controls">
-                <div class="search-container">
-                    <input type="text" id="guess-input" placeholder="Know it? Search for the title">
-                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                <!-- Game Controls -->
+                <div class="game-controls">
+                    <div class="search-container">
+                        <input type="text" id="guess-input" placeholder="Know it? Search for the title">
+                        <div id="autocomplete-results" class="autocomplete-results"></div>
+                    </div>
+                    <div class="button-container">
+                        <button id="skip-button" class="btn">SKIP</button>
+                        <button id="submit-button" class="btn btn-primary">SUBMIT</button>
+                    </div>
                 </div>
-                <div class="button-container">
-                    <button id="skip-button" class="btn">SKIP</button>
-                    <button id="submit-button" class="btn btn-primary">SUBMIT</button>
-                </div>
-            </div>
+            </div><!-- .game-main -->
         </section>
 
         <!-- Success Modal (Hidden by default) -->
@@ -113,7 +116,7 @@
         </div>
     </div>
 
-    <!-- Recap Modal (shown after all 3 daily songs complete) -->
+    <!-- Recap Modal (shown after all daily songs complete) -->
     <div id="recap-modal" class="modal-overlay recap-modal-overlay">
         <div class="recap-card">
             <h2 class="recap-heading">Today's Results</h2>

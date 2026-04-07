@@ -58,6 +58,70 @@ function recordDailySongEnd(wasCorrect) {
         guesses: currentSongGuessCount,
     });
     localStorage.setItem('dailySongsLog', JSON.stringify(log));
+    // Update the sidebar panel for the just-finished song
+    if (currentSong) {
+        updateProgressPanelItem(dailySongIndex, currentSong.title, currentSong.artist, wasCorrect);
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Daily Progress Panel ─────────────────────────────────────────────────────
+function initDailyProgressPanel(total) {
+    const panel = document.getElementById('daily-progress-panel');
+    const container = document.getElementById('progress-panel-items');
+    if (!panel || !container) return;
+
+    container.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+        const item = document.createElement('div');
+        item.className = 'progress-bar-item pbi--pending';
+        item.dataset.index = i;
+        item.innerHTML =
+            `<span class="pbi-num">${i + 1}</span>` +
+            `<span class="pbi-info"></span>` +
+            `<span class="pbi-status"></span>`;
+        container.appendChild(item);
+    }
+
+    // Restore already-completed songs from localStorage (resume case)
+    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
+    log.forEach((entry, i) => {
+        updateProgressPanelItem(i, entry.title, '', entry.correct);
+    });
+
+    panel.style.display = '';
+}
+
+function setProgressPanelCurrent(index) {
+    const container = document.getElementById('progress-panel-items');
+    if (!container) return;
+    container.querySelectorAll('.progress-bar-item').forEach((item, i) => {
+        if (i === index && !item.classList.contains('pbi--correct') && !item.classList.contains('pbi--wrong')) {
+            item.classList.add('pbi--current');
+        } else {
+            item.classList.remove('pbi--current');
+        }
+    });
+}
+
+function updateProgressPanelItem(index, title, artist, wasCorrect) {
+    const container = document.getElementById('progress-panel-items');
+    if (!container) return;
+    const item = container.querySelector(`[data-index="${index}"]`);
+    if (!item) return;
+
+    item.classList.remove('pbi--pending', 'pbi--current', 'pbi--correct', 'pbi--wrong');
+    item.classList.add(wasCorrect ? 'pbi--correct' : 'pbi--wrong');
+
+    const infoEl = item.querySelector('.pbi-info');
+    const statusEl = item.querySelector('.pbi-status');
+    if (infoEl) infoEl.textContent = artist ? `${title} — ${artist}` : title;
+    if (statusEl) statusEl.textContent = wasCorrect ? '✅' : '❌';
+}
+
+function hideDailyProgressPanel() {
+    const panel = document.getElementById('daily-progress-panel');
+    if (panel) panel.style.display = 'none';
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -229,8 +293,11 @@ async function startGame() {
                 dailySongIndex = Math.min(completed, dailySongs.length - 1);
                 console.log(`[MAIN] Resuming daily challenge at song index ${dailySongIndex} (completed: ${completed})`);
                 currentSong = dailySongs[dailySongIndex];
+                initDailyProgressPanel(dailySongs.length);
+                setProgressPanelCurrent(dailySongIndex);
             }
         } else {
+            hideDailyProgressPanel();
             currentSong = await api.getRandomSong(gameParameter, mode, playedTrackIds);
         }
         hideLoadingOverlay(); // Hide loading screen after song is fetched
@@ -432,6 +499,7 @@ function handleSuccess() {
             dailySongIndex++;
             resetGameState();
             currentSong = dailySongs[dailySongIndex];
+            setProgressPanelCurrent(dailySongIndex);
             startStage();
         };
         showSuccessScreen(currentSong.title, currentSong.artist, currentSong.albumArt, callback, currentStage + 1);
@@ -573,6 +641,7 @@ function nextDailySong() {
         dailySongIndex++;
         resetGameState();
         currentSong = dailySongs[dailySongIndex];
+        setProgressPanelCurrent(dailySongIndex);
         startStage();
     } else {
         // After the last daily song, show the recap.
