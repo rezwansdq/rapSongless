@@ -33,6 +33,7 @@ let dailySongs = [];
 let dailySongIndex = 0;
 let guessesLeft = 0;
 let currentSongGuessCount = 0; // counts guesses (including skips) for the active song
+let dailySongEndRecorded = false; // guard: prevents double-logging when controls stay active behind modal
 
 // ── Daily Progress Tracking ───────────────────────────────────────────────────
 function recordDailyGuess() {
@@ -44,6 +45,8 @@ function recordDailyGuess() {
 
 function recordDailySongEnd(wasCorrect) {
     if (!isDailyChallenge) return;
+    if (dailySongEndRecorded) return; // already logged this song — skip duplicate call
+    dailySongEndRecorded = true;
     const prevCompleted = parseInt(localStorage.getItem('dailySongsCompleted') || '0');
     localStorage.setItem('dailySongsCompleted', String(prevCompleted + 1));
     if (wasCorrect) {
@@ -345,6 +348,7 @@ function resetGameState() {
     currentSong = null;
     currentStage = 0;
     currentSongGuessCount = 0; // reset per-song guess counter
+    dailySongEndRecorded = false; // allow recording for the next song
     audioPlaybackState = false;
     stopAudio(); // Stop any previous audio & clears its own timer interval
     updateStageCounter(1, MAX_STAGES);
@@ -522,16 +526,25 @@ function showRecapModal() {
     const totalCorrect = parseInt(localStorage.getItem('dailySongsCorrect') || '0');
     const totalSongs = log.length;
 
+    // Score badge
+    const scoreEl = modal.querySelector('.recap-score');
+    const scoreSubEl = modal.querySelector('.recap-score-sub');
+    if (scoreEl) scoreEl.textContent = `${totalCorrect}/${totalSongs}`;
+    if (scoreSubEl) scoreSubEl.textContent = totalCorrect === totalSongs ? 'Perfect!' : totalCorrect === 0 ? 'Keep practicing' : 'correct';
+
     // Populate song rows
     const songList = modal.querySelector('.recap-song-list');
     if (songList) {
         songList.innerHTML = '';
-        log.forEach(entry => {
+        log.forEach((entry, i) => {
             const row = document.createElement('div');
-            row.className = 'recap-song-row';
-            const icon = entry.correct ? '✅' : '❌';
+            row.className = `recap-song-row ${entry.correct ? 'recap-correct' : 'recap-wrong'}`;
             const guessWord = entry.guesses === 1 ? 'guess' : 'guesses';
-            row.innerHTML = `<span class="recap-song-title">${entry.title}</span><span class="recap-song-meta">${icon} &middot; ${entry.guesses} ${guessWord}</span>`;
+            row.innerHTML =
+                `<span class="recap-song-num">${i + 1}</span>` +
+                `<span class="recap-song-title">${entry.title}</span>` +
+                `<span class="recap-song-meta">${entry.guesses} ${guessWord}</span>` +
+                `<span class="recap-song-icon">${entry.correct ? '✅' : '❌'}</span>`;
             songList.appendChild(row);
         });
     }
@@ -539,7 +552,7 @@ function showRecapModal() {
     // Summary line
     const summary = modal.querySelector('.recap-summary');
     if (summary) {
-        summary.textContent = `${totalCorrect}/${totalSongs} correct · ${totalGuesses} total guesses`;
+        summary.textContent = `${totalGuesses} total guesses`;
     }
 
     // Hide any open success/failure modals
