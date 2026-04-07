@@ -14,14 +14,6 @@
     <div class="container">
         <!-- Game Screen -->
         <section id="game-screen" class="screen">
-
-            <!-- Daily progress sidebar (shown only in daily mode via JS) -->
-            <aside id="daily-progress-panel" class="daily-progress-panel">
-                <p class="progress-panel-label">Songs</p>
-                <div id="progress-panel-items" class="progress-panel-items"></div>
-            </aside>
-
-            <!-- Main game content -->
             <div class="game-main">
                 <div class="game-header">
                     <h1 class="game-title">Songless Unlimited</h1>
@@ -75,6 +67,12 @@
                         <button id="submit-button" class="btn btn-primary">SUBMIT</button>
                     </div>
                 </div>
+
+                <!-- Daily progress panel — shown below skip/submit in daily mode -->
+                <aside id="daily-progress-panel" class="daily-progress-panel">
+                    <p class="progress-panel-label">Today's Songs</p>
+                    <div id="progress-panel-items" class="progress-panel-items"></div>
+                </aside>
             </div><!-- .game-main -->
         </section>
 
