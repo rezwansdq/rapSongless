@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInputMode = 'daily';
 
     // ── Daily Progress Helpers ──────────────────────────────────────────────
-    const DAILY_TOTAL = 3;
+    const DAILY_TOTAL = 10;
 
     function todayStr() {
         return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -154,13 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
             validateButton.disabled = true;
             validateButton.textContent = 'Come back tomorrow!';
             validateButton.classList.add('btn--disabled');
-        } else if (completed === 1) {
+        } else if (completed > 0) {
             validateButton.disabled = false;
-            validateButton.textContent = 'Resume · Song 2 of 3';
-            validateButton.classList.remove('btn--disabled');
-        } else if (completed === 2) {
-            validateButton.disabled = false;
-            validateButton.textContent = 'Resume · Song 3 of 3';
+            validateButton.textContent = `Resume · Song ${completed + 1} of ${DAILY_TOTAL}`;
             validateButton.classList.remove('btn--disabled');
         } else {
             validateButton.disabled = false;
