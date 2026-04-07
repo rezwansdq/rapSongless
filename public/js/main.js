@@ -89,7 +89,7 @@ function initDailyProgressPanel(total) {
         updateProgressPanelItem(i, entry.title, '', entry.correct);
     });
 
-    panel.style.display = '';
+    panel.style.display = 'block';
 }
 
 function setProgressPanelCurrent(index) {
