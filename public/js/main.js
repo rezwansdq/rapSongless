@@ -2,6 +2,7 @@ import { showScreen, updateStageCounter, updateTimer, updateProgressBar, display
 import * as api from './api.js';
 import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume, currentAudio } from './audio.js';
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
+import * as dailyStore from './dailyStore.js';
 import './notesBg.js';
 
 // DOM Elements
@@ -31,36 +32,37 @@ let MAX_STAGES = snippetDurations.length;
 let isDailyChallenge = false;
 let dailySongs = [];
 let dailySongIndex = 0;
+let dailyDate = dailyStore.todayStr(); // which day's challenge is being played
 let guessesLeft = 0;
 let currentSongGuessCount = 0; // counts guesses (including skips) for the active song
 let dailySongEndRecorded = false; // guard: prevents double-logging when controls stay active behind modal
 
 // ── Daily Progress Tracking ───────────────────────────────────────────────────
+
+// The date to play comes from the URL when present (so archive days are
+// linkable), otherwise from whatever the home page last selected.
+function resolveDailyDate() {
+    const fromUrl = new URLSearchParams(window.location.search).get('date');
+    if (fromUrl && dailyStore.isPlayableDate(fromUrl)) return fromUrl;
+    return dailyStore.getActiveDate();
+}
+
 function recordDailyGuess() {
     if (!isDailyChallenge) return;
     currentSongGuessCount++;
-    const prev = parseInt(localStorage.getItem('dailySongsTotalGuesses') || '0');
-    localStorage.setItem('dailySongsTotalGuesses', String(prev + 1));
+    dailyStore.recordGuess(dailyDate);
 }
 
 function recordDailySongEnd(wasCorrect) {
     if (!isDailyChallenge) return;
     if (dailySongEndRecorded) return; // already logged this song — skip duplicate call
     dailySongEndRecorded = true;
-    const prevCompleted = parseInt(localStorage.getItem('dailySongsCompleted') || '0');
-    localStorage.setItem('dailySongsCompleted', String(prevCompleted + 1));
-    if (wasCorrect) {
-        const prevCorrect = parseInt(localStorage.getItem('dailySongsCorrect') || '0');
-        localStorage.setItem('dailySongsCorrect', String(prevCorrect + 1));
-    }
-    // Append per-song log entry
-    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
-    log.push({
+    dailyStore.recordSongEnd(dailyDate, {
         title: currentSong ? currentSong.title : 'Unknown',
+        artist: currentSong ? currentSong.artist : '',
         correct: wasCorrect,
         guesses: currentSongGuessCount,
     });
-    localStorage.setItem('dailySongsLog', JSON.stringify(log));
     // Update the sidebar panel for the just-finished song
     if (currentSong) {
         updateProgressPanelItem(dailySongIndex, currentSong.title, currentSong.artist, wasCorrect);
@@ -74,6 +76,12 @@ function initDailyProgressPanel(total) {
     const container = document.getElementById('progress-panel-items');
     if (!panel || !container) return;
 
+    const label = document.getElementById('progress-panel-label');
+    if (label) {
+        const dayLabel = dailyStore.formatDateLabel(dailyDate);
+        label.textContent = dayLabel === 'Today' ? "Today's Songs" : `${dayLabel} · Songs`;
+    }
+
     container.innerHTML = '';
     for (let i = 0; i < total; i++) {
         const item = document.createElement('div');
@@ -86,10 +94,9 @@ function initDailyProgressPanel(total) {
         container.appendChild(item);
     }
 
-    // Restore already-completed songs from localStorage (resume case)
-    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
-    log.forEach((entry, i) => {
-        updateProgressPanelItem(i, entry.title, '', entry.correct);
+    // Restore already-completed songs from the saved record (resume case)
+    dailyStore.getDayRecord(dailyDate).log.forEach((entry, i) => {
+        updateProgressPanelItem(i, entry.title, entry.artist || '', entry.correct);
     });
 
     panel.style.display = 'block';
@@ -250,9 +257,10 @@ async function startGame() {
     isDailyChallenge = userInputMode === 'daily';
 
     if (isDailyChallenge) {
-        console.log("MAIN: Starting game in Daily Challenge mode.");
+        dailyDate = resolveDailyDate();
+        console.log(`MAIN: Starting game in Daily Challenge mode for ${dailyDate}.`);
 
-        gameParameter = userGenreId; // Daily mode uses genre id behind the scenes
+        gameParameter = `daily-${dailyDate}`; // keeps played-id bookkeeping per day
         mode = 'daily';
     } else if (userInputMode === 'artist' && userArtistName) {
         console.log(`MAIN: Starting game with artist name: ${userArtistName}`);
@@ -288,12 +296,21 @@ async function startGame() {
         // Pass the mode to getRandomSong for clarity, though the backend will infer from param name
         // Also pass the playedTrackIds set
         if (isDailyChallenge) {
-            dailySongs = await api.getDailySong();
+            dailySongs = await api.getDailySong(dailyDate);
             console.log('[MAIN] Daily songs received from API:', dailySongs);
             if (dailySongs && dailySongs.length > 0) {
-                // Resume from however many songs the user has already finished today
-                const completed = parseInt(localStorage.getItem('dailySongsCompleted') || '0');
-                dailySongIndex = Math.min(completed, dailySongs.length - 1);
+                // Resume from however many songs the user has already finished that day
+                const completed = dailyStore.getDayRecord(dailyDate).completed;
+                if (completed >= dailySongs.length) {
+                    // This day is already finished — go straight to its recap.
+                    console.log(`[MAIN] ${dailyDate} already complete; showing recap.`);
+                    hideLoadingOverlay();
+                    showScreen('game-screen');
+                    initDailyProgressPanel(dailySongs.length);
+                    showRecapModal();
+                    return;
+                }
+                dailySongIndex = completed;
                 console.log(`[MAIN] Resuming daily challenge at song index ${dailySongIndex} (completed: ${completed})`);
                 currentSong = dailySongs[dailySongIndex];
                 initDailyProgressPanel(dailySongs.length);
@@ -521,10 +538,17 @@ function showRecapModal() {
     const modal = document.getElementById('recap-modal');
     if (!modal) return;
 
-    const log = JSON.parse(localStorage.getItem('dailySongsLog') || '[]');
-    const totalGuesses = parseInt(localStorage.getItem('dailySongsTotalGuesses') || '0');
-    const totalCorrect = parseInt(localStorage.getItem('dailySongsCorrect') || '0');
+    const record = dailyStore.getDayRecord(dailyDate);
+    const log = record.log;
+    const totalGuesses = record.guesses;
+    const totalCorrect = record.correct;
     const totalSongs = log.length;
+
+    const heading = modal.querySelector('.recap-heading');
+    if (heading) {
+        const dayLabel = dailyStore.formatDateLabel(dailyDate);
+        heading.textContent = dayLabel === 'Today' ? "Today's Results" : `${dayLabel} — Results`;
+    }
 
     // Score badge
     const scoreEl = modal.querySelector('.recap-score');
@@ -542,9 +566,10 @@ function showRecapModal() {
             const guessWord = entry.guesses === 1 ? 'guess' : 'guesses';
             row.innerHTML =
                 `<span class="recap-song-num">${i + 1}</span>` +
-                `<span class="recap-song-title">${entry.title}</span>` +
+                `<span class="recap-song-title"></span>` +
                 `<span class="recap-song-meta">${entry.guesses} ${guessWord}</span>` +
                 `<span class="recap-song-icon">${entry.correct ? '✅' : '❌'}</span>`;
+            row.querySelector('.recap-song-title').textContent = entry.title;
             songList.appendChild(row);
         });
     }
@@ -569,7 +594,7 @@ function showRecapModal() {
         // Clone to remove old listeners
         const newShareBtn = shareBtn.cloneNode(true);
         shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
-        newShareBtn.addEventListener('click', () => handleShare(log, totalCorrect, totalGuesses));
+        newShareBtn.addEventListener('click', () => handleShare(record));
     }
 
     // Close button
@@ -584,15 +609,8 @@ function showRecapModal() {
     }
 }
 
-function handleShare(log, totalCorrect, totalGuesses) {
-    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    const emojiRow = log.map(e => e.correct ? '✅' : '❌').join(' ');
-    const text = [
-        `🎵 Songless Unlimited — ${today}`,
-        emojiRow,
-        `${totalCorrect}/${log.length} correct · ${totalGuesses} guesses`,
-        'playsongless.win',
-    ].join('\n');
+function handleShare(record) {
+    const text = dailyStore.buildShareText(dailyDate, record, dailySongs.length || dailyStore.DAILY_TOTAL);
 
     const shareBtn = document.getElementById('recap-share-btn');
 

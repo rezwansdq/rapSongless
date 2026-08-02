@@ -65,6 +65,19 @@
                     style="margin-top: 5px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold; width: 100%; max-width: 500px; padding: 15px; font-size: 1.1rem;">Start
                     Game</button>
                 <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
+
+                <!-- Past daily challenges (daily mode only) -->
+                <div id="daily-archive" class="daily-archive" style="display: none;">
+                    <button id="archive-toggle" class="archive-toggle" aria-expanded="false"
+                        aria-controls="archive-body">
+                        <span class="archive-toggle-label">Past Days</span>
+                        <span id="archive-toggle-caret" class="archive-toggle-caret">▾</span>
+                    </button>
+                    <div id="archive-body" class="archive-body" style="display: none;">
+                        <p id="archive-lifetime" class="archive-lifetime"></p>
+                        <div id="archive-list" class="archive-list"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="section-block how-to-block">
@@ -86,6 +99,26 @@
     </footer>
     <script type="module" src="/js/home.js"></script>
     <script defer src="/_vercel/insights/script.js"></script>
+
+    <!-- Saved results for one past day (Hidden by default) -->
+    <div id="day-result-modal" class="modal-overlay recap-modal-overlay">
+        <div class="recap-card">
+            <h2 id="day-result-heading" class="recap-heading">Results</h2>
+            <div>
+                <p id="day-result-score" class="recap-score"></p>
+                <p id="day-result-sub" class="recap-score-sub"></p>
+            </div>
+            <div id="day-result-list" class="recap-song-list"></div>
+            <p id="day-result-summary" class="recap-summary"></p>
+            <div class="recap-actions recap-actions--stacked">
+                <button id="day-result-share-btn" class="btn btn-primary recap-share-btn">Share</button>
+                <div class="recap-actions-secondary">
+                    <button id="day-result-replay-btn" class="btn recap-close-btn">Play Again</button>
+                    <button id="day-result-close-btn" class="btn recap-close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- How to Play Modal (Hidden by default) -->
     <div id="how-to-play-modal" class="modal-overlay">
@@ -120,6 +153,11 @@
                 <h3>Input Modes</h3>
                 <p>Choose to play with songs from a specific Artist, a Top Chart Genre, or try the Daily Song Challenge.
                 </p>
+
+                <h3>Daily Challenge</h3>
+                <p>Every day brings 3 new songs, the same ones for everyone. Missed a day? Open <strong>Past Days</strong>
+                    under the start button to play any of the last 30 days. Your results are saved in this browser, so
+                    they'll still be here next time you visit.</p>
 
                 <h3>Volume Control</h3>
                 <p>Adjust the game volume at any time via the settings gear icon in the top right corner of the game
