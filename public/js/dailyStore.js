@@ -5,7 +5,7 @@
 // is what lets a player go back and play (or re-read) an earlier day.
 
 export const DAILY_TOTAL = 3;      // songs in one daily challenge
-export const ARCHIVE_DAYS = 30;    // how far back the archive goes
+export const ARCHIVE_DAYS = 100;   // how far back the archive goes
 
 const STORE_KEY = 'songlessDailyHistory'; // { "YYYY-MM-DD": DayRecord }
 const ACTIVE_DATE_KEY = 'dailyChallengeDate'; // which day the game page should load

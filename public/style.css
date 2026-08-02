@@ -907,6 +907,7 @@ footer a:hover {
     border-radius: 10px;
     text-align: center;
     position: relative; /* For positioning close button */
+    box-sizing: border-box; /* keep padding inside min-width so 320px stays 320px */
     min-width: 320px; /* Minimum width for the modal */
     max-width: 90%;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
