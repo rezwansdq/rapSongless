@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build:daily": "node scripts/build-daily-snapshot.js",
     "vercel-build": "echo 'Build step completed'"
   },
   "dependencies": {

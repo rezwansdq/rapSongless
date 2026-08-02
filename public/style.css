@@ -883,6 +883,7 @@ footer a:hover {
     left: 0;
     width: 100%;
     height: 100%;
+    box-sizing: border-box; /* so overlay padding insets content instead of widening the overlay */
     background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
     display: flex;
     justify-content: center;
@@ -906,6 +907,7 @@ footer a:hover {
     border-radius: 10px;
     text-align: center;
     position: relative; /* For positioning close button */
+    box-sizing: border-box; /* keep padding inside min-width so 320px stays 320px */
     min-width: 320px; /* Minimum width for the modal */
     max-width: 90%;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
@@ -1154,6 +1156,115 @@ footer a:hover {
     opacity: 0.7;
 }
 
+/* ── Past Days Archive ───────────────────────────────────────────────────── */
+.daily-archive {
+    width: 100%;
+    max-width: 500px;
+    margin: 4px auto 0;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.archive-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.archive-toggle:hover {
+    color: #ddd;
+}
+
+.archive-toggle-caret {
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+.archive-body {
+    padding-top: 4px;
+}
+
+.archive-lifetime {
+    font-size: 0.72rem;
+    color: #555;
+    text-align: center;
+    margin: 0 0 10px;
+}
+
+.archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 3px;
+}
+
+.archive-list::-webkit-scrollbar { width: 4px; }
+.archive-list::-webkit-scrollbar-track { background: transparent; }
+.archive-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.archive-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 7px;
+    background: #1c1c1c;
+    border: none;
+    border-left: 3px solid #2a2a2a;
+    color: #bbb;
+    font-size: 0.88rem;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+    min-height: 44px;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.archive-row:hover {
+    background: #262626;
+    color: #fff;
+}
+
+.archive-row--complete {
+    border-left-color: #2ecc71;
+}
+
+.archive-row--partial {
+    border-left-color: #e0a52e;
+}
+
+.archive-row-date {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.archive-row-status {
+    font-size: 0.78rem;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.archive-row--complete .archive-row-status { color: #7ecf91; }
+.archive-row--partial  .archive-row-status { color: #d3a24a; }
+
 /* ── End-of-Day Recap Modal ──────────────────────────────────────────────── */
 .recap-modal-overlay {
     align-items: center;
@@ -1166,6 +1277,7 @@ footer a:hover {
     padding: 22px 20px 18px;
     width: 100%;
     max-width: 380px;
+    box-sizing: border-box; /* keep the padding inside max-width on narrow screens */
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
     display: flex;
     flex-direction: column;
@@ -1281,6 +1393,21 @@ footer a:hover {
 .recap-actions {
     display: flex;
     gap: 8px;
+}
+
+/* Three-button variant (past-day results): share on its own row so the
+   secondary buttons keep their labels readable on small screens. */
+.recap-actions--stacked {
+    flex-direction: column;
+}
+
+.recap-actions-secondary {
+    display: flex;
+    gap: 8px;
+}
+
+.recap-actions-secondary .recap-close-btn {
+    flex: 1;
 }
 
 .recap-share-btn {

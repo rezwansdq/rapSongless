@@ -2,7 +2,21 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 const cors = require('cors');
 
+// The frozen calendar of daily challenges. Committed to the repo so a past day
+// always replays the exact songs it originally had, and so future days exist
+// ahead of time without being reachable before they arrive.
+// Regenerate/extend with: node scripts/build-daily-snapshot.js
+const snapshot = require('../dailysongs/daily-snapshot.json');
+
 const corsMiddleware = cors();
+
+// One daily challenge is one rap song, one pop song and one from the overall chart.
+const SONGS_PER_DAY = snapshot.songsPerDay || 3;
+
+// The earliest timezone on Earth is UTC+14, so a date becomes playable the
+// moment it starts there — that's the "the day has arrived" line. Anything
+// beyond it is a future day and stays sealed.
+const EARLIEST_TZ_OFFSET_HOURS = 14;
 
 // Seeded LCG PRNG — same seed always produces the same sequence
 function seededRandom(seedStr) {
@@ -23,6 +37,34 @@ function deterministicShuffle(arr, rng) {
     }
     return result;
 }
+
+// ── Dates ────────────────────────────────────────────────────────────────────
+
+function toDateStr(date) {
+    return date.toISOString().split('T')[0];
+}
+
+/** The server's own calendar date — what a caller gets when it asks for no date. */
+function utcTodayStr() {
+    return toDateStr(new Date());
+}
+
+/**
+ * The latest date that has begun anywhere in the world. Used only as the upper
+ * bound on what may be requested, so a player in UTC+13 can reach their local
+ * today; it is deliberately not the default date.
+ */
+function latestArrivedDate() {
+    return toDateStr(new Date(Date.now() + EARLIEST_TZ_OFFSET_HOURS * 3600000));
+}
+
+function isWellFormedDate(dateStr) {
+    if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const date = new Date(`${dateStr}T00:00:00Z`);
+    return !isNaN(date.getTime()) && toDateStr(date) === dateStr;
+}
+
+// ── Live chart fallback (only for arrived dates missing from the snapshot) ───
 
 // Fetch top songs from iTunes RSS — genreId=null for the general top chart
 async function fetchTopSongsFromRSS(genreId = null, limit = 100) {
@@ -59,57 +101,79 @@ async function fetchTopSongsFromRSS(genreId = null, limit = 100) {
     }
 }
 
-async function getDailySongs() {
-    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+/**
+ * Assembles a day from the live chart. This is the safety net for when the
+ * committed calendar runs out — days served this way are NOT stable across
+ * requests, so extend the snapshot (scripts/build-daily-snapshot.js) rather
+ * than leaning on this.
+ */
+async function buildDailySongsFromCharts(dateStr) {
     const rng = seededRandom(dateStr + '-v1');
 
-    console.log(`song-daily: Building daily set for ${dateStr}`);
+    console.warn(`song-daily: ${dateStr} not in snapshot — falling back to live charts.`);
 
-    // Fetch all pools in parallel
     const [rapTracks, popTracks, generalTracks] = await Promise.all([
         fetchTopSongsFromRSS('18', 100), // Rap & Hip-Hop
         fetchTopSongsFromRSS('14', 100), // Pop
         fetchTopSongsFromRSS(null, 100), // General top 100
     ]);
 
-    console.log(`song-daily: Pool sizes — rap: ${rapTracks.length}, pop: ${popTracks.length}, general: ${generalTracks.length}`);
-
-    // Pick 3 rap songs
-    const shuffledRap = deterministicShuffle(rapTracks, rng);
-    const selectedRap = shuffledRap.slice(0, 3).map(s => ({ ...s, genre: 'rap' }));
+    // Pick 1 rap song
+    const selectedRap = deterministicShuffle(rapTracks, rng).slice(0, 1).map(s => ({ ...s, genre: 'rap' }));
     const usedIds = new Set(selectedRap.map(s => s.id));
 
-    // Pick 3 pop songs (excluding any already chosen as rap)
+    // Pick 1 pop song (excluding any already chosen as rap)
     const availablePop = popTracks.filter(s => !usedIds.has(s.id));
-    const shuffledPop = deterministicShuffle(availablePop, rng);
-    const selectedPop = shuffledPop.slice(0, 3).map(s => ({ ...s, genre: 'pop' }));
+    const selectedPop = deterministicShuffle(availablePop, rng).slice(0, 1).map(s => ({ ...s, genre: 'pop' }));
     selectedPop.forEach(s => usedIds.add(s.id));
 
-    // Pick 4 from general top 100 (excluding already chosen songs)
+    // Pick 1 from the general top 100 (excluding already chosen songs)
     const availableGeneral = generalTracks.filter(s => !usedIds.has(s.id));
-    const shuffledGeneral = deterministicShuffle(availableGeneral, rng);
-    const selectedOther = shuffledGeneral.slice(0, 4).map(s => ({ ...s, genre: 'top' }));
+    const selectedOther = deterministicShuffle(availableGeneral, rng).slice(0, 1).map(s => ({ ...s, genre: 'top' }));
 
     const combined = [...selectedRap, ...selectedPop, ...selectedOther];
-
-    if (combined.length < 10) {
-        console.warn(`song-daily: Only assembled ${combined.length} songs for ${dateStr} (expected 10)`);
+    if (combined.length < SONGS_PER_DAY) {
+        console.warn(`song-daily: Only assembled ${combined.length} songs for ${dateStr} (expected ${SONGS_PER_DAY})`);
     }
 
     // Shuffle the final order so genre isn't predictable by position
-    const finalOrder = deterministicShuffle(combined, rng);
+    return deterministicShuffle(combined, rng);
+}
 
-    return finalOrder.map(s => ({
-        ...s,
-        id: `daily-${dateStr}-${s.id}`,
-    }));
+// ── Handler ──────────────────────────────────────────────────────────────────
+
+async function getDailySongs(dateStr) {
+    const fromSnapshot = snapshot.days[dateStr];
+    const songs = fromSnapshot || await buildDailySongsFromCharts(dateStr);
+    return songs.map(s => ({ ...s, id: `daily-${dateStr}-${s.id}` }));
 }
 
 module.exports = (req, res) => {
     corsMiddleware(req, res, async () => {
         try {
-            const songs = await getDailySongs();
+            const requestedDate = new URL(req.url, `http://${req.headers.host}`).searchParams.get('date');
+            const maxDate = latestArrivedDate();
+            const dateStr = requestedDate || utcTodayStr();
+
+            if (!isWellFormedDate(dateStr)) {
+                console.warn(`song-daily: Rejected malformed date "${requestedDate}".`);
+                return res.status(400).json({ message: 'Invalid date. Use YYYY-MM-DD.' });
+            }
+
+            // Future days are in the snapshot but stay sealed until they arrive.
+            if (dateStr > maxDate) {
+                console.warn(`song-daily: Refused future date ${dateStr} (max ${maxDate}).`);
+                return res.status(403).json({ message: "That day hasn't arrived yet." });
+            }
+
+            if (snapshot.firstDate && dateStr < snapshot.firstDate) {
+                return res.status(404).json({ message: 'No daily challenge exists for that date.' });
+            }
+
+            const songs = await getDailySongs(dateStr);
             if (songs && songs.length > 0) {
+                // A given date's songs never change, so let the CDN hold them.
+                res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
                 res.status(200).json(songs);
             } else {
                 res.status(404).json({ message: 'Could not fetch daily songs.' });

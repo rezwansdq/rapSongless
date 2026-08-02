@@ -71,12 +71,15 @@ export async function getRandomSong(parameter, mode = 'genre', playedIdsSet = ne
 }
 
 /**
- * Fetches the daily song for the current date.
- * @returns {Promise<Object|null>} A promise that resolves to the daily song object or null if not found.
+ * Fetches the daily songs for a given date.
+ * @param {string} [date] A YYYY-MM-DD date. Defaults to the server's current date.
+ * @returns {Promise<Array<Object>|null>} The day's songs, or null if they couldn't be fetched.
  */
-export async function getDailySong() {
-    console.log("API: Fetching daily song from backend.");
-    const apiUrl = `${API_BASE_URL}/song-daily`;
+export async function getDailySong(date) {
+    console.log(`API: Fetching daily songs from backend${date ? ` for ${date}` : ''}.`);
+    const apiUrl = date
+        ? `${API_BASE_URL}/song-daily?date=${encodeURIComponent(date)}`
+        : `${API_BASE_URL}/song-daily`;
 
     try {
         const response = await fetch(apiUrl);
@@ -84,11 +87,11 @@ export async function getDailySong() {
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`HTTP error! status: ${response.status} - ${errorData.message}`);
         }
-        const song = await response.json();
-        console.log("API: Daily song fetched", song);
-        return song;
+        const songs = await response.json();
+        console.log("API: Daily songs fetched", songs);
+        return songs;
     } catch (error) {
-        console.error("API: Error fetching daily song:", error);
+        console.error("API: Error fetching daily songs:", error);
         return null;
     }
 }
