@@ -48,8 +48,15 @@
         }
     </script>
     <link rel="stylesheet" href="/style.css">
+    <!-- /favicon.ico is the path browsers, crawlers and link unfurlers request
+         when no <link> applies, so it must resolve at the root. SVG is preferred
+         by modern browsers; the 96px PNG is what Google Search uses. -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
-    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="mask-icon" href="/favicon.svg" color="#3ddc84">
     <link rel="manifest" href="/site.webmanifest">
     <script type="application/ld+json">
     {

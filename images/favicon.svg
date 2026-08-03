@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Songless">
+  <!-- Dark tile matching the site's --panel-0, so the mark stays legible on both
+       light and dark browser chrome. Green is --lamp (#3ddc84). -->
+  <rect width="512" height="512" rx="112" fill="#111311"/>
+  <!-- Scaled up and re-centred on the tile: at 16px the glyph needs to fill the
+       space or it turns to mush in a browser tab. -->
+  <g fill="#3ddc84" transform="translate(256 256) scale(1.2) translate(-259 -272)">
+    <!-- Stem -->
+    <rect x="262" y="132" width="36" height="222" rx="18"/>
+    <!-- Flag -->
+    <path d="M286 138c64 20 106 62 102 126-10-40-48-70-102-80z"/>
+    <!-- Note head, tilted like engraved notation -->
+    <ellipse cx="198" cy="352" rx="80" ry="60" transform="rotate(-22 198 352)"/>
+  </g>
+</svg>
