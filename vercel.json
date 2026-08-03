@@ -10,6 +10,7 @@
     { "src": "/api/(.*)",      "dest": "/api/$1.js" },
     { "src": "/js/(.*)",       "dest": "/public/js/$1" },
     { "src": "/style.css",     "dest": "/public/style.css" },
+    { "src": "/fonts/(.*)",    "dest": "/public/fonts/$1" },
     { "src": "/images/(.*)",   "dest": "/public/images/$1" },
     { "src": "/game",          "dest": "/public/index.html" },
     { "src": "/calendar",      "dest": "/public/calendar.html" },
