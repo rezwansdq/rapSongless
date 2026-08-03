@@ -99,6 +99,17 @@
    inherit so no current or future control can slip through. */
 button, input, select, textarea { font-family: inherit; }
 
+/* Mobile browsers wait ~300ms after a tap to see whether a second one is
+   coming, and treat that second tap as zoom-in. Pressing Skip/Submit quickly,
+   or moving between calendar days, therefore zoomed the page instead of
+   registering the press. `manipulation` opts out of double-tap-to-zoom while
+   leaving pinch-to-zoom untouched, so accessibility zoom still works — which
+   is why this is the right fix rather than user-scalable=no in the viewport. */
+button, a, input, select, textarea, label, summary, [role="button"],
+.calendar-day, .guess-box, .mode-btn, .archive-link, .play-btn, .month-btn {
+    touch-action: manipulation;
+}
+
 /* ── Embed Escape Banner ─────────────────────────────────────────────────────
    Shown only when the page is loaded inside someone else's iframe — see the
    inline script in <head> that sets html.is-embedded synchronously, before
@@ -400,7 +411,10 @@ select,
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     font-family: var(--font);
-    font-size: 0.94rem;
+    /* Must stay >= 16px. iOS Safari zooms the whole viewport when a focused
+       text field is smaller than that, so tapping the guess box would jump the
+       page and leave it zoomed. Do not switch this to a rem value below 1. */
+    font-size: 16px;
     transition: border-color 0.15s var(--ease);
 }
 
