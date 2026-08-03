@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showDailyShareButtons(dateStr) {
         const shareRow = document.getElementById('daily-share-row');
         if (!shareRow) return;
-        shareRow.style.display = 'flex';
+        shareRow.classList.remove('is-hidden');
 
         const shareBtn = document.getElementById('home-share-btn');
         const copyBtn = document.getElementById('home-copy-btn');
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideDailyShareButtons() {
         const shareRow = document.getElementById('daily-share-row');
-        if (shareRow) shareRow.style.display = 'none';
+        if (shareRow) shareRow.classList.add('is-hidden');
     }
 
     function renderArchiveLink() {
@@ -128,7 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
         artistInputSection.style.display = 'none';
         genreInputSection.style.display = 'none';
         if (dailySongSection) dailySongSection.style.display = 'none';
-        if (archiveSection) archiveSection.style.display = mode === 'daily' ? 'block' : 'none';
+        // Kept in flow in every mode — only its visibility changes, so switching
+        // modes cannot resize the page.
+        if (archiveSection) archiveSection.classList.toggle('is-hidden', mode !== 'daily');
 
         validateButton.disabled = false;
         validateButton.classList.remove('btn--disabled');

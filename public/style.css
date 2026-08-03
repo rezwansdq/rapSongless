@@ -15,33 +15,33 @@
 
 :root {
     /* Panel surfaces — one hue, lightness only. Higher number = closer to you. */
-    --panel-0: #0d0e0d;   /* the room behind the unit */
-    --panel-1: #121412;   /* the faceplate */
-    --panel-2: #181a18;   /* a raised control */
-    --panel-3: #1f221f;   /* a control under the pointer */
-    --panel-inset: #0a0b0a; /* recessed — inputs receive content, so they sink */
+    --panel-0: #111311;   /* the room behind the unit */
+    --panel-1: #1a1e1a;   /* the faceplate */
+    --panel-2: #232823;   /* a raised control */
+    --panel-3: #2e342e;   /* a control under the pointer */
+    --panel-inset: #0b0d0b; /* recessed — inputs receive content, so they sink */
 
     /* Hairlines. Low-alpha so they define edges without drawing the eye. */
-    --line-soft: rgba(255, 255, 255, 0.05);
-    --line: rgba(255, 255, 255, 0.09);
-    --line-strong: rgba(255, 255, 255, 0.16);
+    --line-soft: rgba(255, 255, 255, 0.09);
+    --line: rgba(255, 255, 255, 0.15);
+    --line-strong: rgba(255, 255, 255, 0.26);
 
     /* Four levels of text, each with a job. */
-    --ink: #f2f4f2;        /* headlines, answers */
-    --ink-2: #b9beb9;      /* body */
-    --silkscreen: #7d847d; /* printed labels, metadata */
-    --ink-dim: #4d534d;    /* disabled, unlit, placeholder */
+    --ink: #f7f9f7;        /* headlines, answers */
+    --ink-2: #d4dad4;      /* body */
+    --silkscreen: #9aa39a; /* printed labels, metadata */
+    --ink-dim: #6e766e;    /* disabled, unlit, placeholder */
 
     /* Indicator lamps. One accent (green); amber and red are status, not decor. */
-    --lamp: #35d07e;
-    --lamp-bright: #4ade94;
-    --lamp-amber: #d59a32;
-    --lamp-red: #d95d57;
+    --lamp: #3ddc84;
+    --lamp-bright: #5ce89b;
+    --lamp-amber: #e5a94a;
+    --lamp-red: #ef6f68;
 
     /* Lamp-tinted panels for state rows. */
-    --panel-good: #131d16;
-    --panel-bad: #1d1414;
-    --panel-warm: #1c1811;
+    --panel-good: #16281c;
+    --panel-bad: #2a1a19;
+    --panel-warm: #282013;
 
     --radius-sm: 6px;   /* buttons, inputs, cells */
     --radius-md: 10px;  /* cards, rows */
@@ -177,14 +177,14 @@ body {
 .btn-primary {
     background-color: var(--lamp);
     border-color: var(--lamp);
-    color: #06210f;
+    color: #05230f;
     font-weight: 650;
 }
 
 .btn-primary:hover {
     background-color: var(--lamp-bright);
     border-color: var(--lamp-bright);
-    color: #06210f;
+    color: #05230f;
 }
 
 /* Quiet outline — secondary actions that shouldn't compete. */
@@ -217,7 +217,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     flex-grow: 1;
     gap: var(--s6);
     width: 100%;
@@ -280,7 +280,7 @@ body {
     flex-direction: column;
     justify-content: center;
     width: 100%;
-    min-height: 56px;
+    height: 74px;
 }
 
 .daily-song-container,
@@ -335,8 +335,10 @@ select {
     cursor: pointer;
 }
 
-#validation-message:not(:empty) {
+#validation-message {
     font-size: 0.84rem;
+    line-height: 20px;
+    min-height: 20px;
     color: var(--lamp-amber);
     margin: 0;
 }
@@ -376,6 +378,12 @@ select {
     min-height: 38px;
     font-size: 0.84rem;
     font-weight: 500;
+}
+
+/* Elements that come and go keep their slot, so the page never reflows. */
+.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* ── Archive entry point ─────────────────────────────────────────────────── */
@@ -594,13 +602,13 @@ select {
 
 .calendar-day--complete {
     background-color: var(--panel-good);
-    border-color: rgba(53, 208, 126, 0.22);
+    border-color: rgba(61, 220, 132, 0.38);
     color: var(--ink);
 }
 
 .calendar-day--partial {
     background-color: var(--panel-warm);
-    border-color: rgba(213, 154, 50, 0.24);
+    border-color: rgba(229, 169, 74, 0.4);
     color: var(--ink);
 }
 
@@ -659,12 +667,12 @@ select {
 
 .legend-swatch--complete {
     background-color: var(--panel-good);
-    border-color: rgba(53, 208, 126, 0.35);
+    border-color: rgba(61, 220, 132, 0.5);
 }
 
 .legend-swatch--partial {
     background-color: var(--panel-warm);
-    border-color: rgba(213, 154, 50, 0.35);
+    border-color: rgba(229, 169, 74, 0.5);
 }
 
 .legend-swatch--locked {
@@ -908,7 +916,7 @@ select {
 .play-icon,
 .pause-icon {
     font-size: 1.4rem;
-    color: #06210f;
+    color: #05230f;
     line-height: 1;
 }
 
