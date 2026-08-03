@@ -876,8 +876,10 @@ select {
     transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
+/* Same height as a filled row — an empty slot that is shorter makes the whole
+   column grow every time a guess lands, shoving the controls below it down
+   mid-round. Only the colours may differ between states, never the metrics. */
 .guess-box.empty {
-    min-height: 30px;
     background-color: transparent;
     border-color: var(--line-soft);
     border-left-color: var(--panel-3);
