@@ -1,0 +1,12 @@
+# Songless — https://songdle.win
+# Also served at playsongless.win; every page carries a rel=canonical pointing
+# at songdle.win so the two domains don't split ranking signal.
+
+User-agent: *
+Allow: /
+
+# Nothing to gain from crawling the JSON endpoints, and /api/song-daily would
+# leak the day's answers straight into a search index.
+Disallow: /api/
+
+Sitemap: https://songdle.win/sitemap.xml

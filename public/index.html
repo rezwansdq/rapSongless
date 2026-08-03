@@ -4,7 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Songless Unlimited - Game</title>
+    <title>Play Songless — Guess the Song From a 0.2s Clip | Song Wordle</title>
+    <meta name="description" content="Play today’s Songless challenge. Hear a split-second music clip and name the song — every miss unlocks a longer snippet. A free song wordle with no signup.">
+    <meta name="keywords" content="songless, songdle, song wordle, wordle for songs, music wordle, song guessing game, guess the song, guess the song game, daily song game, daily music game, heardle, heardle alternative, heardle replacement, music guessing game, name that tune, song quiz, music quiz, audio quiz, guess the song from the intro, daily music puzzle, song trivia, music trivia game, songless unlimited, free song game, online music game, intro quiz, guess the music, song of the day game">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="Rezwan Sadeqi">
+    <meta name="theme-color" content="#111311">
+    <meta name="apple-mobile-web-app-title" content="Songless">
+    <meta name="application-name" content="Songless">
+
+    <!-- Both playsongless.win and songdle.win serve this site; canonical tells
+         search engines which copy to rank so the signal isn't split. -->
+    <link rel="canonical" href="https://songdle.win/game">
+
+    <!-- Open Graph (Facebook, Discord, iMessage, WhatsApp, Slack) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Songless">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:title" content="Play Songless — Guess the Song From the Intro">
+    <meta property="og:description" content="Play today’s Songless challenge. Hear a split-second music clip and name the song — every miss unlocks a longer snippet. A free song wordle with no signup.">
+    <meta property="og:url" content="https://songdle.win/game">
+    <meta property="og:image" content="https://songdle.win/images/og-image.png">
+    <meta property="og:image:secure_url" content="https://songdle.win/images/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Songless — the daily song guessing game">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Play Songless — Guess the Song From the Intro">
+    <meta name="twitter:description" content="Play today’s Songless challenge. Hear a split-second music clip and name the song — every miss unlocks a longer snippet. A free song wordle with no signup.">
+    <meta name="twitter:image" content="https://songdle.win/images/og-image.png">
+    <meta name="twitter:image:alt" content="Songless — the daily song guessing game">
+
     <script>
         // Runs before the stylesheet loads so html.is-embedded is set before
         // first paint — the embed banner below never causes a layout shift.
@@ -16,6 +49,52 @@
     </script>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://songdle.win/#org",
+        "name": "Songless",
+        "url": "https://songdle.win/",
+        "logo": "https://songdle.win/images/og-image.png"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://songdle.win/#game",
+        "name": "Songless",
+        "alternateName": ["Songdle", "Songless Unlimited", "Song Wordle"],
+        "url": "https://songdle.win/",
+        "description": "A free daily song guessing game. Hear a fraction of a second of a track and name it; every wrong guess unlocks a longer snippet.",
+        "image": "https://songdle.win/images/og-image.png",
+        "inLanguage": "en",
+        "genre": ["Music", "Puzzle", "Trivia", "Word Game"],
+        "playMode": "SinglePlayer",
+        "gamePlatform": ["Web browser", "Desktop", "Mobile"],
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "author": { "@type": "Person", "name": "Rezwan Sadeqi" },
+        "publisher": { "@id": "https://songdle.win/#org" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Songless", "item": "https://songdle.win/" },
+          { "@type": "ListItem", "position": 2, "name": "Play", "item": "https://songdle.win/game" }
+        ]
+      }
+      ]
+    }
+    </script>
 </head>
 
 <body>

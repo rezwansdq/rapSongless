@@ -226,6 +226,9 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, cu
     
     if (albumArtElement && albumArtUrl) {
         albumArtElement.src = albumArtUrl;
+        // Describe the actual artwork rather than leaving alt empty.
+        albumArtElement.alt = `${songTitle} by ${artist} — album artwork`;
+        albumArtElement.loading = 'lazy';
         albumArtElement.style.display = 'block';
     } else if (albumArtElement) {
         albumArtElement.style.display = 'none';
@@ -257,6 +260,9 @@ export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
     
     if (albumArtElement && albumArtUrl) {
         albumArtElement.src = albumArtUrl;
+        // Describe the actual artwork rather than leaving alt empty.
+        albumArtElement.alt = `${songTitle} by ${artist} — album artwork`;
+        albumArtElement.loading = 'lazy';
         albumArtElement.style.display = 'block';
     } else if (albumArtElement) {
         albumArtElement.style.display = 'none';

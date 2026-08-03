@@ -274,11 +274,20 @@ async function startGame() {
         gameParameter = userGenreId; 
         mode = 'genre'; 
     } else {
-        console.warn("MAIN: No valid user input (artist name or genre) found in localStorage. Redirecting to home.");
-        hideLoadingOverlay();
-        alert("No artist or genre selected! Please go to the homepage and set one up first.");
-        window.location.href = '/';
-        return;
+        // Arrived at /game with nothing stored — a shared link, a bookmark, or a
+        // search-engine crawler. Bouncing to the home page with an alert() made
+        // /game impossible to index as its own URL and lost anyone following a
+        // link, so fall back to today's daily challenge instead.
+        console.log("MAIN: No stored mode; defaulting to today's daily challenge.");
+        localStorage.setItem('userInputMode', 'daily');
+        localStorage.setItem('userGenreId', '18');
+        localStorage.setItem('userArtistName', '');
+        localStorage.setItem('userGenreName', 'Daily Song');
+
+        isDailyChallenge = true;
+        dailyDate = resolveDailyDate();
+        gameParameter = `daily-${dailyDate}`;
+        mode = 'daily';
     }
 
     // Check if the game parameter has changed. If so, reset playedTrackIds.

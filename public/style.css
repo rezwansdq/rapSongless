@@ -1492,6 +1492,73 @@ select {
     color: var(--silkscreen);
 }
 
+/* ── Below-the-fold reference content ────────────────────────────────────────
+   Sits after the game so it never competes with the primary action, but is
+   real visible prose — search engines can't rank a page of bare controls, and
+   the FAQ schema requires its answers to be on-page for users. */
+
+.seo-content {
+    width: 100%;
+    padding: var(--s8) var(--s5);
+    border-top: 1px solid var(--line-soft);
+    position: relative;
+    z-index: 1;
+}
+
+.seo-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.seo-content h2 {
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin: var(--s7) 0 var(--s3);
+}
+
+.seo-inner > h2:first-child { margin-top: 0; }
+
+.seo-content h3 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    margin: var(--s5) 0 var(--s2);
+}
+
+.seo-content p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--silkscreen);
+    margin: 0 0 var(--s3);
+}
+
+.seo-content strong { color: var(--ink-2); font-weight: 600; }
+
+.seo-content a {
+    color: var(--lamp);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.seo-content a:hover { color: var(--lamp-bright); }
+
+.seo-list {
+    margin: 0 0 var(--s3);
+    padding-left: var(--s5);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--silkscreen);
+}
+
+.seo-list li { margin-bottom: var(--s2); }
+
+@media (max-width: 600px) {
+    .seo-content { padding: var(--s7) var(--s4); }
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 
 footer {

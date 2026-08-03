@@ -4,7 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Songless Unlimited</title>
+    <title>Songless — Daily Song Guessing Game | Music Wordle & Songdle</title>
+    <meta name="description" content="Songless is a free daily song guessing game. Hear a snippet, name the track in six tries. Three new songs every day, plus a 100-day archive. No signup.">
+    <meta name="keywords" content="songless, songdle, song wordle, wordle for songs, music wordle, song guessing game, guess the song, guess the song game, daily song game, daily music game, heardle, heardle alternative, heardle replacement, music guessing game, name that tune, song quiz, music quiz, audio quiz, guess the song from the intro, daily music puzzle, song trivia, music trivia game, songless unlimited, free song game, online music game, intro quiz, guess the music, song of the day game">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="Rezwan Sadeqi">
+    <meta name="theme-color" content="#111311">
+    <meta name="apple-mobile-web-app-title" content="Songless">
+    <meta name="application-name" content="Songless">
+
+    <!-- Both playsongless.win and songdle.win serve this site; canonical tells
+         search engines which copy to rank so the signal isn't split. -->
+    <link rel="canonical" href="https://songdle.win/">
+
+    <!-- Open Graph (Facebook, Discord, iMessage, WhatsApp, Slack) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Songless">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:title" content="Songless — Daily Song Guessing Game">
+    <meta property="og:description" content="Songless is a free daily song guessing game. Hear a snippet, name the track in six tries. Three new songs every day, plus a 100-day archive. No signup.">
+    <meta property="og:url" content="https://songdle.win/">
+    <meta property="og:image" content="https://songdle.win/images/og-image.png">
+    <meta property="og:image:secure_url" content="https://songdle.win/images/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Songless — the daily song guessing game">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Songless — Daily Song Guessing Game">
+    <meta name="twitter:description" content="Songless is a free daily song guessing game. Hear a snippet, name the track in six tries. Three new songs every day, plus a 100-day archive. No signup.">
+    <meta name="twitter:image" content="https://songdle.win/images/og-image.png">
+    <meta name="twitter:image:alt" content="Songless — the daily song guessing game">
+
     <script>
         // Runs before the stylesheet loads so html.is-embedded is set before
         // first paint — the embed banner below never causes a layout shift.
@@ -16,6 +49,90 @@
     </script>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://songdle.win/#org",
+        "name": "Songless",
+        "url": "https://songdle.win/",
+        "logo": "https://songdle.win/images/og-image.png"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://songdle.win/#website",
+        "name": "Songless",
+        "alternateName": ["Songdle", "Songless Unlimited"],
+        "url": "https://songdle.win/",
+        "publisher": { "@id": "https://songdle.win/#org" },
+        "inLanguage": "en"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://songdle.win/#game",
+        "name": "Songless",
+        "alternateName": ["Songdle", "Songless Unlimited", "Song Wordle"],
+        "url": "https://songdle.win/",
+        "description": "A free daily song guessing game. Hear a fraction of a second of a track and name it; every wrong guess unlocks a longer snippet.",
+        "image": "https://songdle.win/images/og-image.png",
+        "inLanguage": "en",
+        "genre": ["Music", "Puzzle", "Trivia", "Word Game"],
+        "playMode": "SinglePlayer",
+        "gamePlatform": ["Web browser", "Desktop", "Mobile"],
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "author": { "@type": "Person", "name": "Rezwan Sadeqi" },
+        "publisher": { "@id": "https://songdle.win/#org" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://songdle.win/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Songless?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Songless is a free daily song guessing game — a music version of Wordle. Each day you get three songs. You hear only a fraction of a second at first, and every wrong guess or skip unlocks a longer snippet, up to 15 seconds." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Songless a good Heardle alternative?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Heardle shut down in 2023, and Songless works the same way: name the track from the shortest possible intro clip, with the snippet growing after each miss. Songless adds three songs a day, a 100-day archive, and artist and genre modes." }
+          },
+          {
+            "@type": "Question",
+            "name": "How many songs are in the daily challenge?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Three — one rap song, one pop song, and one from the overall chart. Everyone in the world gets the same three songs each day." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I play past days?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. The Past Days calendar keeps the last 100 daily puzzles, and every date always has the exact songs it had on the day." }
+          },
+          {
+            "@type": "Question",
+            "name": "How long are the snippets?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Six stages: 0.2 seconds, 0.7 seconds, 2.5 seconds, 5 seconds, 9 seconds, then 15 seconds. Guess correctly at any stage to win the round." }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need an account to play?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Songless is completely free and needs no signup or login. Your results are saved privately in your own browser." }
+          }
+        ]
+      }
+      ]
+    }
+    </script>
 </head>
 
 <body>
@@ -91,6 +208,91 @@
     <div id="loading-overlay" class="loading-screen-overlay">
         <div class="loading-message">Loading</div>
     </div>
+
+    <!-- Below-the-fold reference content. Search engines need crawlable prose to
+         rank a page — the game UI above is almost entirely controls. This is also
+         what makes the FAQPage structured data legitimate: Google requires the
+         questions and answers to be visible to real users, not markup-only. Kept
+         after the game so it never competes with the primary action. -->
+    <section class="seo-content" id="about">
+        <div class="seo-inner">
+            <h2>What is Songless?</h2>
+            <p>
+                <strong>Songless</strong> is a free daily song guessing game — a music version of Wordle,
+                sometimes called <strong>Songdle</strong> or a <strong>song wordle</strong>. Every day you get
+                three tracks. You hear just two tenths of a second at first, and every wrong guess or skip
+                unlocks a longer snippet, up to a full fifteen seconds. Name the track in as few tries as you can.
+            </p>
+            <p>
+                Everyone in the world gets the same three songs each day, so you can compare your result with
+                friends. There is nothing to install and no account to create — your scores are saved privately
+                in your own browser.
+            </p>
+
+            <h2>How to play</h2>
+            <ol class="seo-list">
+                <li>Press play to hear the opening <strong>0.2 seconds</strong> of the track.</li>
+                <li>Start typing a title — the search suggests songs as you go.</li>
+                <li>Guess wrong or skip, and the snippet grows: 0.7s, 2.5s, 5s, 9s, then 15s.</li>
+                <li>Guess right at any stage to win the round and move to the next song.</li>
+            </ol>
+
+            <h2>Game modes</h2>
+            <p>
+                <strong>Daily</strong> gives you the three songs of the day. <strong>Artist</strong> plays an
+                endless run from any artist you name. <strong>Genre</strong> pulls from a chart — rap and
+                hip-hop, pop, R&amp;B and soul, alternative, dance, or country. The
+                <a href="/calendar">Past Days calendar</a> keeps the last 100 daily puzzles so you can play any
+                date you missed.
+            </p>
+            <p>
+                <!-- The main CTA is a <button> driven by JS, so this is the only crawlable
+                     path to /game — without it the page is reachable only via the sitemap. -->
+                Ready? <a href="/game">Play today's Songless challenge</a>, or browse the
+                <a href="/calendar">archive of past daily songs</a>.
+            </p>
+
+            <h2>Frequently asked questions</h2>
+
+            <h3>What is Songless?</h3>
+            <p>
+                Songless is a free daily song guessing game — a music version of Wordle. Each day you get three
+                songs. You hear only a fraction of a second at first, and every wrong guess or skip unlocks a
+                longer snippet, up to 15 seconds.
+            </p>
+
+            <h3>Is Songless a good Heardle alternative?</h3>
+            <p>
+                Yes. Heardle shut down in 2023, and Songless works the same way: name the track from the
+                shortest possible intro clip, with the snippet growing after each miss. Songless adds three
+                songs a day, a 100-day archive, and artist and genre modes.
+            </p>
+
+            <h3>How many songs are in the daily challenge?</h3>
+            <p>
+                Three — one rap song, one pop song, and one from the overall chart. Everyone in the world gets
+                the same three songs each day.
+            </p>
+
+            <h3>Can I play past days?</h3>
+            <p>
+                Yes. The Past Days calendar keeps the last 100 daily puzzles, and every date always has the
+                exact songs it had on the day.
+            </p>
+
+            <h3>How long are the snippets?</h3>
+            <p>
+                Six stages: 0.2 seconds, 0.7 seconds, 2.5 seconds, 5 seconds, 9 seconds, then 15 seconds. Guess
+                correctly at any stage to win the round.
+            </p>
+
+            <h3>Do I need an account to play?</h3>
+            <p>
+                No. Songless is completely free and needs no signup or login. Your results are saved privately
+                in your own browser.
+            </p>
+        </div>
+    </section>
 
     <footer>
         <p>Rezwan Sadeqi &copy; 2026</p>

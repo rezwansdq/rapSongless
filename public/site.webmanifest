@@ -1,0 +1,26 @@
+{
+  "name": "Songless — Daily Song Guessing Game",
+  "short_name": "Songless",
+  "description": "A free daily song guessing game. Hear a snippet, name the track in six tries.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111311",
+  "theme_color": "#111311",
+  "categories": ["games", "music", "entertainment"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/images/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
