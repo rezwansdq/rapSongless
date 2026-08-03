@@ -1,6 +1,7 @@
 import * as dailyStore from './dailyStore.js';
 import { playDay, shareDay, copyToClipboard, openDayResults } from './dailyUi.js';
 import './notesBg.js';
+import './embedBanner.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const artistNameInput = document.getElementById('artist-name');

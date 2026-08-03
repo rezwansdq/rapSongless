@@ -4,6 +4,7 @@ import { playSnippet, playFullPreview, stopAudio, isAudioPlaying, setVolume, cur
 import { checkGuess } from './search.js'; // Only checkGuess is needed from search.js now
 import * as dailyStore from './dailyStore.js';
 import './notesBg.js';
+import './embedBanner.js';
 
 // DOM Elements
 // const startButton = document.getElementById('start-button'); // REMOVED

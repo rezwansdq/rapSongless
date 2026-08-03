@@ -5,11 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Songless Unlimited - Game</title>
+    <script>
+        // Runs before the stylesheet loads so html.is-embedded is set before
+        // first paint — the embed banner below never causes a layout shift.
+        try {
+            if (window.self !== window.top) document.documentElement.classList.add('is-embedded');
+        } catch (e) {
+            document.documentElement.classList.add('is-embedded');
+        }
+    </script>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
 </head>
 
 <body>
+    <div id="embed-banner" class="embed-banner" role="banner">
+        <p class="embed-banner-text">
+            Not playing on our site?
+            <a class="embed-banner-link" href="https://songdle.win" target="_top" rel="noopener noreferrer">Click
+                here to play fullscreen on songdle.win</a>
+        </p>
+        <button id="embed-banner-dismiss" class="embed-banner-dismiss" aria-label="Dismiss">✕</button>
+    </div>
     <canvas id="notesBg"></canvas>
     <div class="container">
         <section id="game-screen" class="screen">

@@ -99,6 +99,61 @@
    inherit so no current or future control can slip through. */
 button, input, select, textarea { font-family: inherit; }
 
+/* ── Embed Escape Banner ─────────────────────────────────────────────────────
+   Shown only when the page is loaded inside someone else's iframe — see the
+   inline script in <head> that sets html.is-embedded synchronously, before
+   first paint, so this never causes a layout shift on load. Direct visitors
+   never see it: `.embed-banner` stays display:none until that class exists. */
+
+.embed-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--s2) var(--s3);
+    width: 100%;
+    padding: var(--s3) var(--s5);
+    background-color: var(--panel-good);
+    border-bottom: 1px solid rgba(61, 220, 132, 0.3);
+    position: relative;
+    z-index: 20;
+}
+
+html.is-embedded .embed-banner { display: flex; }
+
+.embed-banner-text {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--ink-2);
+}
+
+.embed-banner-link {
+    color: var(--lamp);
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.embed-banner-link:hover { color: var(--lamp-bright); }
+
+.embed-banner-dismiss {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--ink-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.embed-banner-dismiss:hover { color: var(--ink); background-color: var(--panel-2); }
+
 /* ── Page shell ──────────────────────────────────────────────────────────── */
 
 body {

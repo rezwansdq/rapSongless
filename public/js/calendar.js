@@ -8,6 +8,7 @@
 import * as dailyStore from './dailyStore.js';
 import { playDay, openDayResults } from './dailyUi.js';
 import './notesBg.js';
+import './embedBanner.js';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
