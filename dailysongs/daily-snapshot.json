@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-02T23:40:41.524Z",
+  "generatedAt": "2026-08-03T00:01:15.690Z",
   "songsPerDay": 3,
   "firstDate": "2026-04-24",
-  "lastDate": "2027-08-02",
+  "lastDate": "2027-08-03",
   "days": {
     "2026-04-24": [
       {
@@ -12117,6 +12117,32 @@
         "title": "Dance The Night",
         "artist": "Dua Lipa",
         "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f8/1b/08/f81b08c2-dd58-8297-3ba3-203da184ca17/mzaf_9024785579572527117.plus.aac.p.m4a",
+        "albumArt": null,
+        "genre": "pop"
+      }
+    ],
+    "2027-08-03": [
+      {
+        "id": "4a0bdaa122b8",
+        "title": "Ocean Drive",
+        "artist": "21 Savage & Metro Boomin",
+        "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/52/8c/8d/528c8d6a-3d12-4189-9fda-8a49f751fe9d/mzaf_12770117934240759132.plus.aac.p.m4a",
+        "albumArt": null,
+        "genre": "rap"
+      },
+      {
+        "id": "62a4c28bc8ce",
+        "title": "Red Warrior",
+        "artist": "Hans Zimmer",
+        "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/a7/aa/b5/a7aab51c-d474-8bdf-d893-47b4f1119315/mzaf_9805776744795771748.plus.aac.p.m4a",
+        "albumArt": null,
+        "genre": "top"
+      },
+      {
+        "id": "ea44fd9476d7",
+        "title": "Same Bitches (feat. G-Eazy & YG)",
+        "artist": "Post Malone",
+        "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8a/44/a3/8a44a35e-1279-a92f-5179-6086a7ba436d/mzaf_8750896488105122594.plus.aac.p.m4a",
         "albumArt": null,
         "genre": "pop"
       }

@@ -126,7 +126,7 @@ function updateProgressPanelItem(index, title, artist, wasCorrect) {
     const infoEl = item.querySelector('.pbi-info');
     const statusEl = item.querySelector('.pbi-status');
     if (infoEl) infoEl.textContent = artist ? `${title} — ${artist}` : title;
-    if (statusEl) statusEl.textContent = wasCorrect ? '✅' : '❌';
+    if (statusEl) statusEl.textContent = wasCorrect ? 'Hit' : 'Miss';
 }
 
 function hideDailyProgressPanel() {
@@ -554,7 +554,11 @@ function showRecapModal() {
     const scoreEl = modal.querySelector('.recap-score');
     const scoreSubEl = modal.querySelector('.recap-score-sub');
     if (scoreEl) scoreEl.textContent = `${totalCorrect}/${totalSongs}`;
-    if (scoreSubEl) scoreSubEl.textContent = totalCorrect === totalSongs ? 'Perfect!' : totalCorrect === 0 ? 'Keep practicing' : 'correct';
+    if (scoreSubEl) {
+        scoreSubEl.textContent = totalCorrect === totalSongs ? 'Perfect'
+            : totalCorrect === 0 ? 'Keep practicing'
+            : 'Correct';
+    }
 
     // Populate song rows
     const songList = modal.querySelector('.recap-song-list');
@@ -567,8 +571,7 @@ function showRecapModal() {
             row.innerHTML =
                 `<span class="recap-song-num">${i + 1}</span>` +
                 `<span class="recap-song-title"></span>` +
-                `<span class="recap-song-meta">${entry.guesses} ${guessWord}</span>` +
-                `<span class="recap-song-icon">${entry.correct ? '✅' : '❌'}</span>`;
+                `<span class="recap-song-meta">${entry.guesses} ${guessWord}</span>`;
             row.querySelector('.recap-song-title').textContent = entry.title;
             songList.appendChild(row);
         });
@@ -583,8 +586,8 @@ function showRecapModal() {
     // Hide any open success/failure modals
     const sm = document.getElementById('success-modal');
     const fm = document.getElementById('failure-modal');
-    if (sm) sm.style.display = 'none';
-    if (fm) fm.style.display = 'none';
+    if (sm) sm.classList.remove('active');
+    if (fm) fm.classList.remove('active');
 
     modal.classList.add('active');
 
@@ -684,16 +687,12 @@ function nextDailySong() {
 function showSettingsModal() {
     if (settingsModal) {
         settingsModal.classList.add('active');
-        // Add blur to game screen content
-        document.classList.add('blurred');
     }
 }
 
 function hideSettingsModal() {
     if (settingsModal) {
         settingsModal.classList.remove('active');
-        // Remove blur from game screen content
-        document.classList.remove('blurred');
     }
 }
 

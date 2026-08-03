@@ -12,16 +12,14 @@
 <body>
     <canvas id="notesBg"></canvas>
     <div class="container">
-        <!-- Game Screen -->
         <section id="game-screen" class="screen">
             <div class="game-main">
                 <div class="game-header">
+                    <a href="/" id="back-to-home-button" class="home-icon-btn">‹ Home</a>
                     <h1 class="game-title">Songless Unlimited</h1>
-                    <a href="/" id="back-to-home-button" class="home-icon-btn">Home</a>
-                    <button id="settings-button" class="settings-icon-btn">⚙️</button>
+                    <button id="settings-button" class="settings-icon-btn" aria-label="Settings">⚙</button>
                 </div>
 
-                <!-- Pre-displayed empty guess boxes -->
                 <div class="guess-boxes-container">
                     <div class="guess-box empty" data-index="0"></div>
                     <div class="guess-box empty" data-index="1"></div>
@@ -31,81 +29,75 @@
                     <div class="guess-box empty" data-index="5"></div>
                 </div>
 
-                <!-- Stage and Timer Info -->
                 <div class="game-info">
                     <div class="stage-info">
-                        <div id="stage-counter" class="stage-label">Stage 1</div>
-                        <div id="stage-duration" class="stage-duration">2 Seconds</div>
+                        <span id="stage-counter" class="stage-label">Stage 1</span>
+                        <span id="stage-duration" class="stage-duration">0.2s</span>
                     </div>
                     <div id="timer-container">
                         <div class="time-display">
-                            <span class="time-label"></span>
                             <div class="progress-bar-container">
                                 <div id="progress-bar" class="progress-bar-fill"></div>
                             </div>
-                            <span class="time-label"></span>
                         </div>
-                        <div id="timer" class="current-time">0.0sec</div>
+                        <div id="timer" class="current-time">0.0s</div>
                     </div>
                 </div>
 
-                <!-- Play/Pause Button -->
                 <div class="play-control">
-                    <button id="play-pause-button" class="play-btn">
+                    <button id="play-pause-button" class="play-btn" aria-label="Play snippet">
                         <span class="play-icon">▶</span>
                     </button>
                 </div>
 
-                <!-- Game Controls -->
                 <div class="game-controls">
                     <div class="search-container">
                         <input type="text" id="guess-input" placeholder="Know it? Search for the title">
                         <div id="autocomplete-results" class="autocomplete-results"></div>
                     </div>
                     <div class="button-container">
-                        <button id="skip-button" class="btn">SKIP</button>
-                        <button id="submit-button" class="btn btn-primary">SUBMIT</button>
+                        <button id="skip-button" class="btn">Skip</button>
+                        <button id="submit-button" class="btn btn-primary">Submit</button>
                     </div>
                 </div>
 
-                <!-- Daily progress panel — shown below skip/submit in daily mode -->
+                <!-- Daily progress — shown below the controls in daily mode -->
                 <aside id="daily-progress-panel" class="daily-progress-panel">
                     <p id="progress-panel-label" class="progress-panel-label">Today's Songs</p>
                     <div id="progress-panel-items" class="progress-panel-items"></div>
                 </aside>
-            </div><!-- .game-main -->
+            </div>
         </section>
+    </div>
 
-        <!-- Success Modal (Hidden by default) -->
-        <div id="success-modal" class="modal" style="display: none;">
-            <div class="modal-content success">
-                <h2 id="success-message">Congratulations!</h2>
-                <img id="success-album-art" class="modal-album-art" src="" alt="Album Art" style="display: none;">
-                <p id="success-song-info">Song Title - Artist</p>
-                <button id="play-next-button" class="btn btn-primary">Play Next</button>
-            </div>
-        </div>
-
-        <!-- Failure Modal (Hidden by default) -->
-        <div id="failure-modal" class="modal" style="display: none;">
-            <div class="modal-content failure">
-                <h2 id="failure-message">You failed!</h2>
-                <img id="failure-album-art" class="modal-album-art" src="" alt="Album Art" style="display: none;">
-                <p id="failure-song-info">The song was: Song Title - Artist</p>
-                <button id="try-again-button" class="btn btn-primary">Try Again</button>
-            </div>
+    <!-- Success -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content success">
+            <h2 id="success-message">Got it</h2>
+            <img id="success-album-art" class="modal-album-art" src="" alt="" style="display: none;">
+            <p id="success-song-info">Song Title - Artist</p>
+            <button id="play-next-button" class="btn btn-primary">Play Next</button>
         </div>
     </div>
 
-    <!-- Loading Screen Overlay (Hidden by default) -->
+    <!-- Failure -->
+    <div id="failure-modal" class="modal">
+        <div class="modal-content failure">
+            <h2 id="failure-message">Out of guesses</h2>
+            <img id="failure-album-art" class="modal-album-art" src="" alt="" style="display: none;">
+            <p id="failure-song-info">The song was: Song Title - Artist</p>
+            <button id="try-again-button" class="btn btn-primary">Play Next</button>
+        </div>
+    </div>
+
     <div id="loading-overlay" class="loading-screen-overlay">
-        <div class="loading-message">Finding song…</div>
+        <div class="loading-message">Finding song</div>
     </div>
 
-    <!-- Settings Modal (Hidden by default) -->
+    <!-- Settings -->
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-content settings-content">
-            <button id="close-settings-button" class="close-btn">✖</button>
+            <button id="close-settings-button" class="close-btn" aria-label="Close">✕</button>
             <h2 class="modal-title">Settings</h2>
             <div class="setting-item">
                 <label for="volume-slider-modal" class="volume-label">Volume</label>
@@ -114,7 +106,7 @@
         </div>
     </div>
 
-    <!-- Recap Modal (shown after all daily songs complete) -->
+    <!-- Recap, shown once the day's songs are done -->
     <div id="recap-modal" class="modal-overlay recap-modal-overlay">
         <div class="recap-card">
             <h2 class="recap-heading">Today's Results</h2>
@@ -126,17 +118,17 @@
             <p class="recap-summary"></p>
             <div class="recap-actions">
                 <button id="recap-share-btn" class="btn btn-primary recap-share-btn">Share</button>
-                <button id="recap-close-btn" class="btn recap-close-btn">Close</button>
+                <button id="recap-close-btn" class="btn btn-ghost recap-close-btn">Close</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="/js/main.js"></script>
-    <script defer src="/_vercel/insights/script.js"></script>
-
     <footer>
         <p>Rezwan Sadeqi &copy; 2026</p>
     </footer>
+
+    <script type="module" src="/js/main.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 
 </html>

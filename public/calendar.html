@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Days - Songless Unlimited</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+</head>
+
+<body>
+    <canvas id="notesBg"></canvas>
+    <div class="container">
+        <section id="calendar-page" class="screen active">
+            <div class="page-header">
+                <a href="/" class="back-link">‹ Home</a>
+                <h1 class="page-title">Past Days</h1>
+                <span class="page-header-spacer" aria-hidden="true"></span>
+            </div>
+
+            <p id="calendar-summary" class="calendar-summary"></p>
+
+            <div class="month-nav">
+                <button id="prev-month" class="month-btn" aria-label="Previous month">‹</button>
+                <p id="month-label" class="month-label"></p>
+                <button id="next-month" class="month-btn" aria-label="Next month">›</button>
+            </div>
+
+            <div id="calendar-grid" class="calendar-grid"></div>
+
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-swatch legend-swatch--complete"></span>Played</span>
+                <span class="legend-item"><span class="legend-swatch legend-swatch--partial"></span>Unfinished</span>
+                <span class="legend-item"><span class="legend-swatch"></span>Available</span>
+                <span class="legend-item"><span class="legend-swatch legend-swatch--locked"></span>Locked</span>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>Rezwan Sadeqi &copy; 2026</p>
+    </footer>
+
+    <!-- Saved results for one day -->
+    <div id="day-result-modal" class="modal-overlay recap-modal-overlay">
+        <div class="recap-card">
+            <h2 id="day-result-heading" class="recap-heading">Results</h2>
+            <div>
+                <p id="day-result-score" class="recap-score"></p>
+                <p id="day-result-sub" class="recap-score-sub"></p>
+            </div>
+            <div id="day-result-list" class="recap-song-list"></div>
+            <p id="day-result-summary" class="recap-summary"></p>
+            <div class="recap-actions recap-actions--stacked">
+                <button id="day-result-share-btn" class="btn btn-primary recap-share-btn">Share</button>
+                <div class="recap-actions-secondary">
+                    <button id="day-result-replay-btn" class="btn btn-ghost recap-close-btn">Play Again</button>
+                    <button id="day-result-close-btn" class="btn btn-ghost recap-close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/calendar.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</body>
+
+</html>

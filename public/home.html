@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Songless Unlimited - Home</title>
+    <title>Songless Unlimited</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
 </head>
@@ -13,94 +13,73 @@
     <canvas id="notesBg"></canvas>
     <div class="container">
         <section id="home-page-content" class="screen active">
-            <div class="section-block">
-                <h1 class="game-title"><span class="title-word">Welcome</span> <span class="title-word">to</span> <span
-                        class="title-word">Songless</span> <span class="title-word">Unlimited!</span></h1>
-                <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 0;">Test your music knowledge and guess the
-                    song!</p>
+            <div class="section-block masthead">
+                <h1 class="game-title"><span class="title-word">Songless</span> <span
+                        class="title-word">Unlimited</span></h1>
+                <p class="tagline">Hear a snippet. Name the song.</p>
             </div>
 
             <div class="section-block">
-                <h2 class="section-title">Game Select</h2>
+                <p class="section-title">Game Select</p>
                 <div class="input-mode-selector">
-                    <button type="button" class="mode-btn" data-mode="daily">Daily Songs</button>
-                    <button type="button" class="mode-btn" data-mode="artist">Artist Name</button>
+                    <button type="button" class="mode-btn" data-mode="daily">Daily</button>
+                    <button type="button" class="mode-btn" data-mode="artist">Artist</button>
                     <button type="button" class="mode-btn" data-mode="genre">Genre</button>
                 </div>
-            </div>
 
-            <div class="section-block">
-                <div
-                    style="min-height: 100px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px;">
-                    <div class="daily-song-container" id="daily-song-section"
-                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
+                <div class="mode-panels">
+                    <div class="daily-song-container" id="daily-song-section">
                         <p id="daily-stats" class="daily-stats"></p>
-                        <div id="daily-share-row" class="daily-share-row" style="display:none;">
-                            <button id="home-share-btn" class="btn home-share-btn">🔗 Share</button>
-                            <button id="home-copy-btn" class="btn home-copy-btn">📋 Copy Result</button>
-                        </div>
                     </div>
 
-                    <div class="artist-input-container" id="artist-input-section"
-                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
-                        <label for="artist-name"
-                            style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Enter
-                            Artist Name:</label>
-                        <input type="text" id="artist-name" placeholder="e.g., Drake"
-                            style="width: 100%; padding: 15px 20px; font-size: 1.1rem; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; box-sizing: border-box;">
+                    <div class="artist-input-container" id="artist-input-section">
+                        <label class="section-title field-label" for="artist-name">Artist Name</label>
+                        <input type="text" id="artist-name" placeholder="e.g. Drake">
                     </div>
 
-                    <div class="genre-input-container" id="genre-input-section"
-                        style="margin-bottom: 0; max-width: 500px; margin-left: auto; margin-right: auto; display: none; width: 100%;">
-                        <label for="genre-select"
-                            style="display: block; margin-bottom: 8px; font-size: 1rem; color: #ddd; text-align: left;">Select
-                            a Genre:</label>
+                    <div class="genre-input-container" id="genre-input-section">
+                        <label class="section-title field-label" for="genre-select">Genre</label>
                         <select id="genre-select">
-                            <!-- Options will be populated by JavaScript -->
+                            <!-- Options populated by JavaScript -->
                         </select>
                     </div>
                 </div>
 
-                <button id="validate-input-btn" class="btn btn-primary"
-                    style="margin-top: 5px; background-color: rgba(30, 136, 74, 0.973); color: #fff; font-weight: bold; width: 100%; max-width: 500px; padding: 15px; font-size: 1.1rem;">Start
-                    Game</button>
-                <div id="validation-message" style="margin-top: 10px; font-size: 0.9rem; min-height: 20px;"></div>
+                <button id="validate-input-btn" class="btn btn-primary btn-block">Start Game</button>
+                <div id="validation-message"></div>
 
-                <!-- Past daily challenges (daily mode only) -->
-                <div id="daily-archive" class="daily-archive" style="display: none;">
-                    <button id="archive-toggle" class="archive-toggle" aria-expanded="false"
-                        aria-controls="archive-body">
-                        <span class="archive-toggle-label">Past Days</span>
-                        <span id="archive-toggle-caret" class="archive-toggle-caret">▾</span>
-                    </button>
-                    <div id="archive-body" class="archive-body" style="display: none;">
-                        <p id="archive-lifetime" class="archive-lifetime"></p>
-                        <div id="archive-list" class="archive-list"></div>
-                    </div>
+                <div id="daily-share-row" class="daily-share-row" style="display:none;">
+                    <button id="home-share-btn" class="btn btn-ghost home-share-btn">Share</button>
+                    <button id="home-copy-btn" class="btn btn-ghost home-copy-btn">Copy result</button>
+                </div>
+
+                <div id="daily-archive" class="daily-archive" style="display:none;">
+                    <a href="/calendar" class="archive-link">
+                        <span class="archive-link-text">
+                            <span>Past Days</span>
+                            <span class="archive-link-sub" id="archive-link-sub"></span>
+                        </span>
+                        <span class="archive-link-caret" aria-hidden="true">›</span>
+                    </a>
                 </div>
             </div>
 
             <div class="section-block how-to-block">
                 <p class="how-to-hint">First time playing?</p>
-                <button id="how-to-play-btn" class="btn how-to-play-btn">How to Play</button>
+                <button id="how-to-play-btn" class="btn btn-ghost how-to-play-btn">How to Play</button>
             </div>
         </section>
-
     </div>
 
-    <!-- Loading Screen Overlay (Hidden by default) - Copied from index.html, might not be used on home.html but good for consistency if needed -->
     <div id="loading-overlay" class="loading-screen-overlay">
-        <div class="loading-message">Loading…</div>
+        <div class="loading-message">Loading</div>
     </div>
 
     <footer>
         <p>Rezwan Sadeqi &copy; 2026</p>
-
     </footer>
-    <script type="module" src="/js/home.js"></script>
-    <script defer src="/_vercel/insights/script.js"></script>
 
-    <!-- Saved results for one past day (Hidden by default) -->
+    <!-- Saved results for one day -->
     <div id="day-result-modal" class="modal-overlay recap-modal-overlay">
         <div class="recap-card">
             <h2 id="day-result-heading" class="recap-heading">Results</h2>
@@ -113,60 +92,45 @@
             <div class="recap-actions recap-actions--stacked">
                 <button id="day-result-share-btn" class="btn btn-primary recap-share-btn">Share</button>
                 <div class="recap-actions-secondary">
-                    <button id="day-result-replay-btn" class="btn recap-close-btn">Play Again</button>
-                    <button id="day-result-close-btn" class="btn recap-close-btn">Close</button>
+                    <button id="day-result-replay-btn" class="btn btn-ghost recap-close-btn">Play Again</button>
+                    <button id="day-result-close-btn" class="btn btn-ghost recap-close-btn">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- How to Play Modal (Hidden by default) -->
+    <!-- How to Play -->
     <div id="how-to-play-modal" class="modal-overlay">
         <div class="modal-content settings-content">
-            <button id="close-how-to-play-btn" class="close-btn">✖</button>
-            <h2 class="modal-title">How to Play Songless Unlimited</h2>
+            <button id="close-how-to-play-btn" class="close-btn" aria-label="Close">✕</button>
+            <h2 class="modal-title">How to Play</h2>
             <div class="how-to-play-content">
                 <h3>The Goal</h3>
-                <p>Guess the song title and artist based on short audio snippets. The snippets get longer with each
-                    incorrect guess or skip!</p>
+                <p>Guess the song from a short audio snippet. Every wrong guess or skip makes the next snippet longer.</p>
 
                 <h3>Gameplay</h3>
                 <ul>
-                    <li><strong>Listen:</strong> Each round starts with a very short snippet of a song.</li>
-                    <li><strong>Guess:</strong> Type your guess into the search bar. Autocomplete will help you find the
-                        right song.</li>
-                    <li><strong>Submit:</strong> Press 'SUBMIT' to check your guess.</li>
-                    <li><strong>Skip:</strong> Can't guess? Hit 'SKIP' to move to the next stage. The snippet gets
-                        longer!</li>
-                    <li><strong>Stages:</strong> There are 5 stages in total. If you can't guess after the final stage,
-                        you fail the round.</li>
+                    <li><strong>Listen</strong> — each round opens with a fraction of a second of the track.</li>
+                    <li><strong>Guess</strong> — start typing and the search will suggest titles.</li>
+                    <li><strong>Skip</strong> — stuck? Skip to unlock a longer snippet.</li>
+                    <li><strong>Six stages</strong> — 0.2s, 0.7s, 2.5s, 5s, 9s, then 15s. Miss all six and the answer
+                        is revealed.</li>
                 </ul>
-
-                <h3>Winning & Losing</h3>
-                <ul>
-                    <li><strong>Win:</strong> Guess correctly at any stage to win the round! You'll hear the full
-                        preview.</li>
-                    <li><strong>Lose:</strong> If you use all stages without guessing, you'll fail. The correct song
-                        will be revealed.</li>
-                </ul>
-
-                <h3>Input Modes</h3>
-                <p>Choose to play with songs from a specific Artist, a Top Chart Genre, or try the Daily Song Challenge.
-                </p>
 
                 <h3>Daily Challenge</h3>
-                <p>Every day brings 3 new songs, the same ones for everyone. Missed a day? Open <strong>Past Days</strong>
-                    under the start button to play any of the last 100 days — each one always has the same songs it had
-                    on the day. Your results are saved in this browser, so they'll still be here next time you visit.</p>
+                <p>Every day brings 3 songs — one rap, one pop, one from the wider chart — the same three for everyone.
+                    Missed a day? Open <strong>Past Days</strong> for a calendar of the last 100 days; each one always
+                    has the songs it had on the day. Results are saved in this browser, so they're here when you come
+                    back.</p>
 
-                <h3>Volume Control</h3>
-                <p>Adjust the game volume at any time via the settings gear icon in the top right corner of the game
-                    screen.</p>
-
-                <p>Good luck and have fun!</p>
+                <h3>Other Modes</h3>
+                <p>Play endlessly from a single artist or a chart genre instead.</p>
             </div>
         </div>
     </div>
+
+    <script type="module" src="/js/home.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 
 </html>

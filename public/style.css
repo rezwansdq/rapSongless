@@ -1,4 +1,85 @@
-/* Animated music notes canvas background */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Songless Unlimited
+
+   The interface is modelled on the faceplate of a hi-fi amplifier in a dim
+   room: near-black panels with a green undertone, silkscreened labels in small
+   caps, tabular numerals like a tape counter, and indicator lamps that report
+   state at a glance. Depth comes from hairline borders and small shifts in
+   panel lightness — no drop shadows competing for attention.
+
+   The recurring motif is the status lamp: a coloured edge or dot that says
+   correct / missed / in progress / unlit. It appears on progress rows, recap
+   rows, mode buttons and calendar cells, so one visual language carries state
+   across the whole site.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* Panel surfaces — one hue, lightness only. Higher number = closer to you. */
+    --panel-0: #0d0e0d;   /* the room behind the unit */
+    --panel-1: #121412;   /* the faceplate */
+    --panel-2: #181a18;   /* a raised control */
+    --panel-3: #1f221f;   /* a control under the pointer */
+    --panel-inset: #0a0b0a; /* recessed — inputs receive content, so they sink */
+
+    /* Hairlines. Low-alpha so they define edges without drawing the eye. */
+    --line-soft: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.09);
+    --line-strong: rgba(255, 255, 255, 0.16);
+
+    /* Four levels of text, each with a job. */
+    --ink: #f2f4f2;        /* headlines, answers */
+    --ink-2: #b9beb9;      /* body */
+    --silkscreen: #7d847d; /* printed labels, metadata */
+    --ink-dim: #4d534d;    /* disabled, unlit, placeholder */
+
+    /* Indicator lamps. One accent (green); amber and red are status, not decor. */
+    --lamp: #35d07e;
+    --lamp-bright: #4ade94;
+    --lamp-amber: #d59a32;
+    --lamp-red: #d95d57;
+
+    /* Lamp-tinted panels for state rows. */
+    --panel-good: #131d16;
+    --panel-bad: #1d1414;
+    --panel-warm: #1c1811;
+
+    --radius-sm: 6px;   /* buttons, inputs, cells */
+    --radius-md: 10px;  /* cards, rows */
+    --radius-lg: 14px;  /* modals */
+
+    /* 4px base unit. */
+    --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+    --s5: 20px; --s6: 24px; --s7: 32px; --s8: 40px;
+
+    --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", sans-serif;
+    /* Numerals, labels and scores — the tape-counter voice. */
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                 "Liberation Mono", monospace;
+
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+body {
+    background-color: var(--panel-0);
+    color: var(--ink-2);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    text-align: center;
+    -webkit-font-smoothing: antialiased;
+    transition: filter 0.3s var(--ease);
+}
+
+/* Drifting notes belong behind the glass, not on it. */
 #notesBg {
     position: fixed;
     inset: 0;
@@ -6,556 +87,837 @@
     height: 100%;
     z-index: 0;
     pointer-events: none;
-}
-
-body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column; /* ADDED: For sticky footer */
-    min-height: 100vh;
-    text-align: center; /* This will still apply to inline/text content within children */
-    transition: filter 0.3s ease; /* Smooth transition for blur */
+    opacity: 0.4;
 }
 
 .blurred {
-    filter: blur(5px); /* Apply blur effect */
-    pointer-events: none; /* Disable interaction with blurred content */
+    filter: blur(5px);
+    pointer-events: none;
 }
+
 .container {
     width: 100%;
-    padding: 20px;
-    box-sizing: border-box;
-    max-width: 800px;
-    margin: 0 auto; /* Center the container */
-    flex-grow: 1; /* ADDED: Allows container to take up space, pushing footer down */
-    display: flex; /* ADDED: To allow its children (screens) to be managed if needed */
-    flex-direction: column; /* ADDED: To stack screens vertically within container */
+    max-width: 640px;
+    padding: var(--s5);
+    margin: 0 auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
     position: relative;
     z-index: 1;
 }
 
-.screen {
-    display: none; /* Hide screens by default */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Type ────────────────────────────────────────────────────────────────── */
+
+.game-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-align: center;
+    margin: 0 0 var(--s2);
+    flex-grow: 1;
 }
 
-.screen.active {
-    display: block; /* Show active screen */
+.title-word { display: inline-block; }
+
+.section-title {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--silkscreen);
+    margin: 0;
 }
 
-/* ── Home Page Layout ────────────────────────────────────────────────────── */
+.tagline {
+    color: var(--silkscreen);
+    font-size: 0.94rem;
+    margin: 0;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+/* One control geometry everywhere: same height, radius, weight and easing.
+   Only the fill changes between roles. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s2);
+    min-height: 44px;
+    padding: 0 var(--s5);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background-color: var(--panel-2);
+    color: var(--ink-2);
+    font-family: var(--font);
+    font-size: 0.94rem;
+    font-weight: 550;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s var(--ease),
+                border-color 0.15s var(--ease),
+                color 0.15s var(--ease);
+}
+
+.btn:hover { background-color: var(--panel-3); color: var(--ink); }
+.btn:active { transform: translateY(0.5px); }
+
+.btn:focus-visible {
+    outline: 2px solid var(--lamp);
+    outline-offset: 2px;
+}
+
+/* The one lit control on any given screen. */
+.btn-primary {
+    background-color: var(--lamp);
+    border-color: var(--lamp);
+    color: #06210f;
+    font-weight: 650;
+}
+
+.btn-primary:hover {
+    background-color: var(--lamp-bright);
+    border-color: var(--lamp-bright);
+    color: #06210f;
+}
+
+/* Quiet outline — secondary actions that shouldn't compete. */
+.btn-ghost {
+    background-color: transparent;
+    border-color: var(--line);
+    color: var(--silkscreen);
+}
+
+.btn-ghost:hover {
+    background-color: var(--panel-2);
+    border-color: var(--line-strong);
+    color: var(--ink);
+}
+
+.btn--disabled,
+.btn--disabled:hover,
+.btn:disabled {
+    background-color: var(--panel-2);
+    border-color: transparent;
+    color: var(--ink-dim);
+    cursor: not-allowed;
+}
+
+.btn-block { width: 100%; }
+
+/* ── Home ────────────────────────────────────────────────────────────────── */
+
 #home-page-content.active {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     flex-grow: 1;
-    min-height: calc(100vh - 140px); /* rough viewport minus padding/footer */
-    gap: 24px;
+    gap: var(--s6);
     width: 100%;
+    padding: var(--s6) 0;
 }
 
 .section-block {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: var(--s3);
     width: 100%;
+    max-width: 420px;
 }
+
+.masthead { gap: var(--s2); }
 
 .how-to-block {
-    margin-top: auto; /* push to bottom if there's extra space */
-    padding-top: 40px;
+    padding-top: var(--s4);
+    gap: var(--s2);
 }
 
-#home-page-content .game-title {
-    margin-top: 0;
-    margin-bottom: 8px; /* localized override against generic .game-title */
-}
-
-
-/* New styles for game header and icon button */
-.game-header {
-    position: relative; /* For absolute positioning of the icon button */
+/* Segmented control — one recessed track, the active segment lifts out of it. */
+.input-mode-selector {
     display: flex;
-    justify-content: center; /* Center the title */
-    align-items: center;
+    gap: var(--s1);
+    padding: var(--s1);
     width: 100%;
-    padding: 10px 0; /* Add some padding */
-    margin-bottom: 0px; /* Space below header */
+    background-color: var(--panel-inset);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
 }
 
-.game-title {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #ffffff;
-    text-align: center;
-    margin-top: 25px ;
-    margin-bottom: 5px;
-    flex-grow: 1; /* Allow title to take space and center correctly */
-}
-
-.title-word {
-    display: inline-block;
-}
-
-.home-icon-btn {
-    position: absolute;
-    top: 5%; /* Adjust this if you want to change vertical positioning */
-    left: 0; /* Position to the far right */
-    transform: translateY(-50%); /* Vertically center */
-    font-size: 18px; /* Increased font-size */
-    color: #2ecc71;
-    text-decoration: none;
-    padding: 10px 16px; /* Increased padding */
-    min-width: 44px; /* Mobile tap target standard */
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    border-radius: 5px;
-    background-color: transparent; /* Or a subtle background if preferred */
-    transition: color 0.3s ease, background-color 0.3s ease;
-    margin-top: 5px; /* Add margin to push it down */
-    font-weight: 500; /* Match the button font weight */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; /* Match the font family */
-}
-
-.home-icon-btn:hover {
-    color: #2ecc71; /* Highlight color on hover */
-    /* background-color: #333; */ /* Optional hover background */
-}
-
-/* New Settings Gear Icon Button */
-.settings-icon-btn {
-    position: absolute;
-    top: 10%; /* Center vertically */
-    right: 0; /* Position to the far right */
-    transform: translateY(-50%); /* Vertically center */
-    background: none; /* No background */
-    border: none; /* No border */
-    font-size: 30px; /* Increased icon size */
-    min-width: 44px; /* Mobile tap target standard */
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #aaa; /* Default color */
-    transition: color 0.3s ease;
-    padding: 0; /* Handled by min-width/height flex boundaries */
-}
-
-.settings-icon-btn:hover {
-    color: #fff; /* White on hover */
-}
-
-.btn {
-    padding: 10px 20px;
+.mode-btn {
+    flex: 1;
+    min-height: 38px;
+    padding: 0 var(--s2);
+    background: none;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
+    color: var(--silkscreen);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 550;
     cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
-.btn-primary {
-    background-color: #2ecc71;
-    color: #ffffff;
+.mode-btn:hover { color: var(--ink-2); }
+
+.mode-btn.active {
+    background-color: var(--panel-2);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line);
 }
 
-.btn-primary:hover {
-    background-color: #27ae60;
-}
-
-/* Landing Screen Specific */
-#landing-screen.active {
-    display: flex; /* Use flex to center the button */
+/* Fixed height so switching modes doesn't shunt the start button up and down. */
+.mode-panels {
+    display: flex;
     flex-direction: column;
     justify-content: center;
+    width: 100%;
+    min-height: 56px;
+}
+
+.daily-song-container,
+.artist-input-container,
+.genre-input-container {
+    width: 100%;
+}
+
+.field-label {
+    display: block;
+    margin-bottom: var(--s2);
+    text-align: left;
+}
+
+/* Inputs are inset — darker than their surroundings, so they read as
+   "put something here" without a heavy border. */
+input[type="text"],
+select,
+#guess-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 var(--s3);
+    background-color: var(--panel-inset);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.94rem;
+    transition: border-color 0.15s var(--ease);
+}
+
+input[type="text"]::placeholder,
+#guess-input::placeholder { color: var(--ink-dim); }
+
+input[type="text"]:focus,
+select:focus,
+#guess-input:focus {
+    outline: none;
+    border-color: var(--lamp);
+}
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    /* Chevron drawn in the border colour so it belongs to the control. */
+    background-image: linear-gradient(45deg, transparent 50%, var(--silkscreen) 50%),
+                      linear-gradient(135deg, var(--silkscreen) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: var(--s7);
+    cursor: pointer;
+}
+
+#validation-message:not(:empty) {
+    font-size: 0.84rem;
+    color: var(--lamp-amber);
+    margin: 0;
+}
+
+/* Today's line — a readout, so monospace with tabular figures. */
+.daily-stats {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--silkscreen);
+    text-align: center;
+    margin: 0;
+    min-height: 18px;
+}
+
+.daily-stats--complete { color: var(--lamp); }
+
+/* Share + copy sit below the primary action and read as a subordinate pair:
+   same height, ghost fill, no emoji shouting for attention. */
+.daily-share-row {
+    display: flex;
+    gap: var(--s2);
+    width: 100%;
+}
+
+.home-share-btn,
+.home-copy-btn { flex: 1; }
+
+.how-to-hint {
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    margin: 0;
+}
+
+.how-to-play-btn {
+    padding: 0 var(--s6);
+    min-height: 38px;
+    font-size: 0.84rem;
+    font-weight: 500;
+}
+
+/* ── Archive entry point ─────────────────────────────────────────────────── */
+
+.daily-archive { width: 100%; }
+
+.archive-link {
+    display: flex;
     align-items: center;
-    height: calc(100vh - 40px); /* Adjust height considering padding */
+    justify-content: space-between;
+    gap: var(--s3);
+    width: 100%;
+    min-height: 52px;
+    padding: 0 var(--s4);
+    background-color: var(--panel-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    color: var(--ink-2);
+    text-decoration: none;
+    font-family: var(--font);
+    font-size: 0.92rem;
+    font-weight: 550;
+    cursor: pointer;
+    transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease);
 }
 
-#start-button {
-    padding: 15px 30px;
-    font-size: 1.5rem;
-    font-weight: 700;
+.archive-link:hover {
+    background-color: var(--panel-2);
+    border-color: var(--line-strong);
+    color: var(--ink);
 }
 
-#back-to-home-button {
-    text-decoration: none; /* Ensure no underline for a-tag styled as button */
-    /* This ID might still be used by other .btn styled elements or JS, keep if needed */
-    /* If it's only for the icon, the .home-icon-btn class handles styling */
-}
-
-/* Game Screen Specific */
-/* Remove the general #game-screen rule that was making it always flex */
-/*
-#game-screen {
-    display: flex; 
+.archive-link-text {
+    display: flex;
     flex-direction: column;
-    gap: 20px;
+    align-items: flex-start;
+    gap: 2px;
 }
-*/
+
+.archive-link-sub {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+    color: var(--silkscreen);
+}
+
+.archive-link-caret {
+    color: var(--ink-dim);
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+/* ── Calendar ────────────────────────────────────────────────────────────── */
+
+#calendar-page.active {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s5);
+    width: 100%;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+    width: 100%;
+}
+
+.page-title {
+    font-size: 1.15rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s1);
+    min-height: 44px;
+    color: var(--silkscreen);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 550;
+    transition: color 0.15s var(--ease);
+}
+
+.back-link:hover { color: var(--ink); }
+
+/* Balances the back link so the title sits centred. */
+.page-header-spacer { width: 64px; flex-shrink: 0; }
+
+.calendar-summary {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--silkscreen);
+    text-align: center;
+    margin: 0;
+}
+
+.month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s5);
+    width: 100%;
+}
+
+.month-label { min-width: 170px; }
+
+.month-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+}
+
+.month-btn {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    flex-shrink: 0;
+    background-color: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--ink-2);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease),
+                color 0.15s var(--ease);
+}
+
+.month-btn:hover:not(:disabled) {
+    background-color: var(--panel-2);
+    border-color: var(--line-strong);
+    color: var(--ink);
+}
+
+.month-btn:disabled {
+    color: var(--ink-dim);
+    border-color: var(--line-soft);
+    cursor: not-allowed;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--s1);
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.calendar-weekday {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--silkscreen);
+    text-align: center;
+    padding-bottom: var(--s1);
+}
+
+.calendar-blank { aspect-ratio: 1; }
+
+/* A day is an indicator lamp. Its three dots are the three songs, so a whole
+   month of results reads at a glance without a single number being parsed. */
+.calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+    background-color: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease),
+                color 0.15s var(--ease);
+}
+
+.calendar-day:hover:not(:disabled) {
+    background-color: var(--panel-3);
+    border-color: var(--line-strong);
+    color: var(--ink);
+}
+
+.calendar-day:focus-visible {
+    outline: 2px solid var(--lamp);
+    outline-offset: 1px;
+}
+
+/* Unlit: the day hasn't arrived, or predates the archive. Inert on purpose. */
+.calendar-day--locked,
+.calendar-day--locked:hover {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ink-dim);
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.calendar-day--complete {
+    background-color: var(--panel-good);
+    border-color: rgba(53, 208, 126, 0.22);
+    color: var(--ink);
+}
+
+.calendar-day--partial {
+    background-color: var(--panel-warm);
+    border-color: rgba(213, 154, 50, 0.24);
+    color: var(--ink);
+}
+
+/* Today wears the lamp ring even before it's played. */
+.calendar-day--today {
+    border-color: var(--lamp);
+    color: var(--ink);
+}
+
+.calendar-day-num { line-height: 1; }
+
+.calendar-day-dots {
+    display: flex;
+    gap: 3px;
+    height: 5px;
+}
+
+.day-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--ink-dim);
+}
+
+.day-dot--correct { background-color: var(--lamp); }
+.day-dot--wrong { background-color: var(--lamp-red); }
+
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s2) var(--s4);
+    width: 100%;
+    padding-top: var(--s4);
+    border-top: 1px solid var(--line-soft);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--silkscreen);
+}
+
+.legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    background-color: var(--panel-2);
+}
+
+.legend-swatch--complete {
+    background-color: var(--panel-good);
+    border-color: rgba(53, 208, 126, 0.35);
+}
+
+.legend-swatch--partial {
+    background-color: var(--panel-warm);
+    border-color: rgba(213, 154, 50, 0.35);
+}
+
+.legend-swatch--locked {
+    background-color: transparent;
+    border-color: var(--line-soft);
+}
+
+.calendar-empty {
+    font-size: 0.86rem;
+    color: var(--silkscreen);
+    text-align: center;
+    margin: 0;
+}
+
+/* ── Game screen ─────────────────────────────────────────────────────────── */
 
 #game-screen.active {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--s3);
     position: relative;
-    transition: filter 0.3s ease;
-}
-
-/* ── Daily Progress Panel (below skip/submit) ────────────────────────────── */
-.daily-progress-panel {
-    display: none; /* shown via JS when in daily mode */
-    width: 100%;
-    margin-top: 6px;
-}
-
-.progress-panel-label {
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #444;
-    margin: 0 0 6px;
-    text-align: left;
-}
-
-.progress-panel-items {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.progress-bar-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 12px;
-    border-radius: 6px;
-    background: #1a1a1a;
-    border-left: 3px solid #2a2a2a;
-    min-height: 32px;
-    box-sizing: border-box;
-    transition: background 0.25s ease, border-color 0.25s ease;
-}
-
-.progress-bar-item.pbi--current {
-    background: #212121;
-    border-left-color: #2ecc71;
-}
-
-.progress-bar-item.pbi--correct {
-    background: #192919;
-    border-left-color: #2ecc71;
-}
-
-.progress-bar-item.pbi--wrong {
-    background: #29191a;
-    border-left-color: #e74c3c;
-}
-
-.pbi-num {
-    font-size: 0.7rem;
-    color: #555;
-    font-weight: 600;
-    flex-shrink: 0;
-    width: 16px;
-    text-align: right;
-}
-
-.pbi-info {
-    flex: 1;
-    font-size: 0.78rem;
-    color: #777;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: left;
-    min-width: 0;
-}
-
-.progress-bar-item.pbi--correct .pbi-info { color: #7ecf91; }
-.progress-bar-item.pbi--wrong  .pbi-info { color: #d97a7a; }
-
-.pbi-status {
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    line-height: 1;
+    transition: filter 0.3s var(--ease);
 }
 
 .game-main {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--s3);
 }
 
-/* Volume Slider Styles */
-/* The original volume-control-container is now hidden, these styles apply to the one inside the modal */
-#volume-control-container {
-    display: flex; 
-    flex-direction: column; /* Stack slider and label vertically */
-    justify-content: center; 
-    align-items: center; 
-    width: 80%; /* Make the container take up more width */
-    margin-left: auto; 
-    margin-right: auto; 
-}
-
-#volume-slider-modal {
-    -webkit-appearance: none; /* Override default appearance */
-    appearance: none;
-    width: 100%; /* Make slider fill the container width */
-    max-width: 300px; /* Optional: max width for the slider itself */
-    height: 8px; /* Height of the track */
-    background: #555; /* Track color - grey */
-    border-radius: 5px;
-    cursor: pointer;
-    outline: none; /* Remove outline */
-}
-
-#volume-slider-modal::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px; 
-    height: 16px; 
-    background: #2ecc71; /* Thumb color - green */
-    border-radius: 50%;
-    cursor: pointer;
-    margin-top: -4px; /* Adjust thumb position vertically: (track_height - thumb_height) / 2 = (8 - 16) / 2 = -4px */
-}
-
-#volume-slider-modal::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #2ecc71; /* Thumb color - green */
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-}
-
-#volume-slider-modal::-moz-range-track {
+.game-header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    height: 8px;
-    background: #555; /* Track color - grey */
-    border-radius: 5px;
+    min-height: 44px;
+    margin-bottom: var(--s2);
+}
+
+.game-header .game-title {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.home-icon-btn,
+.settings-icon-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 var(--s2);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--silkscreen);
+    text-decoration: none;
+    font-family: var(--font);
+    font-size: 0.86rem;
+    font-weight: 550;
     cursor: pointer;
+    transition: color 0.15s var(--ease);
 }
 
-.volume-label {
-    font-size: 0.9em; /* Similar to old percentage text */
-    color: #fff; /* White color */
-    margin-top: 8px; /* Space between slider and label */
-    text-align: center;
-}
+.home-icon-btn { left: 0; }
+.settings-icon-btn { right: 0; font-size: 1.15rem; }
 
-/* Guess Boxes */
+.home-icon-btn:hover,
+.settings-icon-btn:hover { color: var(--ink); }
+
+/* Guess rows — one per stage, filled top-down as the round goes on. */
 .guess-boxes-container {
     display: flex;
     flex-direction: column;
-    gap: 5px; /* Reduced gap */
-    margin: 0px 0 15px; /* Reduced margin */
+    gap: var(--s1);
+    margin: 0 0 var(--s3);
 }
 
 .guess-box {
-    background-color: #2a2a2a;
-    border-radius: 5px;
-    padding: 15px; /* Reduced padding */
     display: flex;
     align-items: center;
-    transition: all 0.3s ease;
-    position: relative;
-    height: 18px; /* Reduced height */
+    gap: var(--s3);
+    min-height: 36px;
+    padding: 0 var(--s4);
+    background-color: var(--panel-1);
+    border: 1px solid var(--line-soft);
+    border-left: 3px solid var(--panel-3);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    text-align: left;
+    transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
 .guess-box.empty {
-    background-color: #1e1e1e;
+    min-height: 30px;
+    background-color: transparent;
+    border-color: var(--line-soft);
+    border-left-color: var(--panel-3);
 }
 
 .guess-box.skipped {
-    background-color: #424242;
-}
-
-.guess-box.skipped::before {
-    content: "→";
-    position: absolute;
-    left: 15px;
-    color: #888;
+    background-color: var(--panel-1);
+    border-left-color: var(--silkscreen);
 }
 
 .guess-box.skipped::after {
-    content: "SKIPPED";
-    position: absolute;
-    right: 15px;
-    color: #888;
-    font-weight: 500;
-    letter-spacing: 1px;
+    content: "Skipped";
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--silkscreen);
+    margin-left: auto;
 }
 
 .guess-box.wrong {
-    background-color: #3a2a2a;
-    color: #e74c3c;
-}
-
-.guess-box.wrong::before {
-    content: "→";
-    position: absolute;
-    left: 15px;
-    color: #888;
-}
-
-.guess-box .guess-text {
-    margin-left: 30px;
-    font-size: 0.95rem;
-}
-
-.guess-box.wrong .status {
-    position: absolute;
-    right: 15px;
-    color: #e74c3c;
-    font-weight: 500;
-    letter-spacing: 1px;
+    background-color: var(--panel-bad);
+    border-left-color: var(--lamp-red);
 }
 
 .guess-box.correct {
-    background-color: #2a3a2a;
-    color: #2ecc71;
-    justify-content: space-between; /* Distribute items with space between them */
+    background-color: var(--panel-good);
+    border-left-color: var(--lamp);
 }
 
-.guess-box.correct .guess-text {
-    margin-left: 0; /* Remove left margin as flexbox handles spacing */
+.guess-box .guess-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink);
 }
 
-.guess-box.correct .status.correct-status {
-    position: static; /* Remove absolute positioning */
-    right: auto; /* Remove right positioning */
-    margin-left: auto; /* Push to the right */
+.guess-box .status {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--lamp-red);
 }
 
-/* Stage and Timer Info */
+.guess-box .status.correct-status { color: var(--lamp); }
+
+/* Stage readout */
 .game-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px; /* Reduced gap */
-    margin-bottom: 10px; /* Reduced margin */
+    gap: var(--s3);
 }
 
 .stage-info {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px; /* Reduced gap */
+    align-items: baseline;
+    gap: var(--s2);
 }
 
 .stage-label {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #2ecc71;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--silkscreen);
 }
 
 .stage-duration {
-    font-size: 1rem;
-    color: #aaa;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--lamp);
 }
 
 #timer-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px; /* Reduced gap */
+    gap: var(--s2);
     width: 100%;
 }
 
 .time-display {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
 }
 
-.time-label {
-    font-size: 0.85rem;
-    color: #888;
-    width: 40px;
-}
+.time-label { display: none; }
 
 .current-time {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #fff;
-    margin-top: 3px; /* Reduced margin */
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--silkscreen);
 }
 
 .progress-bar-container {
     flex-grow: 1;
-    background-color: #333;
-    border-radius: 5px;
-    height: 8px;
-    margin: 0 10px;
+    height: 4px;
+    background-color: var(--panel-2);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    width: 0%; /* Initial width */
-    background-color: #2ecc71;
-    border-radius: 5px;
-    transition: width 0.15s ease; /* Faster transition for smoother updates */
+    width: 0%;
+    background-color: var(--lamp);
+    transition: width 0.15s linear;
 }
 
-/* Play Button */
+/* The one round control — a physical knob, so the circle is earned. */
 .play-control {
     display: flex;
     justify-content: center;
-    margin: 5px 0 10px; /* Reduced margin */
+    margin: var(--s1) 0 var(--s2);
 }
 
 .play-btn {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    background-color: #2ecc71;
+    background-color: var(--lamp);
     border: none;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
-.play-btn:hover {
-    background-color: #27ae60;
-    transform: scale(1.05);
-}
+.play-btn:hover { background-color: var(--lamp-bright); }
+.play-btn:active { transform: scale(0.96); }
 
-.play-btn:active {
-    transform: scale(0.95);
-}
-
-.play-icon {
-    font-size: 1.8rem;
-    color: white;
-    margin-left: 3px; /* Slight adjustment for the play icon */
-}
-
+.play-icon,
 .pause-icon {
-    font-size: 1.8rem;
-    color: white;
+    font-size: 1.4rem;
+    color: #06210f;
+    line-height: 1;
 }
 
-/* Game Controls */
+.play-icon { margin-left: 3px; }
+
 .game-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Reduced gap */
-    margin-top: 5px; /* Reduced margin */
+    gap: var(--s2);
 }
 
 .search-container {
@@ -563,337 +925,164 @@ body {
     width: 100%;
 }
 
-#guess-input {
-    width: 100%;
-    padding: 12px 15px;
-    font-size: 1rem;
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 5px;
-    box-sizing: border-box;
-    padding-left: 35px; /* Space for search icon */
-}
-
-.search-container::before {
-    content: "🔍";
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #888;
-    font-size: 1rem;
-}
-
 .autocomplete-results {
-    background-color: #333;
-    border: 1px solid #555;
-    border-bottom: none;
-    border-radius: 5px 5px 0 0;
-    max-height: 150px;
-    overflow-y: auto;
     position: absolute;
-    width: 100%;
     bottom: 100%;
     left: 0;
-    margin-bottom: 4px;
+    width: 100%;
+    margin-bottom: var(--s1);
+    background-color: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    max-height: 180px;
+    overflow-y: auto;
     z-index: 10;
-    display: none; /* ADDED: Hidden by default */
+    display: none;
 }
 
-.autocomplete-results.active {
-    display: block; /* ADDED: Show when active */
-}
+.autocomplete-results.active { display: block; }
 
 .autocomplete-item {
-    padding: 10px 15px;
+    padding: var(--s3) var(--s4);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     text-align: left;
+    color: var(--ink-2);
+    transition: background-color 0.1s var(--ease), color 0.1s var(--ease);
 }
 
-.autocomplete-item:hover, .autocomplete-item.active {
-    background-color: #2ecc71;
-    color: #fff;
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: var(--panel-3);
+    color: var(--ink);
 }
 
 .button-container {
     display: flex;
-    gap: 10px;
+    gap: var(--s2);
 }
 
-#skip-button {
-    flex: 1;
-    background-color: #555;
-    color: #fff;
-    font-weight: 600;
+#skip-button { flex: 1; }
+#submit-button { flex: 2; }
+
+/* ── Daily progress panel (game screen) ──────────────────────────────────── */
+
+.daily-progress-panel {
+    display: none; /* JS reveals it in daily mode */
+    width: 100%;
+    margin-top: var(--s2);
 }
 
-#skip-button:hover {
-    background-color: #666;
-}
-
-#submit-button {
-    flex: 2;
-    font-weight: 600;
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
-    .game-title {
-        font-size: 1.6rem;
-        margin-top: 10px;
-        margin-bottom: 4px;
-    }
-
-    .guess-box {
-        padding: 10px 12px;
-    }
-
-    .play-btn {
-        width: 52px;
-        height: 52px;
-    }
-}
-
-/* Modal Styles */
-.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    display: none; /* Hidden by default */
-}
-
-.modal-content {
-    background-color: rgba(18, 18, 18, 0.95);
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    min-width: 300px;
-    max-width: 90%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.modal-content h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 15px 0;
-}
-
-.modal-content p {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin: 0 0 25px 0;
-    color: #ffffff;
-}
-
-.modal-album-art {
-    max-width: 150px; /* Adjust as needed */
-    height: auto;
-    border-radius: 8px;
-    margin: 15px auto; /* Center the image and add vertical spacing */
-    display: block; /* Ensure it takes up its own line and can be centered */
-}
-
-.modal-content.success {
-    border: 2px solid #2ecc71;
-}
-
-.modal-content.failure {
-    border: 2px solid #e74c3c;
-}
-
-.modal-content .btn-primary {
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    min-width: 120px;
-}
-
-/* How to Play hint label */
-.how-to-hint {
-    font-size: 12px;
-    opacity: 0.4;
-    margin-bottom: 8px;
-    margin-top: 0;
-    color: #fff;
-}
-
-/* How to Play Button — ghost/outline, unobtrusive */
-.how-to-play-btn {
-    display: inline-block;
-    width: fit-content;
-    margin: 0 auto;
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.6);
-    padding: 8px 28px;
-    border-radius: 5px;
-    font-size: 13px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.how-to-play-btn:hover {
-    color: rgba(255, 255, 255, 1);
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: transparent;
-}
-
-/* How to Play Modal Content Styling */
-.how-to-play-content {
+.progress-panel-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-dim);
+    margin: 0 0 var(--s2);
     text-align: left;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #ddd;
-    max-height: 70vh; /* Max height to allow scrolling */
-    overflow-y: auto;
-    padding-right: 10px; /* Space for scrollbar */
 }
 
-.how-to-play-content h3 {
-    color: #2ecc71;
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-size: 1.2rem;
-}
-
-.how-to-play-content ul {
-    list-style-type: disc;
-    margin-left: 20px;
-    padding-left: 0;
-    margin-bottom: 15px;
-}
-
-.how-to-play-content li {
-    margin-bottom: 8px;
-}
-
-/* History Display */
-.history-container {
+.progress-panel-items {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
-    max-height: 300px;
-    overflow-y: auto;
+    gap: var(--s1);
 }
 
-.history-item {
+.progress-bar-item {
     display: flex;
     align-items: center;
-    background-color: #2a2a2a;
-    padding: 12px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
+    gap: var(--s3);
+    min-height: 36px;
+    padding: 0 var(--s3);
+    background-color: var(--panel-1);
+    border: 1px solid var(--line-soft);
+    border-left: 3px solid var(--panel-2);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
-.history-item .arrow {
-    margin-right: 10px;
-    color: #666;
+.progress-bar-item.pbi--current {
+    background-color: var(--panel-2);
+    border-left-color: var(--lamp);
 }
 
-.history-item .status {
-    margin-left: auto;
+.progress-bar-item.pbi--correct {
+    background-color: var(--panel-good);
+    border-left-color: var(--lamp);
+}
+
+.progress-bar-item.pbi--wrong {
+    background-color: var(--panel-bad);
+    border-left-color: var(--lamp-red);
+}
+
+.pbi-num {
+    flex-shrink: 0;
+    width: 14px;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+}
+
+.pbi-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 0.8rem;
+    color: var(--silkscreen);
+}
+
+.progress-bar-item.pbi--correct .pbi-info { color: var(--lamp); }
+.progress-bar-item.pbi--wrong .pbi-info { color: var(--lamp-red); }
+
+.pbi-status {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 500;
-    color: #888;
+    letter-spacing: 0.1em;
+    color: var(--silkscreen);
 }
 
-.history-item.skipped {
-    background-color: #2a2a2a;
-}
+/* ── Modals ──────────────────────────────────────────────────────────────── */
 
-.history-item.wrong {
-    background-color: #3a2a2a;
-    color: #e74c3c;
-}
-
-.history-item.correct {
-    background-color: #2a3a2a;
-    color: #2ecc71;
-}
-
-/* Loading Screen Overlay Styles */
-.loading-screen-overlay {
-    position: fixed; /* Fixed position to cover the whole screen */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
-    display: none; /* Hidden by default */
-    justify-content: center;
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
     align-items: center;
-    z-index: 2000; /* Ensure it's on top of other content */
-    -webkit-backdrop-filter: blur(5px); /* Blur for Safari */
-    backdrop-filter: blur(5px); /* Standard blur */
+    justify-content: center;
+    padding: var(--s4);
+    background-color: rgba(6, 7, 6, 0.72);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
 }
 
-.loading-screen-overlay.active {
-    display: flex; /* Show when active */
-}
+.modal.active { display: flex; }
 
-.loading-message {
-    color: #ffffff;
-    font-size: 1.5rem;
-    font-weight: 500;
-    padding: 20px;
-    background-color: rgba(18, 18, 18, 0.85); /* Slightly more opaque background for the message itself */
-    border-radius: 8px;
-    text-align: center;
-}
-
-/* Footer Styles */
-footer {
-    text-align: center;
-    padding: 20px 0;
-    margin-top: auto; /* This helps push it to the bottom in some flex contexts, but flex-grow on container is primary */
-    border-top: 1px solid #333; /* A subtle separator line */
-    width: 100%; /* Footer should span full width */
-    background-color: #121212; /* Match body background if it's meant to seem part of the page bottom */
-    position: relative;
-    z-index: 1;
-}
-
-footer p {
-    margin: 5px 0;
-    font-size: 0.9em;
-    color: #aaa; /* Lighter grey for footer text */
-}
-
-footer a {
-    color: #2ecc71; /* Use the primary green for links */
-    text-decoration: none;
-    margin: 0 5px;
-}
-
-footer a:hover {
-    text-decoration: underline;
-}
-
-/* New Modal Overlay for Settings */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
-    box-sizing: border-box; /* so overlay padding insets content instead of widening the overlay */
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 1001; /* Above game content, below loading overlay */
-    -webkit-backdrop-filter: blur(5px); /* For Safari */
-    backdrop-filter: blur(5px); /* Standard blur */
+    justify-content: center;
+    padding: var(--s4);
+    background-color: rgba(6, 7, 6, 0.72);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    z-index: 1001;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.2s var(--ease), visibility 0.2s var(--ease);
 }
 
 .modal-overlay.active {
@@ -901,549 +1090,348 @@ footer a:hover {
     visibility: visible;
 }
 
-.settings-content {
-    background-color: #1e1e1e; /* Darker background for settings modal */
-    padding: 30px;
-    border-radius: 10px;
+.modal-content {
+    width: 100%;
+    max-width: 380px;
+    padding: var(--s6);
+    background-color: var(--panel-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
     text-align: center;
-    position: relative; /* For positioning close button */
-    box-sizing: border-box; /* keep padding inside min-width so 320px stays 320px */
-    min-width: 320px; /* Minimum width for the modal */
-    max-width: 90%;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--s4);
 }
 
-.modal-title {
-    font-size: 1.8rem;
-    color: #fff;
-    margin-bottom: 15px;
+.modal-content h2 {
+    font-size: 1.15rem;
+    font-weight: 650;
+    color: var(--ink);
+    margin: 0;
 }
+
+.modal-content p {
+    font-size: 0.94rem;
+    color: var(--ink-2);
+    margin: 0;
+}
+
+/* Outcome is carried by the lamp on the heading, not a border around everything. */
+.modal-content.success h2 { color: var(--lamp); }
+.modal-content.failure h2 { color: var(--lamp-red); }
+
+.modal-album-art {
+    width: 128px;
+    height: 128px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    margin: 0 auto;
+    display: block;
+}
+
+.modal-title { font-size: 1.15rem; font-weight: 650; color: var(--ink); margin: 0; }
+
+.settings-content { max-width: 340px; }
 
 .setting-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    align-items: stretch;
+    gap: var(--s3);
     width: 100%;
+}
+
+.volume-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--silkscreen);
+    text-align: left;
 }
 
 .close-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.close-btn:hover {
-    color: #fff;
-}
-
-/* Input Mode Selection */
-.input-mode-selector {
-    display: flex;
-    justify-content: center;
-    background-color: #1e1e1e; /* deeper dark for pill background */
-    border-radius: 8px;
-    padding: 5px;
-    margin-bottom: 25px;
-    max-width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 1rem;
-}
-
-.mode-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    background-color: transparent;
-    color: #aaa;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.mode-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05); /* very light hint */
-    color: #ddd;
-}
-
-.mode-btn.active {
-    background-color: #383838; /* active tab background */
-    color: #fff; 
-    border-color: transparent;
-}
-
-.mode-btn.active:hover {
-    background-color: #444; 
-}
-
-.input-mode-selector label {
-    cursor: pointer;
+    top: var(--s3);
+    right: var(--s3);
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-}
-
-.input-mode-selector input[type="radio"] {
-    margin-right: 8px;
-    /* Custom radio button styling if needed */
-}
-
-
-
-/* Styles for the genre dropdown */
-#genre-select {
-    width: 100%;
-    padding: 15px 35px 15px 20px; /* 35px right padding for the custom arrow */
-    font-size: 1.1rem;
-    border-radius: 5px;
-    border: 1px solid #555;
-    background-color: #333;
-    color: #fff;
-    box-sizing: border-box;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--ink-dim);
+    font-size: 0.9rem;
     cursor: pointer;
-    appearance: none; /* Remove default dropdown arrow */
+    transition: color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.close-btn:hover { color: var(--ink); background-color: var(--panel-2); }
+
+/* Volume slider — a fader on the panel. */
+#volume-slider-modal {
     -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px;
-}
-
-#genre-select::-ms-expand { /* For IE/Edge */
-    display: none;
-}
-
-/* ── CTA Button Pulse Glow ───────────────────────────────────────────────── */
-@keyframes pulse-ring {
-    0%   { box-shadow: 0 0 0 0px rgba(34, 197, 94, 0.5); }
-    100% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
-}
-
-.btn-primary {
-    animation: pulse-ring 1.4s ease-out infinite;
-}
-
-.btn-primary:hover {
-    animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .btn-primary {
-        animation: none;
-    }
-}
-
-/* ── Mobile layout ───────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-    .container {
-        padding: 8px 12px;
-    }
-
-    .game-main {
-        gap: 8px;
-    }
-
-    .guess-boxes-container {
-        gap: 5px;
-        margin-bottom: 8px;
-    }
-
-    .guess-box {
-        padding: 9px 12px;
-        height: 20px;
-    }
-
-    .game-info {
-        gap: 5px;
-        margin-bottom: 4px;
-    }
-
-    .play-control {
-        margin: 2px 0 4px;
-    }
-
-    .game-controls {
-        gap: 8px;
-        margin-top: 0;
-    }
-
-    #guess-input {
-        font-size: 16px; /* prevents iOS zoom on focus */
-    }
-}
-
-/* ── Daily Stats Display ─────────────────────────────────────────────────── */
-.daily-stats {
-    font-size: 12px;
-    opacity: 0.5;
-    color: #fff;
-    text-align: center;
-    margin: 6px 0 0;
-    min-height: 16px;
-    transition: opacity 0.3s ease, color 0.3s ease;
-}
-
-.daily-stats--complete {
-    opacity: 0.85;
-    color: #2ecc71;
-}
-
-/* ── Home-Page Daily Share Row ───────────────────────────────────────────── */
-.daily-share-row {
-    display: flex;
-    gap: 12px;
+    appearance: none;
     width: 100%;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 10px;
-    box-sizing: border-box;
-}
-
-.home-share-btn,
-.home-copy-btn {
-    flex: 1;
-    padding: 15px;
-    border-radius: 5px;
-    font-size: 1.1rem;
-    font-weight: bold;
+    height: 4px;
+    background: var(--panel-3);
+    border-radius: 2px;
     cursor: pointer;
-    border: none; /* border removed — use box-shadow for visual stroke so height is not affected */
-    transition: background-color 0.2s ease, color 0.2s ease;
+    outline: none;
 }
 
-.home-share-btn {
-    background-color: #2ecc71;
-    color: #fff;
+#volume-slider-modal::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--lamp);
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -6px;
 }
 
-.home-share-btn:hover {
-    background-color: #27ae60;
-    animation-play-state: paused;
-}
-
-.home-copy-btn {
-    background-color: #252525;
-    color: #ccc;
-    box-shadow: inset 0 0 0 1px #3a3a3a; /* visual border that adds zero height */
-}
-
-.home-copy-btn:hover {
-    background-color: #333;
-    color: #fff;
-    box-shadow: inset 0 0 0 1px #555;
-}
-
-/* Greyed-out disabled CTA state for "Come back tomorrow!" */
-.btn--disabled,
-.btn--disabled:hover {
-    background-color: #444 !important;
-    color: #888 !important;
-    cursor: not-allowed;
-    animation: none !important;
-    box-shadow: none !important;
-    opacity: 0.7;
-}
-
-/* ── Past Days Archive ───────────────────────────────────────────────────── */
-.daily-archive {
-    width: 100%;
-    max-width: 500px;
-    margin: 4px auto 0;
-    box-sizing: border-box;
-    text-align: left;
-}
-
-.archive-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    padding: 10px;
-    background: none;
+#volume-slider-modal::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--lamp);
+    border-radius: 50%;
     border: none;
-    color: #888;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.4px;
     cursor: pointer;
-    transition: color 0.2s ease;
 }
 
-.archive-toggle:hover {
-    color: #ddd;
+#volume-slider-modal::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background: var(--panel-3);
+    border-radius: 2px;
 }
 
-.archive-toggle-caret {
-    font-size: 0.7rem;
-    line-height: 1;
-}
-
-.archive-body {
-    padding-top: 4px;
-}
-
-.archive-lifetime {
-    font-size: 0.72rem;
-    color: #555;
-    text-align: center;
-    margin: 0 0 10px;
-}
-
-.archive-list {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    max-height: 260px;
+/* How to play */
+.how-to-play-content {
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--ink-2);
+    max-height: 62vh;
     overflow-y: auto;
-    padding-right: 3px;
+    padding-right: var(--s2);
 }
 
-.archive-list::-webkit-scrollbar { width: 4px; }
-.archive-list::-webkit-scrollbar-track { background: transparent; }
-.archive-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-
-.archive-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: 7px;
-    background: #1c1c1c;
-    border: none;
-    border-left: 3px solid #2a2a2a;
-    color: #bbb;
-    font-size: 0.88rem;
-    text-align: left;
-    cursor: pointer;
-    box-sizing: border-box;
-    min-height: 44px;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+.how-to-play-content h3 {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--lamp);
+    margin: var(--s5) 0 var(--s2);
 }
 
-.archive-row:hover {
-    background: #262626;
-    color: #fff;
-}
+.how-to-play-content h3:first-child { margin-top: 0; }
+.how-to-play-content p { margin: 0 0 var(--s3); font-size: 0.9rem; }
+.how-to-play-content ul { margin: 0 0 var(--s3); padding-left: var(--s5); }
+.how-to-play-content li { margin-bottom: var(--s2); }
+.how-to-play-content strong { color: var(--ink); font-weight: 600; }
 
-.archive-row--complete {
-    border-left-color: #2ecc71;
-}
+/* ── Results card (recap + saved day) ────────────────────────────────────── */
 
-.archive-row--partial {
-    border-left-color: #e0a52e;
-}
-
-.archive-row-date {
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.archive-row-status {
-    font-size: 0.78rem;
-    color: #666;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.archive-row--complete .archive-row-status { color: #7ecf91; }
-.archive-row--partial  .archive-row-status { color: #d3a24a; }
-
-/* ── End-of-Day Recap Modal ──────────────────────────────────────────────── */
-.recap-modal-overlay {
-    align-items: center;
-    padding: 16px;
-}
+.recap-modal-overlay { align-items: center; }
 
 .recap-card {
-    background: #1c1c1c;
-    border-radius: 14px;
-    padding: 22px 20px 18px;
     width: 100%;
     max-width: 380px;
-    box-sizing: border-box; /* keep the padding inside max-width on narrow screens */
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    padding: var(--s6);
+    background-color: var(--panel-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    animation: recapIn 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-}
-
-@keyframes recapIn {
-    from { opacity: 0; transform: translateY(16px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    gap: var(--s4);
 }
 
 .recap-heading {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: var(--ink);
     text-align: center;
-    letter-spacing: 0.5px;
+    margin: 0;
 }
 
-/* Score badge shown under the heading */
+/* The score is the payload — big, mono, tabular. */
 .recap-score {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #2ecc71;
+    font-family: var(--font-mono);
+    font-size: 2.1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--lamp);
     text-align: center;
-    margin: -6px 0 0;
     line-height: 1;
+    margin: calc(var(--s3) * -1) 0 0;
 }
 
 .recap-score-sub {
-    font-size: 0.75rem;
-    color: #555;
-    text-align: center;
-    margin: 2px 0 0;
-    letter-spacing: 0.5px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
     text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--silkscreen);
+    text-align: center;
+    margin: var(--s2) 0 0;
 }
 
 .recap-song-list {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    max-height: 320px;
+    gap: var(--s1);
+    max-height: 300px;
     overflow-y: auto;
-    padding-right: 2px;
 }
-
-/* Thin scrollbar */
-.recap-song-list::-webkit-scrollbar { width: 4px; }
-.recap-song-list::-webkit-scrollbar-track { background: transparent; }
-.recap-song-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
 .recap-song-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 7px;
-    background: #242424;
+    gap: var(--s2);
+    min-height: 38px;
+    padding: 0 var(--s3);
+    background-color: var(--panel-2);
+    border-left: 3px solid var(--panel-3);
+    border-radius: var(--radius-sm);
 }
 
-.recap-song-row.recap-correct { background: #192619; }
-.recap-song-row.recap-wrong   { background: #261919; }
+.recap-song-row.recap-correct {
+    background-color: var(--panel-good);
+    border-left-color: var(--lamp);
+}
+
+.recap-song-row.recap-wrong {
+    background-color: var(--panel-bad);
+    border-left-color: var(--lamp-red);
+}
 
 .recap-song-num {
-    font-size: 0.65rem;
-    color: #444;
-    font-weight: 600;
-    width: 14px;
     flex-shrink: 0;
+    width: 12px;
     text-align: right;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
 }
 
 .recap-song-title {
-    font-size: 0.82rem;
-    color: #d8d8d8;
-    font-weight: 500;
     flex: 1;
-    text-align: left;
-    white-space: nowrap;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 0.84rem;
+    color: var(--ink);
 }
-
-.recap-song-row.recap-correct .recap-song-title { color: #7ecf91; }
-.recap-song-row.recap-wrong   .recap-song-title { color: #d07070; }
 
 .recap-song-meta {
-    font-size: 0.72rem;
-    color: #555;
-    white-space: nowrap;
     flex-shrink: 0;
-}
-
-.recap-song-icon {
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    line-height: 1;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--silkscreen);
 }
 
 .recap-summary {
-    font-size: 0.78rem;
-    color: #555;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--silkscreen);
     text-align: center;
     margin: 0;
-    padding-top: 10px;
-    border-top: 1px solid #252525;
+    padding-top: var(--s3);
+    border-top: 1px solid var(--line-soft);
 }
 
 .recap-actions {
     display: flex;
-    gap: 8px;
+    gap: var(--s2);
 }
 
-/* Three-button variant (past-day results): share on its own row so the
-   secondary buttons keep their labels readable on small screens. */
-.recap-actions--stacked {
-    flex-direction: column;
-}
+.recap-actions--stacked { flex-direction: column; }
 
 .recap-actions-secondary {
     display: flex;
-    gap: 8px;
+    gap: var(--s2);
 }
 
-.recap-actions-secondary .recap-close-btn {
-    flex: 1;
+.recap-actions-secondary .recap-close-btn { flex: 1; }
+
+.recap-share-btn { flex: 2; }
+.recap-close-btn { flex: 1; }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+
+.loading-screen-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(6, 7, 6, 0.8);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    z-index: 2000;
 }
 
-.recap-share-btn {
-    flex: 2;
-    background-color: #2ecc71;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 11px 0;
-    border-radius: 8px;
-    min-height: 44px;
+.loading-screen-overlay.active { display: flex; }
+
+.loading-message {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--silkscreen);
 }
 
-.recap-share-btn:hover {
-    background-color: #27ae60;
-    animation-play-state: paused;
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+footer {
+    text-align: center;
+    padding: var(--s5) 0;
+    margin-top: auto;
+    border-top: 1px solid var(--line-soft);
+    width: 100%;
+    position: relative;
+    z-index: 1;
 }
 
-.recap-close-btn {
-    flex: 1;
-    background-color: #252525;
-    color: #666;
-    font-size: 0.88rem;
-    padding: 11px 0;
-    border-radius: 8px;
-    min-height: 44px;
-    border: 1px solid #2e2e2e;
+footer p {
+    font-size: 0.72rem;
+    color: var(--ink-dim);
+    margin: 0;
 }
 
-.recap-close-btn:hover {
-    color: #bbb;
-    background-color: #2e2e2e;
+/* ── Narrow screens ──────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .container { padding: var(--s4); }
+
+    #home-page-content.active { gap: var(--s6); padding-top: var(--s5); }
+
+    .game-title { font-size: 1.45rem; }
+
+    .play-btn { width: 56px; height: 56px; }
+
+    .calendar-grid { gap: 3px; }
+    .calendar-day { font-size: 0.74rem; gap: 4px; }
+    .day-dot { width: 4px; height: 4px; }
+
+    .modal-content,
+    .recap-card { padding: var(--s5); }
 }
 
-@media (max-width: 480px) {
-    .recap-card { padding: 18px 14px 14px; }
-    .recap-score { font-size: 1.7rem; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
-

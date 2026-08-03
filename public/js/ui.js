@@ -30,7 +30,7 @@ export function updateStageCounter(currentStage, totalStages) {
     const stageDurationElement = document.getElementById('stage-duration');
     if (stageDurationElement) {
         const duration = getStageDuration(currentStage - 1); // Convert to 0-indexed
-        stageDurationElement.textContent = `${duration} ${duration === 1 ? 'Second' : 'Seconds'}`;
+        stageDurationElement.textContent = `${duration}s`;
     }
 }
 
@@ -64,7 +64,7 @@ function formatTime(seconds) {
     // Round up to nearest 0.1 second
     const roundedSeconds = Math.floor(seconds * 10) / 10;
     // Format with 1 decimal place
-    return `${roundedSeconds.toFixed(1)}sec`;
+    return `${roundedSeconds.toFixed(1)}s`;
 }
 
 export function updateProgressBar(percentage) {
@@ -216,7 +216,7 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, cu
     const albumArtElement = document.getElementById('success-album-art');
 
     if (failureModal) { // Explicitly hide failure modal
-        failureModal.style.display = 'none';
+        failureModal.classList.remove('active');
     }
 
     // Add correct guess to the current box
@@ -231,12 +231,12 @@ export function showSuccessScreen(songTitle, artist, albumArtUrl, onPlayNext, cu
         albumArtElement.style.display = 'none';
     }
 
-    modal.style.display = 'block';
+    modal.classList.add('active');
 
     const newPlayNextButton = playNextButton.cloneNode(true);
     playNextButton.parentNode.replaceChild(newPlayNextButton, playNextButton);
     newPlayNextButton.addEventListener('click', () => {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
         resetGuessBoxes(); // Reset boxes for new game
         if (onPlayNext) onPlayNext();
     });
@@ -250,7 +250,7 @@ export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
     const albumArtElement = document.getElementById('failure-album-art');
 
     if (successModal) { // Explicitly hide success modal
-        successModal.style.display = 'none';
+        successModal.classList.remove('active');
     }
 
     songInfo.textContent = `The song was: ${songTitle} - ${artist}`;
@@ -262,12 +262,12 @@ export function showFailureScreen(songTitle, artist, albumArtUrl, onTryAgain) {
         albumArtElement.style.display = 'none';
     }
 
-    modal.style.display = 'block';
+    modal.classList.add('active');
 
     const newTryAgainButton = tryAgainButton.cloneNode(true);
     tryAgainButton.parentNode.replaceChild(newTryAgainButton, tryAgainButton);
     newTryAgainButton.addEventListener('click', () => {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
         resetGuessBoxes(); // Reset boxes for new game
         if (onTryAgain) onTryAgain();
     });
