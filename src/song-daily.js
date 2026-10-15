@@ -1,14 +1,11 @@
-const fetch = require('node-fetch');
-const crypto = require('crypto');
-const cors = require('cors');
+import { createHash } from 'node:crypto';
+import snapshot from '../dailysongs/daily-snapshot.json';
+import { topSongsRss } from './itunes.js';
 
 // The frozen calendar of daily challenges. Committed to the repo so a past day
 // always replays the exact songs it originally had, and so future days exist
 // ahead of time without being reachable before they arrive.
 // Regenerate/extend with: node scripts/build-daily-snapshot.js
-const snapshot = require('../dailysongs/daily-snapshot.json');
-
-const corsMiddleware = cors();
 
 // One daily challenge is one rap song, one pop song and one from the overall chart.
 const SONGS_PER_DAY = snapshot.songsPerDay || 3;
@@ -20,7 +17,7 @@ const EARLIEST_TZ_OFFSET_HOURS = 14;
 
 // Seeded LCG PRNG — same seed always produces the same sequence
 function seededRandom(seedStr) {
-    const hash = crypto.createHash('sha256').update(seedStr).digest('hex');
+    const hash = createHash('sha256').update(seedStr).digest('hex');
     let state = parseInt(hash.slice(0, 8), 16);
     return () => {
         state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
@@ -66,39 +63,16 @@ function isWellFormedDate(dateStr) {
 
 // ── Live chart fallback (only for arrived dates missing from the snapshot) ───
 
-// Fetch top songs from iTunes RSS — genreId=null for the general top chart
+// Same chart fetch as the random endpoint, mapped to the daily song shape.
 async function fetchTopSongsFromRSS(genreId = null, limit = 100) {
-    const url = genreId
-        ? `https://itunes.apple.com/us/rss/topsongs/limit=${limit}/genre=${genreId}/json`
-        : `https://itunes.apple.com/us/rss/topsongs/limit=${limit}/json`;
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`song-daily: RSS fetch failed for genreId=${genreId}: ${response.status}`);
-            return [];
-        }
-        const data = await response.json();
-        if (!data.feed || !data.feed.entry) return [];
-
-        return data.feed.entry.map(entry => {
-            const previewLink = entry.link.find(
-                l => l.attributes && l.attributes.rel === 'enclosure' && l.attributes.type === 'audio/x-m4a'
-            );
-            const images = entry['im:image'];
-            const bestImage = images && images.length > 0 ? images[images.length - 1].label : null;
-            return {
-                id: entry.id.attributes['im:id'],
-                title: entry['im:name'].label,
-                artist: entry['im:artist'].label,
-                previewUrl: previewLink ? previewLink.attributes.href : null,
-                albumArt: bestImage,
-            };
-        }).filter(t => t.previewUrl);
-    } catch (error) {
-        console.error(`song-daily: Error fetching RSS for genreId=${genreId}:`, error);
-        return [];
-    }
+    const tracks = await topSongsRss(genreId, limit);
+    return tracks.map(t => ({
+        id: t.trackId,
+        title: t.trackName,
+        artist: t.artistName,
+        previewUrl: t.previewUrl,
+        albumArt: t.artworkUrl100,
+    }));
 }
 
 /**
@@ -148,39 +122,36 @@ async function getDailySongs(dateStr) {
     return songs.map(s => ({ ...s, id: `daily-${dateStr}-${s.id}` }));
 }
 
-module.exports = (req, res) => {
-    corsMiddleware(req, res, async () => {
-        try {
-            const requestedDate = new URL(req.url, `http://${req.headers.host}`).searchParams.get('date');
-            const maxDate = latestArrivedDate();
-            const dateStr = requestedDate || utcTodayStr();
+export async function handleDaily(url) {
+    const json = (body, status = 200, headers = {}) =>
+        Response.json(body, { status, headers });
 
-            if (!isWellFormedDate(dateStr)) {
-                console.warn(`song-daily: Rejected malformed date "${requestedDate}".`);
-                return res.status(400).json({ message: 'Invalid date. Use YYYY-MM-DD.' });
-            }
+    try {
+        const requestedDate = url.searchParams.get('date');
+        const maxDate = latestArrivedDate();
+        const dateStr = requestedDate || utcTodayStr();
 
-            // Future days are in the snapshot but stay sealed until they arrive.
-            if (dateStr > maxDate) {
-                console.warn(`song-daily: Refused future date ${dateStr} (max ${maxDate}).`);
-                return res.status(403).json({ message: "That day hasn't arrived yet." });
-            }
-
-            if (snapshot.firstDate && dateStr < snapshot.firstDate) {
-                return res.status(404).json({ message: 'No daily challenge exists for that date.' });
-            }
-
-            const songs = await getDailySongs(dateStr);
-            if (songs && songs.length > 0) {
-                // A given date's songs never change, so let the CDN hold them.
-                res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-                res.status(200).json(songs);
-            } else {
-                res.status(404).json({ message: 'Could not fetch daily songs.' });
-            }
-        } catch (error) {
-            console.error('song-daily: Unhandled error:', error);
-            res.status(500).json({ message: 'Internal server error.' });
+        if (!isWellFormedDate(dateStr)) {
+            return json({ message: 'Invalid date. Use YYYY-MM-DD.' }, 400);
         }
-    });
-};
+
+        // Future days are in the snapshot but stay sealed until they arrive.
+        if (dateStr > maxDate) {
+            return json({ message: "That day hasn't arrived yet." }, 403);
+        }
+
+        if (snapshot.firstDate && dateStr < snapshot.firstDate) {
+            return json({ message: 'No daily challenge exists for that date.' }, 404);
+        }
+
+        const songs = await getDailySongs(dateStr);
+        if (songs && songs.length > 0) {
+            // A given date's songs never change, so let the CDN hold them.
+            return json(songs, 200, { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' });
+        }
+        return json({ message: 'Could not fetch daily songs.' }, 404);
+    } catch (error) {
+        console.error('song-daily: Unhandled error:', error);
+        return json({ message: 'Internal server error.' }, 500);
+    }
+}

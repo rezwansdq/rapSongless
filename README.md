@@ -4,6 +4,20 @@ A music guessing game focused on rap/hip-hop songs.
 
 **this page is a work in progess**
 
+## Running & deploying (Cloudflare Workers)
+
+One Worker (`src/`) serves the `/api/*` endpoints; the site itself is static
+assets built into `dist/` by `scripts/build-assets.js`.
+
+```
+npm install
+npm run dev       # build + wrangler dev on http://localhost:8787
+npm run deploy    # build + wrangler deploy (run `npx wrangler login` first)
+```
+
+To serve it on songdle.win, add the domain under Workers → rap-songless →
+Settings → Domains & Routes (or uncomment `routes` in `wrangler.jsonc`).
+
 ## Daily challenge
 
 Each day is 3 songs — one rap, one pop, one from the wider chart — the same
