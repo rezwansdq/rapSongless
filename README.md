@@ -7,16 +7,24 @@ A music guessing game focused on rap/hip-hop songs.
 ## Running & deploying (Cloudflare Workers)
 
 One Worker (`src/`) serves the `/api/*` endpoints; the site itself is static
-assets built into `dist/` by `scripts/build-assets.js`.
+assets that `scripts/build-assets.js` assembles into `dist/`. `wrangler dev` and
+`wrangler deploy` run that build automatically (`build.command` in
+`wrangler.jsonc`), so there is no separate build step.
 
 ```
 npm install
-npm run dev       # build + wrangler dev on http://localhost:8787
-npm run deploy    # build + wrangler deploy (run `npx wrangler login` first)
+npm run dev       # wrangler dev on http://localhost:8787
+npm run deploy    # wrangler deploy (run `npx wrangler login` first)
 ```
 
-To serve it on songdle.win, add the domain under Workers → rap-songless →
-Settings → Domains & Routes (or uncomment `routes` in `wrangler.jsonc`).
+**Deploy on every push (Workers Builds):** Cloudflare dashboard → Workers & Pages
+→ Create → Import a repository → pick this repo. The defaults work as-is
+(deploy command `npx wrangler deploy`); the Worker name must stay `rap-songless`
+to match `wrangler.jsonc`.
+
+**Custom domain:** Workers → rap-songless → Settings → Domains & Routes → add
+`songdle.win` (the domain's DNS must be on Cloudflare), or uncomment `routes` in
+`wrangler.jsonc`.
 
 ## Daily challenge
 

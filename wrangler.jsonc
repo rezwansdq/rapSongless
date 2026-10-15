@@ -13,6 +13,12 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none"
   },
+  // Builds dist/ from public/ + images/ before every deploy and dev run, so the default
+  // `wrangler deploy` (including Workers Builds) needs no separate build command.
+  "build": {
+    "command": "npm run build",
+    "watch_dir": ["public", "images"]
+  },
   "observability": { "enabled": true }
   // Custom domain (songdle.win): add in the dashboard under Workers > rap-songless > Settings > Domains,
   // or uncomment:
