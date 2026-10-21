@@ -65,14 +65,19 @@ function isWellFormedDate(dateStr) {
 
 // Same chart fetch as the random endpoint, mapped to the daily song shape.
 async function fetchTopSongsFromRSS(genreId = null, limit = 100) {
-    const tracks = await topSongsRss(genreId, limit);
-    return tracks.map(t => ({
-        id: t.trackId,
-        title: t.trackName,
-        artist: t.artistName,
-        previewUrl: t.previewUrl,
-        albumArt: t.artworkUrl100,
-    }));
+    try {
+        const { tracks } = await topSongsRss(genreId, limit);
+        return tracks.map(t => ({
+            id: t.trackId,
+            title: t.trackName,
+            artist: t.artistName,
+            previewUrl: t.previewUrl,
+            albumArt: t.artworkUrl100,
+        }));
+    } catch (error) {
+        console.error(`song-daily: chart fetch failed for genreId=${genreId}:`, error);
+        return [];
+    }
 }
 
 /**

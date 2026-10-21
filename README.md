@@ -26,6 +26,16 @@ to match `wrangler.jsonc`.
 `songdle.win` (the domain's DNS must be on Cloudflare), or uncomment `routes` in
 `wrangler.jsonc`.
 
+### iTunes access
+
+Genre/artist rounds and the search autocomplete call Apple's iTunes APIs from the
+Worker. Apple throttles per IP (answering 403) and Workers share Cloudflare's IP
+pool, so `src/itunes.js` retries, caches good answers at the edge (charts 30 min,
+artist 1 h, autocomplete 10 min) and falls back to the last good copy (kept 24 h)
+if Apple refuses. Responses carry `X-Itunes-Source: live | cache | stale`. If
+iTunes can't be reached and nothing is cached, the API answers 502 with
+`{"upstreamStatus": <what Apple said>}` and logs the failing URL to Workers Logs.
+
 ## Daily challenge
 
 Each day is 3 songs — one rap, one pop, one from the wider chart — the same

@@ -1,9 +1,23 @@
 import { handleDaily } from './song-daily.js';
-import { getRandomSong, searchForAutocomplete } from './itunes.js';
+import { UpstreamError, getRandomSong, searchForAutocomplete } from './itunes.js';
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
+const NO_STORE = { 'Cache-Control': 'no-store' };
 
-const json = (body, status = 200) => Response.json(body, { status, headers: CORS });
+const json = (body, status = 200, headers = {}) =>
+    Response.json(body, { status, headers: { ...CORS, ...headers } });
+
+function failure(where, error, message) {
+    console.error(`${where}: server error:`, error);
+    if (error instanceof UpstreamError) {
+        // Apple refused or didn't answer. upstreamStatus is what it said (0 = no answer at all).
+        return json({
+            message: "Couldn't reach iTunes right now. Please try again in a moment.",
+            upstreamStatus: error.status,
+        }, 502, NO_STORE);
+    }
+    return json({ message, error: error.message }, 500, NO_STORE);
+}
 
 async function handleRandom(url) {
     const genreId = url.searchParams.get('genreId') || url.searchParams.get('playlistId');
@@ -16,22 +30,31 @@ async function handleRandom(url) {
     if (mode === 'daily' ? !genreId : !genreId && !artistName) {
         return json({ message: 'Genre ID or Artist Name is required for fetching a random song.' }, 400);
     }
+    // The genre ID goes into a URL path (and a cache key), so only accept what iTunes uses.
+    if (genreId && !/^\d{1,6}$/.test(genreId)) {
+        return json({ message: 'Invalid genre ID.' }, 400);
+    }
 
     try {
-        const song = await getRandomSong({ genreId, artistName, excludeIds });
-        if (song) return json(song);
+        const { song, source } = await getRandomSong({ genreId, artistName, excludeIds });
+        if (song) return json(song, 200, { 'X-Itunes-Source': source });
         const what = genreId ? `genre ${genreId}` : `artist '${artistName}'`;
-        return json({ message: `Could not fetch a random song from ${what}.` }, 404);
+        return json({ message: `Could not fetch a random song from ${what}.` }, 404, NO_STORE);
     } catch (error) {
-        console.error('song-random: server error:', error);
-        return json({ message: 'Error fetching random song', error: error.message }, 500);
+        return failure('song-random', error, 'Error fetching random song');
     }
 }
 
 async function handleSearch(url) {
     const term = url.searchParams.get('term');
-    if (!term) return json({ message: 'Search term is required' }, 400);
-    return json(await searchForAutocomplete(term));
+    if (!term || !term.trim()) return json({ message: 'Search term is required' }, 400);
+
+    try {
+        const { songs, source } = await searchForAutocomplete(term);
+        return json(songs, 200, { 'X-Itunes-Source': source });
+    } catch (error) {
+        return failure('songs-search', error, 'Error searching songs');
+    }
 }
 
 const routes = {
